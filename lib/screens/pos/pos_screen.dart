@@ -1,6 +1,8 @@
+import 'package:stock_prime/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/screens/screens.dart';
 
 class PosScreen extends StatefulWidget {
   const PosScreen({super.key});
@@ -29,7 +31,7 @@ class _PosScreenState extends State<PosScreen> {
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: const Color(0xFF1B5E20),
             title: const Text(
               'Point de vente',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
@@ -38,35 +40,37 @@ class _PosScreenState extends State<PosScreen> {
             elevation: 0,
             actions: [
               Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Container(
-                  height: 36,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Scanner code-barres caméra activé !')),
-                          );
-                        },
-                        child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
-                      ),
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Catalogue de caisse rafraîchi !')),
-                          );
-                        },
-                        child: const Icon(Icons.refresh, color: Colors.white, size: 18),
-                      ),
-                    ],
+                padding: const EdgeInsets.only(right: 14),
+                child: Center(
+                  child: Container(
+                    height: 38,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF86A789).withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(19),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Scanner code-barres activé')),
+                            );
+                          },
+                          child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Catalogue rafraîchi')),
+                            );
+                          },
+                          child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -74,10 +78,11 @@ class _PosScreenState extends State<PosScreen> {
           ),
           body: Column(
             children: [
-              // 1. RECHERCHE (Screenshot 5)
+              // 1. CHAMP DE RECHERCHE (Pilule arrondie avec bordure fine)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
                 child: Container(
+                  height: 48,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
@@ -85,10 +90,11 @@ class _PosScreenState extends State<PosScreen> {
                   ),
                   child: TextField(
                     controller: _searchCtrl,
+                    style: const TextStyle(fontSize: 15, color: Color(0xFF111827)),
                     decoration: const InputDecoration(
                       hintText: 'Rechercher un produit...',
-                      hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                      prefixIcon: Icon(Icons.search, color: Color(0xFF6B7280), size: 20),
+                      hintStyle: TextStyle(color: Color(0xFF4B5563), fontSize: 15),
+                      prefixIcon: Icon(Icons.search, color: Color(0xFF4B5563), size: 22),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
@@ -96,7 +102,7 @@ class _PosScreenState extends State<PosScreen> {
                 ),
               ),
 
-              // 2. SÉLECTEUR DE BOUTIQUE (Screenshot 5)
+              // 2. SÉLECTEUR DE BOUTIQUE (Badge arrondi 'Boutique principale ⌄')
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Align(
@@ -106,16 +112,20 @@ class _PosScreenState extends State<PosScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      border: Border.all(color: const Color(0xFFD1D5DB)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.storefront, size: 16, color: Color(0xFF374151)),
-                        SizedBox(width: 8),
+                        Icon(Icons.storefront_outlined, size: 16, color: Color(0xFF374151)),
+                        SizedBox(width: 6),
                         Text(
                           'Boutique principale',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1F2937)),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: Color(0xFF1F2937),
+                          ),
                         ),
                         SizedBox(width: 4),
                         Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF6B7280)),
@@ -124,146 +134,204 @@ class _PosScreenState extends State<PosScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
-              // 3. LISTE DES PRODUITS AVEC ÉTAT PANIER (Screenshot 5)
+              // 3. CONTENU : LISTE OU ÉTAT VIDE CONFORME AU SCREENSHOT
               Expanded(
                 child: products.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Padding(
-                          padding: EdgeInsets.all(24.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.point_of_sale_outlined, size: 64, color: Color(0xFFD1D5DB)),
-                              SizedBox(height: 12),
-                              Text(
-                                'Aucun produit en rayon',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF374151)),
+                              // Cercle doux orange avec icône carton +
+                              Container(
+                                width: 76,
+                                height: 76,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFFFF2E5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 36,
+                                    height: 36,
+                                    child: Stack(
+                                      children: const [
+                                        Icon(
+                                          Icons.inventory_2_outlined,
+                                          color: Color(0xFFEA580C),
+                                          size: 34,
+                                        ),
+                                        Positioned(
+                                          right: 0,
+                                          bottom: 0,
+                                          child: Icon(
+                                            Icons.add,
+                                            color: Color(0xFFEA580C),
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Créez vos produits dans l\'onglet Produits pour commencer à vendre.',
+                              const SizedBox(height: 20),
+
+                              // Titre gras
+                              const Text(
+                                'Rien à vendre pour l’instant',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: Color(0xFF111827),
+                                ),
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Sous-titre descriptif
+                              const Text(
+                                'Ajoutez un produit et son stock pour démarrer vos ventes.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Color(0xFF4B5563),
+                                  fontSize: 14,
+                                  height: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+
+                              // Bouton vert forêt arrondi 'Ajouter mon premier produit'
+                              SizedBox(
+                                height: 48,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1B5E20),
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const NewProductScreen()),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.add_box, color: Colors.white, size: 20),
+                                  label: const Text(
+                                    'Ajouter mon premier produit',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
                       )
-                    : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  itemCount: products.length,
-                  itemBuilder: (context, idx) {
-                    final p = products[idx];
-                    final cartIndex = appState.cart.indexWhere((c) => c.product.id == p.id);
-                    final isInCart = cartIndex >= 0;
-                    final cartItem = isInCart ? appState.cart[cartIndex] : null;
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        itemCount: products.length,
+                        separatorBuilder: (_, index) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                        itemBuilder: (context, index) {
+                          final p = products[index];
+                          final cartItem = appState.cart.cast<CartItem?>().firstWhere(
+                                (ci) => ci?.product.id == p.id,
+                                orElse: () => null,
+                              );
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isInCart ? const Color(0xFFF0FDF4) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isInCart ? const Color(0xFF86EFAC) : const Color(0xFFE5E7EB),
-                          width: isInCart ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          // Image / Icône
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF3F4F6),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 24),
-                          ),
-                          const SizedBox(width: 12),
-                          // Nom & Catégorie
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          return Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Row(
                               children: [
-                                Text(
-                                  p.name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF3F4F6),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF9CA3AF), size: 24),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  p.category,
-                                  style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        p.name,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        AppTheme.formatFCFA(p.sellPrice),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF1B5E20),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                                if (cartItem == null)
+                                  InkWell(
+                                    onTap: () => appState.addToCart(p),
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF1B5E20),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.add, color: Colors.white, size: 20),
+                                    ),
+                                  )
+                                else
+                                  Row(
+                                    children: [
+                                      InkWell(
+                                        onTap: () => appState.removeFromCart(cartItem),
+                                        child: const Icon(Icons.remove_circle_outline, color: Color(0xFFDC2626), size: 22),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '${cartItem.quantity}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      InkWell(
+                                        onTap: () => appState.updateCartQuantity(cartItem, 1),
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF1B5E20),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.add, color: Colors.white, size: 16),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                               ],
                             ),
-                          ),
-                          // Prix & Contrôles (+ ou Trash / Qte / +)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                AppTheme.formatFCFA(p.sellPrice),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryNavy),
-                              ),
-                              const SizedBox(height: 6),
-                              if (!isInCart)
-                                InkWell(
-                                  onTap: () => appState.addToCart(p),
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primaryNavy,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.add, color: AppTheme.accentGold, size: 18),
-                                  ),
-                                )
-                              else
-                                Row(
-                                  children: [
-                                    InkWell(
-                                      onTap: () => appState.removeFromCart(cartItem!),
-                                      child: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 18),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${cartItem!.quantity}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    InkWell(
-                                      onTap: () => appState.updateCartQuantity(cartItem, 1),
-                                      borderRadius: BorderRadius.circular(16),
-                                      child: Container(
-                                        width: 24,
-                                        height: 24,
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.primaryNavy,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(Icons.add, color: AppTheme.accentGold, size: 16),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                            ],
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
 
-              // 4. BARRE INFÉRIEURE DU PANIER : Payer Total (Screenshot 5)
+              // 4. BARRE DU PANIER LORSQUE NON VIDE
               if (appState.cart.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
@@ -278,7 +346,7 @@ class _PosScreenState extends State<PosScreen> {
                       height: 52,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryNavy,
+                        color: const Color(0xFF1B5E20),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -293,7 +361,7 @@ class _PosScreenState extends State<PosScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(3),
                                     decoration: const BoxDecoration(
-                                      color: AppTheme.badgeOrange,
+                                      color: Color(0xFFF97316),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Text(
@@ -312,7 +380,7 @@ class _PosScreenState extends State<PosScreen> {
                           ),
                           Text(
                             AppTheme.formatFCFA(appState.cartTotal),
-                            style: const TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                         ],
                       ),
@@ -343,13 +411,13 @@ class _PosScreenState extends State<PosScreen> {
                   const Text('Encaissement Rapide', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   Text(
                     AppTheme.formatFCFA(appState.cartTotal),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryNavy),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1B5E20)),
                   ),
                 ],
               ),
               const Divider(height: 24),
               ListTile(
-                leading: const Icon(Icons.money, color: AppTheme.success),
+                leading: const Icon(Icons.money, color: Color(0xFF16A34A)),
                 title: const Text('Espèces (Cash)', style: TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: const Text('Avec calcul automatique de monnaie à rendre'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 14),
@@ -365,7 +433,7 @@ class _PosScreenState extends State<PosScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.phone_android, color: AppTheme.orangeMoney),
+                leading: const Icon(Icons.phone_android, color: Color(0xFFFF6600)),
                 title: const Text('Orange Money Cameroun', style: TextStyle(fontWeight: FontWeight.bold)),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                 onTap: () {
@@ -380,7 +448,7 @@ class _PosScreenState extends State<PosScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.phonelink_ring, color: AppTheme.mtnYellow),
+                leading: const Icon(Icons.phonelink_ring, color: Color(0xFFFFCC00)),
                 title: const Text('MTN Mobile Money', style: TextStyle(fontWeight: FontWeight.bold)),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                 onTap: () {

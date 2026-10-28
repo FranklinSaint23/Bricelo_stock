@@ -11,7 +11,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _currentIndex = 2; // Default to 'Produits' to match the user's focus
+  int _currentIndex = 0; // Page Accueil par défaut après authentification
   final appState = AppState.instance;
 
   final List<Widget> _screens = const [
@@ -117,7 +117,7 @@ class _MainShellState extends State<MainShell> {
               onTap: (idx) => setState(() => _currentIndex = idx),
               type: BottomNavigationBarType.fixed,
               backgroundColor: Colors.white,
-              selectedItemColor: AppTheme.primaryNavy,
+              selectedItemColor: const Color(0xFF1B5E20),
               unselectedItemColor: const Color(0xFF6B7280),
               selectedFontSize: 11,
               unselectedFontSize: 11,
