@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stock_prime/theme/app_theme.dart';
+import 'package:stock_prime/widgets/widgets.dart';
 import 'package:stock_prime/screens/screens.dart';
 
 class StockSubMenuScreen extends StatelessWidget {
@@ -9,28 +9,9 @@ class StockSubMenuScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        backgroundColor: AppTheme.primaryNavy,
-        elevation: 0,
-        centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
-            ),
-          ),
-        ),
-        title: const Text(
-          'Stock',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
-        ),
+      appBar: StockAppBar.forestGreen(
+        title: 'Stock',
+        onBack: () => Navigator.pop(context),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -55,7 +36,7 @@ class StockSubMenuScreen extends StatelessWidget {
                   icon: Icons.delete_sweep_outlined,
                   title: 'Dépréciation de stock',
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const StockDepreciationScreen()));
                   },
                 ),
                 _buildDivider(),
@@ -87,9 +68,7 @@ class StockSubMenuScreen extends StatelessWidget {
                   icon: Icons.sync_alt,
                   title: 'Transferts de stock',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Transfert entre boutiques')),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const StockTransfersScreen()));
                   },
                 ),
                 _buildDivider(),
@@ -112,6 +91,10 @@ class StockSubMenuScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: StockBottomBar(
+        currentIndex: 4,
+        onTap: (_) => Navigator.pop(context),
       ),
     );
   }
