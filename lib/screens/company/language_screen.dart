@@ -21,56 +21,65 @@ class _LanguageScreenState extends State<LanguageScreen> {
       ),
       body: ListView(
         children: [
-          _buildLanguageItem(
-            code: 'fr',
-            flag: '🇫🇷',
-            label: 'Français',
-            isSelected: _selectedLang == 'fr',
+          // FRANÇAIS SÉLECTIONNÉ (1:1 SCREENSHOT 2)
+          InkWell(
+            onTap: () => setState(() => _selectedLang = 'fr'),
+            child: Container(
+              color: _selectedLang == 'fr' ? const Color(0xFFF0FDF4) : Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Row(
+                children: [
+                  const Text('🇫🇷', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Text(
+                      'Français',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                  ),
+                  if (_selectedLang == 'fr')
+                    const Icon(Icons.check, color: Color(0xFF166534), size: 22),
+                ],
+              ),
+            ),
           ),
           const Divider(height: 1, color: Color(0xFFF3F4F6)),
-          _buildLanguageItem(
-            code: 'en',
-            flag: '🇬🇧',
-            label: 'English',
-            isSelected: _selectedLang == 'en',
+
+          // ENGLISH NON SÉLECTIONNÉ
+          InkWell(
+            onTap: () => setState(() => _selectedLang = 'en'),
+            child: Container(
+              color: _selectedLang == 'en' ? const Color(0xFFF0FDF4) : Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Row(
+                children: [
+                  const Text('🇬🇧', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Text(
+                      'English',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                  ),
+                  if (_selectedLang == 'en')
+                    const Icon(Icons.check, color: Color(0xFF166534), size: 22),
+                ],
+              ),
+            ),
           ),
         ],
       ),
       bottomNavigationBar: StockBottomBar(
         currentIndex: 4,
         onTap: (_) => Navigator.pop(context),
-      ),
-    );
-  }
-
-  Widget _buildLanguageItem({
-    required String code,
-    required String flag,
-    required String label,
-    required bool isSelected,
-  }) {
-    return InkWell(
-      onTap: () => setState(() => _selectedLang = code),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          children: [
-            Text(flag, style: const TextStyle(fontSize: 22)),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF111827),
-                ),
-              ),
-            ),
-            if (isSelected)
-              const Icon(Icons.check, color: Color(0xFF1B5E20), size: 22),
-          ],
-        ),
       ),
     );
   }

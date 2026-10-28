@@ -58,9 +58,7 @@ class StockSubMenuScreen extends StatelessWidget {
                   icon: Icons.tune_outlined,
                   title: 'Ajustement de stock',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Ajustement physique de stock')),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const StockAdjustmentScreen()));
                   },
                 ),
                 _buildDivider(),
