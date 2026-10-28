@@ -1,7 +1,8 @@
+import 'depreciation_report_screen.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/app_state.dart';
-import '../models/models.dart';
+import 'supply_screen.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -10,523 +11,309 @@ class InventoryScreen extends StatefulWidget {
   State<InventoryScreen> createState() => _InventoryScreenState();
 }
 
-class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _InventoryScreenState extends State<InventoryScreen> {
   final appState = AppState.instance;
-  String _filter = 'Tous';
-  String _searchQuery = '';
-  final TextEditingController _searchCtrl = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _searchCtrl.dispose();
-    super.dispose();
-  }
+  String _selectedStoreTab = 'Tous';
+  bool _isFabExpanded = false;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: appState,
       builder: (context, _) {
-        final products = appState.products.where((p) {
-          bool matchesFilter = true;
-          if (_filter == 'Stock Faible') matchesFilter = p.isLowStock;
-          if (_filter == 'Rupture') matchesFilter = p.isOutOfStock;
-          if (_filter == 'Bricélo.cm') matchesFilter = p.isSyncedToBricelo;
-
-          final matchesSearch = p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              p.barcode.contains(_searchQuery);
-          return matchesFilter && matchesSearch;
-        }).toList();
-
         return Scaffold(
-          backgroundColor: AppTheme.background,
+          backgroundColor: Colors.white,
           appBar: AppBar(
-            title: const Text('Gestion des Stocks & Produits', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            bottom: TabBar(
-              controller: _tabController,
-              indicatorColor: AppTheme.gold500,
-              indicatorWeight: 3,
-              labelColor: AppTheme.gold500,
-              unselectedLabelColor: Colors.white70,
-              tabs: [
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.inventory_2, size: 18),
-                      const SizedBox(width: 8),
-                      Text('Catalogue (${appState.products.length})'),
-                    ],
-                  ),
-                ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.history, size: 18),
-                      const SizedBox(width: 8),
-                      Text('Mouvements (${appState.stockMovements.length})'),
-                    ],
-                  ),
-                ),
-              ],
+            backgroundColor: AppTheme.primaryNavy,
+            title: const Text(
+              'Stock',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
             ),
+            centerTitle: true,
+            elevation: 0,
             actions: [
-              IconButton(
-                icon: const Icon(Icons.add_circle, color: AppTheme.gold500, size: 26),
-                tooltip: 'Ajouter un produit',
-                onPressed: () => _showAddProductDialog(context),
-              ),
-            ],
-          ),
-          body: TabBarView(
-            controller: _tabController,
-            children: [
-              // ONGLET 1 : CATALOGUE
-              _buildCatalogueTab(products),
-              // ONGLET 2 : MOUVEMENTS DE STOCK
-              _buildMovementsTab(),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // --- ONGLET 1 : CATALOGUE ---
-  Widget _buildCatalogueTab(List<Product> products) {
-    return Column(
-      children: [
-        // Filtres & Recherche
-        Container(
-          padding: const EdgeInsets.all(12),
-          color: Colors.white,
-          child: Column(
-            children: [
-              TextField(
-                controller: _searchCtrl,
-                decoration: InputDecoration(
-                  hintText: 'Rechercher un article ou code-barres...',
-                  prefixIcon: const Icon(Icons.search, size: 20),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
-                          onPressed: () {
-                            setState(() {
-                              _searchCtrl.clear();
-                              _searchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
-                  isDense: true,
-                  filled: true,
-                  fillColor: AppTheme.surfaceRaised,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                ),
-                onChanged: (v) => setState(() => _searchQuery = v),
-              ),
-              const SizedBox(height: 8),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: ['Tous', 'Stock Faible', 'Rupture', 'Bricélo.cm'].map((f) {
-                    final isSel = _filter == f;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: FilterChip(
-                        label: Text(f, style: TextStyle(fontSize: 11, fontWeight: isSel ? FontWeight.bold : FontWeight.normal)),
-                        selected: isSel,
-                        selectedColor: AppTheme.navy900,
-                        labelStyle: TextStyle(color: isSel ? Colors.white : AppTheme.slate700),
-                        onSelected: (_) => setState(() => _filter = f),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Divider(height: 1),
-
-        // Liste des cartes produits
-        Expanded(
-          child: products.isEmpty
-              ? const Center(
-                  child: Text('Aucun produit correspondant.', style: TextStyle(color: AppTheme.slate500)),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: products.length,
-                  itemBuilder: (context, idx) {
-                    final p = products[idx];
-                    return _buildProductListItem(p);
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProductListItem(Product p) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        p.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.navy900),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Réf: ${p.barcode} • Catégorie: ${p.category} • Fournisseur: ${p.supplierName ?? "Marché"}',
-                        style: const TextStyle(fontSize: 11, color: AppTheme.slate500),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Container(
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
-                    color: p.isOutOfStock
-                        ? AppTheme.danger
-                        : (p.isLowStock ? AppTheme.warning : AppTheme.success),
-                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    p.isOutOfStock ? 'RUPTURE' : 'Stock : ${p.stock}',
-                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
+                  child: const Icon(Icons.help_outline, color: Colors.white, size: 20),
                 ),
-              ],
-            ),
-            const Divider(height: 18),
-
-            // Ligne Financière : Vente / Gros / Achat / Marge
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                _buildPriceCol('Prix Détail', AppTheme.formatFCFA(p.sellPrice), AppTheme.navy900),
-                _buildPriceCol('Prix Gros', AppTheme.formatFCFA(p.wholesalePrice), AppTheme.warning),
-                if (appState.isBossMode) ...[
-                  _buildPriceCol('Prix Achat', AppTheme.formatFCFA(p.buyPrice), AppTheme.slate600),
-                  _buildPriceCol(
-                    'Marge Nette',
-                    '${AppTheme.formatFCFA(p.margin)} (+${p.marginPercent.toStringAsFixed(0)}%)',
-                    AppTheme.success,
-                  ),
-                ] else
-                  _buildPriceCol('Marge', '*** (Caissier)', AppTheme.slate400),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Actions : Réassort (+), Ajustement / Perte, Synchro Bricélo
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+              ),
+            ],
+          ),
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      p.isSyncedToBricelo ? Icons.cloud_done : Icons.cloud_off,
-                      size: 16,
-                      color: p.isSyncedToBricelo ? AppTheme.success : AppTheme.slate400,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      p.isSyncedToBricelo ? 'Synchro Bricélo.cm' : 'Stock Local',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: p.isSyncedToBricelo ? AppTheme.success : AppTheme.slate500,
-                        fontWeight: FontWeight.bold,
+                    // CARTE VALEUR DU STOCK
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.trending_up, color: AppTheme.primaryNavy, size: 16),
+                              SizedBox(width: 6),
+                              Text(
+                                'VALEUR DU STOCK',
+                                style: TextStyle(color: Color(0xFF6B7280), fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildStockValueCol('Vente', '0 F CFA'),
+                              Container(width: 1, height: 30, color: const Color(0xFFE5E7EB)),
+                              _buildStockValueCol('Coût', '0 F CFA'),
+                              Container(width: 1, height: 30, color: const Color(0xFFE5E7EB)),
+                              _buildStockValueCol('Marge', '—'),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 12),
+
+                    // BADGES D'ÉTAT DU STOCK
+                    Row(
+                      children: [
+                        _buildStatusBadge(Icons.inventory_2_outlined, '${appState.products.length} articles', const Color(0xFFF3F4F6), const Color(0xFF1F2937)),
+                        const SizedBox(width: 8),
+                        _buildStatusBadge(Icons.warning_amber_rounded, '${appState.lowStockCount} bas', const Color(0xFFFEF3C7), const Color(0xFFD97706)),
+                        const SizedBox(width: 8),
+                        _buildStatusBadge(Icons.cancel_outlined, '${appState.outOfStockCount} rupture', const Color(0xFFFEE2E2), const Color(0xFFDC2626)),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // SÉLECTEUR DE DÉPÔTS
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFD1D5DB)),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          InkWell(
+                            onTap: () => setState(() => _selectedStoreTab = 'Tous'),
+                            borderRadius: const BorderRadius.horizontal(left: Radius.circular(24)),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: _selectedStoreTab == 'Tous' ? AppTheme.goldLight : Colors.white,
+                                borderRadius: const BorderRadius.horizontal(left: Radius.circular(24)),
+                              ),
+                              child: const Text('Tous', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1F2937))),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => setState(() => _selectedStoreTab = 'Boutique principale'),
+                            borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: _selectedStoreTab == 'Boutique principale' ? AppTheme.goldLight : Colors.white,
+                                borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
+                              ),
+                              child: const Text('Boutique principale', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1F2937))),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // SECTION INVENTAIRE
+                    const Text(
+                      'Inventaire',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF111827)),
+                    ),
+                    const SizedBox(height: 40),
+
+                    // ÉTAT VIDE
+                    Center(
+                      child: Column(
+                        children: [
+                          const Icon(Icons.inventory_2_outlined, size: 70, color: Color(0xFF9CA3AF)),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Aucun stock pour cette boutique',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF111827)),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Le stock arrive de vos fournisseurs. Créez une commande pour en recevoir.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.goldLight,
+                              foregroundColor: const Color(0xFF1F2937),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            ),
+                            icon: const Icon(Icons.move_to_inbox, size: 18),
+                            label: const Text('Approvisionner', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 80),
                   ],
                 ),
-                Row(
-                  children: [
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+
+              // SPEED DIAL OVERLAY STOCK (Screenshot 2: 4 Actions)
+              if (_isFabExpanded)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isFabExpanded = false),
+                    child: Container(
+                      color: Colors.white.withOpacity(0.88),
+                      padding: const EdgeInsets.only(bottom: 90, right: 16),
+                      alignment: Alignment.bottomRight,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          // 1. Approvisionner
+                          _buildSpeedDialOption(
+                            label: 'Approvisionner',
+                            icon: Icons.move_to_inbox,
+                            onTap: () {
+                              setState(() => _isFabExpanded = false);
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          // 2. Ajuster le stock
+                          _buildSpeedDialOption(
+                            label: 'Ajuster le stock',
+                            icon: Icons.tune,
+                            onTap: () {
+                              setState(() => _isFabExpanded = false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Module d\'ajustement de stock ouvert !')),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          // 3. Transférer entre boutiques
+                          _buildSpeedDialOption(
+                            label: 'Transférer entre boutiques',
+                            icon: Icons.swap_horiz,
+                            onTap: () {
+                              setState(() => _isFabExpanded = false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Module de transfert inter-boutiques ouvert !')),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                                                    // 4. Enregistrer une perte
+                          _buildSpeedDialOption(
+                            label: 'Enregistrer une perte',
+                            icon: Icons.remove_shopping_cart_outlined,
+                            onTap: () {
+                              setState(() => _isFabExpanded = false);
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
+                            },
+                          ),
+],
                       ),
-                      icon: const Icon(Icons.tune, size: 14),
-                      label: const Text('Ajuster / Perte', style: TextStyle(fontSize: 11)),
-                      onPressed: () => _showAdjustmentDialog(context, p),
                     ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.navy900,
-                        foregroundColor: AppTheme.gold500,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      icon: const Icon(Icons.add, size: 14),
-                      label: const Text('+ Réassort', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                      onPressed: () => _showRestockDialog(context, p),
-                    ),
-                  ],
+                  ),
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPriceCol(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: AppTheme.slate500)),
-        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
-      ],
-    );
-  }
-
-  // --- ONGLET 2 : JOURNAL DES MOUVEMENTS DE STOCK ---
-  Widget _buildMovementsTab() {
-    final movements = appState.stockMovements;
-    if (movements.isEmpty) {
-      return const Center(child: Text('Aucun mouvement de stock pour le moment.'));
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.all(14),
-      itemCount: movements.length,
-      separatorBuilder: (_, index) => const Divider(height: 12),
-      itemBuilder: (context, idx) {
-        final m = movements[idx];
-        final isPositive = m.type.contains('+');
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isPositive ? AppTheme.success.withOpacity(0.12) : AppTheme.danger.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              isPositive ? Icons.arrow_downward : Icons.arrow_upward,
-              color: isPositive ? AppTheme.success : AppTheme.danger,
-              size: 20,
-            ),
+            ],
           ),
-          title: Text(m.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          subtitle: Text(
-            '${m.type} • ${m.quantity} article(s) • Nouveau stock : ${m.newStock} • ${m.reason}',
-            style: const TextStyle(fontSize: 11, color: AppTheme.slate600),
-          ),
-          trailing: Text(
-            '${m.date.hour.toString().padLeft(2, '0')}:${m.date.minute.toString().padLeft(2, '0')}',
-            style: const TextStyle(fontSize: 11, color: AppTheme.slate400),
+
+          // FAB EN BAS À DROITE (Screenshot 2)
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: AppTheme.primaryNavy,
+            foregroundColor: AppTheme.accentGold,
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
+            child: Icon(_isFabExpanded ? Icons.close : Icons.add, size: 28),
           ),
         );
       },
     );
   }
 
-  // --- MODALS DE RÉASSORT & AJUSTEMENT ---
-  void _showRestockDialog(BuildContext context, Product product) {
-    final qtyCtrl = TextEditingController(text: '10');
-    final costCtrl = TextEditingController(text: product.buyPrice.toStringAsFixed(0));
-    final supplierCtrl = TextEditingController(text: product.supplierName ?? 'Grossiste Akwa');
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Réapprovisionnement : ${product.name}', style: const TextStyle(fontSize: 15)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Stock actuel : ${product.stock} ${product.unit}(s)', style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: qtyCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Quantité reçue *', border: OutlineInputBorder()),
+  Widget _buildSpeedDialOption({required String label, required IconData icon, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF111827)),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: costCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Prix d\'achat unitaire (FCFA)', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: supplierCtrl,
-              decoration: const InputDecoration(labelText: 'Fournisseur / Grossiste', border: OutlineInputBorder()),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-          ElevatedButton(
-            onPressed: () {
-              final qty = int.tryParse(qtyCtrl.text) ?? 10;
-              final cost = double.tryParse(costCtrl.text) ?? product.buyPrice;
-              appState.restockProduct(
-                productId: product.id,
-                quantity: qty,
-                buyCost: cost,
-                supplier: supplierCtrl.text,
-              );
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Stock mis à jour (+ $qty) pour ${product.name} !')),
-              );
-            },
-            child: const Text('Enregistrer l\'Entrée'),
+            child: Icon(icon, color: AppTheme.primaryNavy, size: 22),
           ),
         ],
       ),
     );
   }
 
-  void _showAdjustmentDialog(BuildContext context, Product product) {
-    final stockCtrl = TextEditingController(text: product.stock.toString());
-    String reason = 'Avarie / Cassé';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text('Ajustement de Stock : ${product.name}', style: const TextStyle(fontSize: 15)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: stockCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Nouveau stock réel compté', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: reason,
-                decoration: const InputDecoration(labelText: 'Motif de l\'ajustement', border: OutlineInputBorder()),
-                items: [
-                  'Avarie / Cassé',
-                  'Perte / Vol suspecté',
-                  'Consommation / Usage boutique',
-                  'Erreur inventaire comptage',
-                ].map((r) => DropdownMenuItem(value: r, child: Text(r, style: const TextStyle(fontSize: 12)))).toList(),
-                onChanged: (v) => setDialogState(() => reason = v!),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-            ElevatedButton(
-              onPressed: () {
-                final newStock = int.tryParse(stockCtrl.text) ?? product.stock;
-                appState.adjustStock(
-                  productId: product.id,
-                  newStock: newStock,
-                  reason: reason,
-                );
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Stock ajusté à $newStock ${product.unit}(s).')),
-                );
-              },
-              child: const Text('Valider'),
-            ),
-          ],
-        ),
-      ),
+  Widget _buildStockValueCol(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11)),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
+      ],
     );
   }
 
-  void _showAddProductDialog(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final barcodeCtrl = TextEditingController(text: '690${DateTime.now().millisecondsSinceEpoch.toString().substring(4)}');
-    final buyCtrl = TextEditingController();
-    final sellCtrl = TextEditingController();
-    final wholesaleCtrl = TextEditingController();
-    final stockCtrl = TextEditingController(text: '12');
-    String category = 'Électronique';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Ajouter un Nouveau Produit', style: TextStyle(fontSize: 15)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Nom de l\'article *', border: OutlineInputBorder())),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: category,
-                  decoration: const InputDecoration(labelText: 'Catégorie', border: OutlineInputBorder()),
-                  items: ['Électronique', 'Électroménager', 'Bricolage & Électricité', 'Maison & Confort', 'Mode & Voyage']
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13)))).toList(),
-                  onChanged: (v) => setDialogState(() => category = v!),
-                ),
-                const SizedBox(height: 8),
-                TextField(controller: barcodeCtrl, decoration: const InputDecoration(labelText: 'Code-barres / EAN', border: OutlineInputBorder())),
-                const SizedBox(height: 8),
-                TextField(controller: buyCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Prix d\'achat (PAMP en FCFA) *', border: OutlineInputBorder())),
-                const SizedBox(height: 8),
-                TextField(controller: sellCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Prix de vente détail (FCFA) *', border: OutlineInputBorder())),
-                const SizedBox(height: 8),
-                TextField(controller: wholesaleCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Prix de vente gros (FCFA)', border: OutlineInputBorder())),
-                const SizedBox(height: 8),
-                TextField(controller: stockCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Stock initial en magasin', border: OutlineInputBorder())),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-            ElevatedButton(
-              onPressed: () {
-                final sell = double.tryParse(sellCtrl.text) ?? 0;
-                final buy = double.tryParse(buyCtrl.text) ?? 0;
-                final wholesale = double.tryParse(wholesaleCtrl.text) ?? (sell * 0.88);
-                final stock = int.tryParse(stockCtrl.text) ?? 0;
-                if (nameCtrl.text.isEmpty || sell <= 0) return;
-
-                appState.addProduct(Product(
-                  id: 'p_${DateTime.now().millisecondsSinceEpoch}',
-                  name: nameCtrl.text,
-                  category: category,
-                  barcode: barcodeCtrl.text,
-                  buyPrice: buy,
-                  sellPrice: sell,
-                  wholesalePrice: wholesale,
-                  stock: stock,
-                ));
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Produit ${nameCtrl.text} créé avec succès !')),
-                );
-              },
-              child: const Text('Enregistrer le Produit'),
-            ),
+  Widget _buildStatusBadge(IconData icon, String label, Color bg, Color textCol) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: textCol),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(color: textCol, fontWeight: FontWeight.bold, fontSize: 11)),
           ],
         ),
       ),
