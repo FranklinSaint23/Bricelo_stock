@@ -276,3 +276,28 @@ class Customer {
     );
   }
 }
+
+
+class Supplier {
+  final String id;
+  final String name;
+  final String contactName;
+  final String phone;
+  final String email;
+  final String address;
+  final String notes;
+  final bool isArchived;
+  final DateTime createdAt;
+
+  Supplier({
+    required this.id,
+    required this.name,
+    this.contactName = '',
+    this.phone = '',
+    this.email = '',
+    this.address = '',
+    this.notes = '',
+    this.isArchived = false,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+}

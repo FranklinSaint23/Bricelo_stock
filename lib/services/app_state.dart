@@ -23,6 +23,7 @@ class AppState extends ChangeNotifier {
 
   // --- Données Centrales ---
   List<Customer> customers = [];
+  List<Supplier> suppliers = [];
   List<Product> products = [];
   List<CartItem> cart = [];
   List<HeldCart> heldCarts = [];
@@ -51,6 +52,25 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  
+  void addSupplier(Supplier supplier) {
+    suppliers.add(supplier);
+    notifyListeners();
+  }
+
+  void updateSupplier(Supplier supplier) {
+    final index = suppliers.indexWhere((s) => s.id == supplier.id);
+    if (index != -1) {
+      suppliers[index] = supplier;
+      notifyListeners();
+    }
+  }
+
+  void removeSupplier(String id) {
+    suppliers.removeWhere((s) => s.id == id);
+    notifyListeners();
+  }
+
   void _initSampleData() {
     products = [];
     sales = [];
@@ -64,6 +84,7 @@ class AppState extends ChangeNotifier {
 
   void resetAllData() {
     customers.clear();
+    suppliers.clear();
     products.clear();
     sales.clear();
     debts.clear();

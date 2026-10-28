@@ -41,3 +41,9 @@ export 'finance/reports_screen.dart';
 export 'finance/depreciation_report_screen.dart';
 export 'finance/promotion_and_shop_screen.dart';
 export 'more/more_screen.dart';
+
+export 'company/language_screen.dart';
+export 'company/announcements_screen.dart';
+export 'company/about_screen.dart';
+export 'inventory/suppliers_screen.dart';
+export 'inventory/new_supplier_screen.dart';
