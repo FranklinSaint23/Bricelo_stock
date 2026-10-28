@@ -17,6 +17,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       'balance': '0 F CFA',
       'icon': Icons.payments_outlined,
       'isCashDesk': true,
+      'type': 'Espèces',
     },
     {
       'id': '2',
@@ -25,6 +26,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       'balance': '0 F CFA',
       'icon': Icons.smartphone,
       'isCashDesk': false,
+      'type': 'Mobile Money',
     },
     {
       'id': '3',
@@ -33,61 +35,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       'balance': '0 F CFA',
       'icon': Icons.credit_card,
       'isCashDesk': false,
+      'type': 'Carte',
     },
   ];
 
-  void _showAddAccountDialog() {
-    final titleController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Ajouter un compte', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(
-                labelText: 'Nom du compte',
-                hintText: 'Ex: Orange Money, MTN MoMo, Virement bancaire',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryNavy,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () {
-              final val = titleController.text.trim();
-              if (val.isNotEmpty) {
-                setState(() {
-                  _accounts.add({
-                    'id': DateTime.now().millisecondsSinceEpoch.toString(),
-                    'title': val,
-                    'subtitle': null,
-                    'balance': '0 F CFA',
-                    'icon': Icons.account_balance_wallet_outlined,
-                    'isCashDesk': false,
-                  });
-                });
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text('Ajouter', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
+  bool _isAdding = false;
+  String _selectedType = 'Mobile Money'; // 'Mobile Money', 'Banque', 'Carte'
+  final _nameController = TextEditingController();
 
   void _showHelpDialog() {
     showDialog(
@@ -113,6 +67,44 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         ],
       ),
     );
+  }
+
+  void _addAccount() {
+    final name = _nameController.text.trim();
+    if (name.isNotEmpty) {
+      IconData icon = Icons.smartphone;
+      if (_selectedType == 'Banque') icon = Icons.account_balance;
+      if (_selectedType == 'Carte') icon = Icons.credit_card;
+
+      setState(() {
+        _accounts.add({
+          'id': DateTime.now().millisecondsSinceEpoch.toString(),
+          'title': name,
+          'subtitle': null,
+          'balance': '0 F CFA',
+          'icon': icon,
+          'isCashDesk': false,
+          'type': _selectedType,
+        });
+        _nameController.clear();
+        _isAdding = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Compte "$name" ajouté')),
+      );
+    }
+  }
+
+  String _getHintText() {
+    switch (_selectedType) {
+      case 'Banque':
+        return 'Nom (ex. Ecobank, Afriland, Virement)';
+      case 'Carte':
+        return 'Nom (ex. Carte Visa, Mastercard, TPE)';
+      case 'Mobile Money':
+      default:
+        return 'Nom (ex. Orange Money, Wave)';
+    }
   }
 
   @override
@@ -169,6 +161,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           ),
           const SizedBox(height: 16),
 
+          // LISTE DES COMPTES EXISTANTS
           ..._accounts.map((acc) {
             final isCash = acc['isCashDesk'] == true;
             return Container(
@@ -260,34 +253,180 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
           const SizedBox(height: 6),
           const Text(
-            'Soldes au 28/10/2026 01:58:13',
+            'Soldes au 28/10/2026 02:39:20',
             style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 16),
 
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              side: const BorderSide(color: Color(0xFF4B5563), width: 1.2),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          // FORMULAIRE EN LIGNE (SCREENSHOT 2) vs BOUTON AJOUTER (SCREENSHOT 1)
+          if (_isAdding) ...[
+            // SEGMENTED PILLS: Mobile Money | Banque | Carte
+            Container(
+              height: 46,
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFF9CA3AF)),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                children: [
+                  // MOBILE MONEY
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedType = 'Mobile Money'),
+                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(24)),
+                      child: Container(
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: _selectedType == 'Mobile Money' ? const Color(0xFFFEF3C7) : Colors.transparent,
+                          borderRadius: const BorderRadius.horizontal(left: Radius.circular(24)),
+                          border: _selectedType == 'Mobile Money'
+                              ? Border.all(color: const Color(0xFFF5B000), width: 1.2)
+                              : null,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'Mobile Money',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF111827)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(width: 1, height: 46, color: const Color(0xFF9CA3AF)),
+
+                  // BANQUE
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedType = 'Banque'),
+                      child: Container(
+                        height: 46,
+                        color: _selectedType == 'Banque' ? const Color(0xFFFEF3C7) : Colors.transparent,
+                        child: const Center(
+                          child: Text(
+                            'Banque',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF111827)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(width: 1, height: 46, color: const Color(0xFF9CA3AF)),
+
+                  // CARTE
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedType = 'Carte'),
+                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
+                      child: Container(
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: _selectedType == 'Carte' ? const Color(0xFFFEF3C7) : Colors.transparent,
+                          borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
+                          border: _selectedType == 'Carte'
+                              ? Border.all(color: const Color(0xFFF5B000), width: 1.2)
+                              : null,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'Carte',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF111827)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            onPressed: _showAddAccountDialog,
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            const SizedBox(height: 14),
+
+            // CHAMP NOM (EX. ORANGE MONEY, WAVE)
+            TextField(
+              controller: _nameController,
+              autofocus: true,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: _getHintText(),
+                hintStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF9CA3AF)),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // ACTIONS: ANNULER & AJOUTER
+            Row(
               children: [
-                Icon(Icons.add, color: Color(0xFF111827), size: 18),
-                SizedBox(width: 8),
-                Text(
-                  'Ajouter un compte',
-                  style: TextStyle(
-                    color: Color(0xFF111827),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                Expanded(
+                  child: Center(
+                    child: TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _isAdding = false;
+                          _nameController.clear();
+                        });
+                      },
+                      child: const Text(
+                        'Annuler',
+                        style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _nameController.text.trim().isNotEmpty
+                            ? const Color(0xFF14532D)
+                            : const Color(0xFFD1D5DB),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                      ),
+                      onPressed: _nameController.text.trim().isNotEmpty ? _addAccount : null,
+                      child: Text(
+                        'Ajouter',
+                        style: TextStyle(
+                          color: _nameController.text.trim().isNotEmpty ? Colors.white : const Color(0xFF4B5563),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
+          ] else ...[
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: const BorderSide(color: Color(0xFF4B5563), width: 1.2),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              ),
+              onPressed: () => setState(() => _isAdding = true),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add, color: Color(0xFF111827), size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Ajouter un compte',
+                    style: TextStyle(
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -128,7 +128,30 @@ class _PosScreenState extends State<PosScreen> {
 
               // 3. LISTE DES PRODUITS AVEC ÉTAT PANIER (Screenshot 5)
               Expanded(
-                child: ListView.builder(
+                child: products.isEmpty
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.point_of_sale_outlined, size: 64, color: Color(0xFFD1D5DB)),
+                              SizedBox(height: 12),
+                              Text(
+                                'Aucun produit en rayon',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF374151)),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Créez vos produits dans l\'onglet Produits pour commencer à vendre.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   itemCount: products.length,
                   itemBuilder: (context, idx) {

@@ -1,3 +1,4 @@
+import '../services/app_state.dart';
 import 'package:flutter/material.dart';
 
 class ResetDataScreen extends StatelessWidget {
@@ -20,6 +21,7 @@ class ResetDataScreen extends StatelessWidget {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
             onPressed: () {
+              AppState.instance.resetAllData();
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

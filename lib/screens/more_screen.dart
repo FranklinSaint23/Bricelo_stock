@@ -1,3 +1,4 @@
+import 'verify_email_screen.dart';
 import 'company_and_team_screen.dart';
 import 'pilo_assistant_screen.dart';
 import 'my_account_screen.dart';
@@ -137,13 +138,18 @@ class _MoreScreenState extends State<MoreScreen> {
             const SizedBox(height: 12),
 
             // 3. BANNIÈRE E-MAIL NON VÉRIFIÉ
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFEE2E2)),
-              ),
+            InkWell(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const VerifyEmailScreen()));
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFEE2E2)),
+                ),
               child: Row(
                 children: [
                   const Icon(Icons.mail_outline, color: AppTheme.danger, size: 22),
@@ -177,6 +183,7 @@ class _MoreScreenState extends State<MoreScreen> {
                   ),
                 ],
               ),
+            ),
             ),
             const SizedBox(height: 16),
 

@@ -231,3 +231,48 @@ class StockMovement {
     required this.date,
   });
 }
+
+
+class Customer {
+  final String id;
+  final String name;
+  final String phone;
+  final String email;
+  final String address;
+  final String notes;
+  final bool isArchived;
+  final DateTime createdAt;
+
+  Customer({
+    required this.id,
+    required this.name,
+    this.phone = '',
+    this.email = '',
+    this.address = '',
+    this.notes = '',
+    this.isArchived = false,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  Customer copyWith({
+    String? id,
+    String? name,
+    String? phone,
+    String? email,
+    String? address,
+    String? notes,
+    bool? isArchived,
+    DateTime? createdAt,
+  }) {
+    return Customer(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      address: address ?? this.address,
+      notes: notes ?? this.notes,
+      isArchived: isArchived ?? this.isArchived,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+}

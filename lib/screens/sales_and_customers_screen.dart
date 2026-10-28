@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'sales_analytics_screen.dart';
 import 'debts_screen.dart';
+import 'quotes_screen.dart';
+import 'sales_history_screen.dart';
+import 'customers_screen.dart';
 
 class SalesAndCustomersScreen extends StatelessWidget {
   const SalesAndCustomersScreen({super.key});
@@ -55,9 +58,7 @@ class SalesAndCustomersScreen extends StatelessWidget {
                   icon: Icons.receipt_long,
                   title: 'Historique des ventes',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Historique des ventes')),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesHistoryScreen()));
                   },
                 ),
                 const Divider(height: 1, indent: 52, color: Color(0xFFF3F4F6)),
@@ -65,9 +66,7 @@ class SalesAndCustomersScreen extends StatelessWidget {
                   icon: Icons.description_outlined,
                   title: 'Devis',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Gestion des devis')),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const QuotesScreen()));
                   },
                 ),
                 const Divider(height: 1, indent: 52, color: Color(0xFFF3F4F6)),
@@ -102,7 +101,7 @@ class SalesAndCustomersScreen extends StatelessWidget {
                   icon: Icons.people_outline,
                   title: 'Clients',
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const DebtsScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomersScreen()));
                   },
                 ),
                 const Divider(height: 1, indent: 52, color: Color(0xFFF3F4F6)),

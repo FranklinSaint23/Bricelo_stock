@@ -22,6 +22,7 @@ class AppState extends ChangeNotifier {
   bool isSyncedToBricelo = true;
 
   // --- Données Centrales ---
+  List<Customer> customers = [];
   List<Product> products = [];
   List<CartItem> cart = [];
   List<HeldCart> heldCarts = [];
@@ -31,284 +32,47 @@ class AppState extends ChangeNotifier {
   List<Expense> expenses = [];
   List<StockMovement> stockMovements = [];
 
+  
+  void addCustomer(Customer customer) {
+    customers.add(customer);
+    notifyListeners();
+  }
+
+  void updateCustomer(Customer customer) {
+    final index = customers.indexWhere((c) => c.id == customer.id);
+    if (index != -1) {
+      customers[index] = customer;
+      notifyListeners();
+    }
+  }
+
+  void removeCustomer(String id) {
+    customers.removeWhere((c) => c.id == id);
+    notifyListeners();
+  }
+
   void _initSampleData() {
-    products = [
-      Product(
-        id: 'p1',
-        name: 'Tondeuse professionnelle VGR V-030 Gold',
-        category: 'Électronique',
-        barcode: '6901234567890',
-        buyPrice: 9500,
-        sellPrice: 13900,
-        wholesalePrice: 12000,
-        stock: 18,
-        minStockAlert: 5,
-        unit: 'Pièce',
-        supplierName: 'Grossiste Électro Akwa',
-      ),
-      Product(
-        id: 'p2',
-        name: 'Power bank Oraimo 20.000 mAh Fast Charge',
-        category: 'Électronique',
-        barcode: '6909876543210',
-        buyPrice: 6800,
-        sellPrice: 9900,
-        wholesalePrice: 8500,
-        stock: 4, // Stock faible
-        minStockAlert: 6,
-        unit: 'Pièce',
-        supplierName: 'Oraimo Store Douala',
-      ),
-      Product(
-        id: 'p3',
-        name: 'Rallonge parafoudre 5 sorties câble 3m',
-        category: 'Bricolage & Électricité',
-        barcode: '6904443332211',
-        buyPrice: 3200,
-        sellPrice: 5500,
-        wholesalePrice: 4500,
-        stock: 24,
-        minStockAlert: 5,
-        unit: 'Pièce',
-        supplierName: 'Importateur Congo',
-      ),
-      Product(
-        id: 'p4',
-        name: 'Fer à repasser à vapeur Philips EasySpeed',
-        category: 'Électroménager',
-        barcode: '8710103857410',
-        buyPrice: 12500,
-        sellPrice: 17500,
-        wholesalePrice: 15500,
-        stock: 9,
-        minStockAlert: 3,
-        unit: 'Pièce',
-        supplierName: 'Grossiste NANA Douala',
-      ),
-      Product(
-        id: 'p5',
-        name: 'Matelas Orthopédique PH7 2 Places 140x190',
-        category: 'Maison & Confort',
-        barcode: '2370011223344',
-        buyPrice: 48000,
-        sellPrice: 65000,
-        wholesalePrice: 58000,
-        stock: 0, // Rupture de stock
-        minStockAlert: 2,
-        unit: 'Pièce',
-        supplierName: 'Usine Mousse Bassa',
-      ),
-      Product(
-        id: 'p6',
-        name: 'Ventilateur rechargeable solaire 16\" LED',
-        category: 'Électroménager',
-        barcode: '6907778889990',
-        buyPrice: 22000,
-        sellPrice: 32000,
-        wholesalePrice: 28000,
-        stock: 7,
-        minStockAlert: 3,
-        unit: 'Pièce',
-        supplierName: 'Énergie Plus Yaoundé',
-      ),
-      Product(
-        id: 'p7',
-        name: 'Écouteurs sans fil Oraimo FreePods 4 ANC',
-        category: 'Électronique',
-        barcode: '6908889991112',
-        buyPrice: 11000,
-        sellPrice: 16000,
-        wholesalePrice: 14000,
-        stock: 15,
-        minStockAlert: 4,
-        unit: 'Pièce',
-        supplierName: 'Oraimo Store Douala',
-      ),
-      Product(
-        id: 'p8',
-        name: 'Cafetière programmable SmartChef 1.2L',
-        category: 'Électroménager',
-        barcode: '6903332221110',
-        buyPrice: 9000,
-        sellPrice: 14500,
-        wholesalePrice: 12500,
-        stock: 5,
-        minStockAlert: 2,
-        unit: 'Pièce',
-        supplierName: 'Grossiste NANA Douala',
-      ),
-    ];
+    products = [];
+    sales = [];
+    debts = [];
+    supplierDebts = [];
+    expenses = [];
+    stockMovements = [];
+    cart = [];
+    heldCarts = [];
+  }
 
-    // Ventes d'exemple du jour
-    final now = DateTime.now();
-    sales = [
-      Sale(
-        id: 's1',
-        ticketNumber: 'SP-1041',
-        createdAt: now.subtract(const Duration(hours: 3)),
-        items: [
-          SaleItemSummary(
-            productName: 'Tondeuse professionnelle VGR V-030 Gold',
-            quantity: 1,
-            unitPrice: 13900,
-            total: 13900,
-          ),
-        ],
-        total: 13900,
-        paymentMethod: 'Orange Money',
-        amountReceived: 13900,
-        customerName: 'M. Paul Atangana',
-        customerPhone: '+237 6 99 12 34 56',
-        storeName: currentStore,
-      ),
-      Sale(
-        id: 's2',
-        ticketNumber: 'SP-1042',
-        createdAt: now.subtract(const Duration(hours: 1, minutes: 20)),
-        items: [
-          SaleItemSummary(
-            productName: 'Power bank Oraimo 20.000 mAh Fast Charge',
-            quantity: 2,
-            unitPrice: 9900,
-            total: 19800,
-          ),
-        ],
-        total: 19800,
-        paymentMethod: 'Espèces',
-        amountReceived: 20000,
-        changeReturned: 200,
-        customerName: 'Client Comptoir',
-        storeName: currentStore,
-      ),
-    ];
-
-    // Dettes clients d'exemple
-    debts = [
-      CustomerDebt(
-        id: 'd1',
-        customerName: 'M. Emmanuel Tagne',
-        customerPhone: '+237 6 77 88 99 00',
-        customerCity: 'Akwa (Douala)',
-        initialDebt: 35000,
-        paidAmount: 10000,
-        createdAt: now.subtract(const Duration(days: 3)),
-        lastPaymentDate: now.subtract(const Duration(days: 1)),
-        itemsSummary: ['1x Tondeuse Gold', '1x Rallonge 5 sorties'],
-        payments: [
-          DebtPayment(
-            id: 'dp1',
-            amount: 10000,
-            date: now.subtract(const Duration(days: 1)),
-            paymentMethod: 'Orange Money',
-            note: 'Acompte versé au comptoir',
-          ),
-        ],
-      ),
-      CustomerDebt(
-        id: 'd2',
-        customerName: 'Mme Clarisse Mballa',
-        customerPhone: '+237 6 55 44 33 22',
-        customerCity: 'Bastos (Yaoundé)',
-        initialDebt: 65000,
-        paidAmount: 25000,
-        createdAt: now.subtract(const Duration(days: 7)),
-        lastPaymentDate: now.subtract(const Duration(days: 2)),
-        itemsSummary: ['1x Matelas Orthopédique PH7'],
-        payments: [
-          DebtPayment(
-            id: 'dp2',
-            amount: 25000,
-            date: now.subtract(const Duration(days: 2)),
-            paymentMethod: 'MTN MoMo',
-            note: 'Premier acompte',
-          ),
-        ],
-      ),
-      CustomerDebt(
-        id: 'd3',
-        customerName: 'M. Jean-Paul Kamdem',
-        customerPhone: '+237 6 91 22 33 44',
-        customerCity: 'Bonabéri (Douala)',
-        initialDebt: 18000,
-        paidAmount: 0,
-        createdAt: now.subtract(const Duration(days: 1)),
-        lastPaymentDate: now.subtract(const Duration(days: 1)),
-        itemsSummary: ['1x Écouteurs FreePods 4'],
-      ),
-    ];
-
-    // Dettes fournisseurs d'exemple
-    supplierDebts = [
-      SupplierDebt(
-        id: 'sd1',
-        supplierName: 'Ets NANA & Fils (Grossiste)',
-        supplierPhone: '+237 6 99 88 77 66',
-        invoiceRef: 'FAC-2026-891',
-        totalAmount: 450000,
-        paidAmount: 200000,
-        createdAt: now.subtract(const Duration(days: 5)),
-        dueDate: now.add(const Duration(days: 5)),
-      ),
-      SupplierDebt(
-        id: 'sd2',
-        supplierName: 'Société Camerounaise d\'Importation (SCI)',
-        supplierPhone: '+237 6 70 11 22 33',
-        invoiceRef: 'BL-99201',
-        totalAmount: 280000,
-        paidAmount: 0,
-        createdAt: now.subtract(const Duration(days: 2)),
-        dueDate: now.add(const Duration(days: 12)),
-      ),
-    ];
-
-    // Dépenses de la boutique du jour
-    expenses = [
-      Expense(
-        id: 'e1',
-        category: 'Transport / Taxi',
-        description: 'Course réassort au Marché Congo',
-        amount: 2500,
-        createdAt: now.subtract(const Duration(hours: 4)),
-      ),
-      Expense(
-        id: 'e2',
-        category: 'Ration / Repas',
-        description: 'Déjeuner équipe comptoir et caisse',
-        amount: 3500,
-        createdAt: now.subtract(const Duration(hours: 2)),
-      ),
-      Expense(
-        id: 'e3',
-        category: 'Emballage / Sachets',
-        description: 'Paquet 100 sachets d\'emballage plastique',
-        amount: 2000,
-        createdAt: now.subtract(const Duration(hours: 1)),
-      ),
-    ];
-
-    // Mouvements de stock
-    stockMovements = [
-      StockMovement(
-        id: 'sm1',
-        productId: 'p1',
-        productName: 'Tondeuse professionnelle VGR V-030 Gold',
-        type: 'VENTE (-)',
-        quantity: 1,
-        newStock: 18,
-        reason: 'Ticket #SP-1041',
-        date: now.subtract(const Duration(hours: 3)),
-      ),
-      StockMovement(
-        id: 'sm2',
-        productId: 'p2',
-        productName: 'Power bank Oraimo 20.000 mAh Fast Charge',
-        type: 'VENTE (-)',
-        quantity: 2,
-        newStock: 4,
-        reason: 'Ticket #SP-1042',
-        date: now.subtract(const Duration(hours: 1, minutes: 20)),
-      ),
-    ];
+  void resetAllData() {
+    customers.clear();
+    products.clear();
+    sales.clear();
+    debts.clear();
+    supplierDebts.clear();
+    expenses.clear();
+    stockMovements.clear();
+    cart.clear();
+    heldCarts.clear();
+    notifyListeners();
   }
 
   // --- GETTERS STATISTIQUES ---
@@ -630,8 +394,8 @@ class AppState extends ChangeNotifier {
       productId: p.id,
       productName: p.name,
       type: diff >= 0 ? 'AJUSTEMENT (+)' : 'AVARIE / PERTE (-)',
-      quantity: diff.abs(),
-      newStock: newStock,
+      quantity: diff.abs().round(),
+      newStock: newStock.round(),
       reason: reason,
       date: DateTime.now(),
     ));

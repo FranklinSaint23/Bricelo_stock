@@ -16,120 +16,230 @@ class _OutletsScreenState extends State<OutletsScreen> {
       'type': 'Boutique',
       'isDefault': true,
       'hasSpecificPrices': true,
+      'discount': 0,
+      'address': '',
     },
   ];
 
   void _showAddOutletDialog() {
     final nameController = TextEditingController();
-    String selectedType = 'Boutique';
+    final addressController = TextEditingController();
+    final discountController = TextEditingController(text: '0');
+    String selectedType = 'Boutique'; // 'Boutique' or 'Entrepôt'
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      barrierDismissible: true,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
+        builder: (ctx, setModalState) => Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Nouvelle boutique',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // CHAMP NOM *
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Nom *',
+                    labelStyle: const TextStyle(color: Color(0xFF4B5563)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFF9CA3AF)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // LABEL TYPE
+                const Text(
+                  'Type',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF4B5563), fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+
+                // SEGMENTED PILL TYPE: Boutique / Entrepôt
+                Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
+                    border: Border.all(color: const Color(0xFF9CA3AF)),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => setModalState(() => selectedType = 'Boutique'),
+                          borderRadius: const BorderRadius.horizontal(left: Radius.circular(24)),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: selectedType == 'Boutique' ? const Color(0xFFFEF3C7) : Colors.transparent,
+                              borderRadius: const BorderRadius.horizontal(left: Radius.circular(24)),
+                              border: selectedType == 'Boutique'
+                                  ? Border.all(color: const Color(0xFFF5B000), width: 1.2)
+                                  : null,
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'Boutique',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(width: 1, height: 42, color: const Color(0xFF9CA3AF)),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => setModalState(() => selectedType = 'Entrepôt'),
+                          borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: selectedType == 'Entrepôt' ? const Color(0xFFFEF3C7) : Colors.transparent,
+                              borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
+                              border: selectedType == 'Entrepôt'
+                                  ? Border.all(color: const Color(0xFFF5B000), width: 1.2)
+                                  : null,
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'Entrepôt',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Ajouter un emplacement',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Nom de la boutique ou entrepôt',
-                  hintText: 'Ex: Entrepôt Bonabéri, Boutique Akwa',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                const SizedBox(height: 16),
+
+                // CHAMP ADRESSE
+                TextField(
+                  controller: addressController,
+                  decoration: InputDecoration(
+                    labelText: 'Adresse',
+                    labelStyle: const TextStyle(color: Color(0xFF4B5563)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFF9CA3AF)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Center(child: Text('Boutique')),
-                      selected: selectedType == 'Boutique',
-                      selectedColor: AppTheme.goldLight,
-                      labelStyle: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: selectedType == 'Boutique' ? const Color(0xFF92400E) : Colors.black87,
+
+                // CHAMP RÉDUCTION (SEULEMENT SI BOUTIQUE)
+                if (selectedType == 'Boutique') ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: discountController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Réduction sur tous les prix (%)',
+                      labelStyle: const TextStyle(color: Color(0xFF4B5563)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFF9CA3AF)),
                       ),
-                      onSelected: (val) {
-                        if (val) setModalState(() => selectedType = 'Boutique');
-                      },
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Center(child: Text('Entrepôt')),
-                      selected: selectedType == 'Entrepôt',
-                      selectedColor: AppTheme.goldLight,
-                      labelStyle: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: selectedType == 'Entrepôt' ? const Color(0xFF92400E) : Colors.black87,
-                      ),
-                      onSelected: (val) {
-                        if (val) setModalState(() => selectedType = 'Entrepôt');
-                      },
-                    ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '0 = prix normaux',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                   ),
                 ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryNavy,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onPressed: () {
-                    final name = nameController.text.trim();
-                    if (name.isNotEmpty) {
-                      setState(() {
-                        _outlets.add({
-                          'id': DateTime.now().millisecondsSinceEpoch.toString(),
-                          'name': name,
-                          'type': selectedType,
-                          'isDefault': false,
-                          'hasSpecificPrices': false,
-                        });
-                      });
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('$selectedType "$name" ajouté avec succès')),
-                      );
-                    }
-                  },
-                  child: const Text('Enregistrer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+
+                const SizedBox(height: 24),
+
+                // BOUTONS ANNULER / CRÉER
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF9CA3AF)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                          ),
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text(
+                            'Annuler',
+                            style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF14532D),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                          ),
+                          onPressed: () {
+                            final name = nameController.text.trim();
+                            if (name.isNotEmpty) {
+                              final discount = int.tryParse(discountController.text) ?? 0;
+                              setState(() {
+                                _outlets.add({
+                                  'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                                  'name': name,
+                                  'type': selectedType,
+                                  'isDefault': false,
+                                  'hasSpecificPrices': false,
+                                  'address': addressController.text.trim(),
+                                  'discount': discount,
+                                });
+                              });
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('$selectedType "$name" créé avec succès')),
+                              );
+                            }
+                          },
+                          child: const Text(
+                            'Créer',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
