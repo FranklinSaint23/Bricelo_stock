@@ -97,9 +97,7 @@ class StockSubMenuScreen extends StatelessWidget {
                   icon: Icons.qr_code_scanner,
                   title: 'Trouver une unité',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Recherche d\'unité (IMEI / N° de série)')),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const FindUnitScreen()));
                   },
                 ),
                 _buildDivider(),
@@ -107,9 +105,7 @@ class StockSubMenuScreen extends StatelessWidget {
                   icon: Icons.event_note_outlined,
                   title: 'Suivi de péremption',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Suivi des dates de péremption')),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpiryTrackingScreen()));
                   },
                 ),
               ],
