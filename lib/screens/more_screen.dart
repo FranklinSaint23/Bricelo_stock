@@ -315,27 +315,6 @@ class _MoreScreenState extends State<MoreScreen> {
                   _buildDivider(),
                   _buildMenuItem(Icons.help_outline, 'Centre d\'aide', () {}),
                   _buildDivider(),
-
-                  // DÉCONNEXION (Screenshot 3)
-                  _buildMenuItem(
-                    Icons.logout,
-                    'Déconnexion',
-                    () {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                    },
-                    textColor: const Color(0xFFDC2626),
-                    iconColor: const Color(0xFFDC2626),
-                  ),
-                  _buildDivider(),
-
-                  // SUPPRIMER MON COMPTE (Screenshot 3)
-                  _buildMenuItem(
-                    Icons.delete_outline,
-                    'Supprimer mon compte',
-                    () => _showDeleteAccountDialog(context),
-                    textColor: const Color(0xFFDC2626),
-                    iconColor: const Color(0xFFDC2626),
-                  ),
                 ],
               ),
             ),
