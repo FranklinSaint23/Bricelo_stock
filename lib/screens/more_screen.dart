@@ -1,3 +1,5 @@
+import 'company_and_team_screen.dart';
+import 'pilo_assistant_screen.dart';
 import 'my_account_screen.dart';
 import 'stock_sub_menu_screen.dart';
 import 'preferences_screen.dart';
@@ -7,9 +9,7 @@ import 'promotion_and_shop_screen.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'sales_and_customers_screen.dart';
-import 'team_screen.dart';
 import 'depreciation_report_screen.dart';
-import 'login_screen.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -26,80 +26,6 @@ class _MoreScreenState extends State<MoreScreen> {
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
-  }
-
-  void _showDeleteAccountDialog(BuildContext context) {
-    final pwdCtrl = TextEditingController();
-    bool obscure = true;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDlgState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
-            'Supprimer mon compte',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1F2937)),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Cette action est irréversible. Toutes vos données personnelles seront supprimées. Si vous êtes le seul propriétaire de votre entreprise, celle-ci sera également désactivée.',
-                style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF4B5563)),
-              ),
-              const SizedBox(height: 18),
-              TextField(
-                controller: pwdCtrl,
-                obscureText: obscure,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF6B7280), size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                      color: const Color(0xFF6B7280),
-                      size: 20,
-                    ),
-                    onPressed: () => setDlgState(() => obscure = !obscure),
-                  ),
-                  hintText: 'Mot de passe',
-                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actionsPadding: const EdgeInsets.only(right: 16, bottom: 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text(
-                'Annuler',
-                style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Demande de suppression enregistrée')),
-                );
-              },
-              child: const Text(
-                'Supprimer',
-                style: TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600, fontSize: 14),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -291,7 +217,7 @@ class _MoreScreenState extends State<MoreScreen> {
                     Icons.badge_outlined,
                     'Entreprise & équipe',
                     () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamScreen()));
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyAndTeamScreen()));
                     },
                     badge: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -308,9 +234,7 @@ class _MoreScreenState extends State<MoreScreen> {
                   }),
                   _buildDivider(),
                   _buildMenuItem(Icons.smart_toy_outlined, 'Assistant Pilo', () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Assistant IA Pilo : À votre écoute !')),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const PiloAssistantScreen()));
                   }),
                   _buildDivider(),
                   _buildMenuItem(Icons.help_outline, 'Centre d\'aide', () {}),

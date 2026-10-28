@@ -1,3 +1,4 @@
+import 'pilo_assistant_screen.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/app_state.dart';
@@ -241,10 +242,8 @@ class DashboardScreen extends StatelessWidget {
                 bottom: 20,
                 child: InkWell(
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Assistant IA Bricélo Pilo à votre service !')),
-                    );
-                  },
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const PiloAssistantScreen()));
+                    },
                   borderRadius: BorderRadius.circular(28),
                   child: Container(
                     width: 54,

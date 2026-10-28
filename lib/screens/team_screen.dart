@@ -136,56 +136,132 @@ class TeamScreen extends StatelessWidget {
   }
 
   void _showInviteDialog(BuildContext context) {
-    final nameCtrl = TextEditingController();
+    final prenomCtrl = TextEditingController();
+    final nomCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     String role = 'Caissier';
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Inviter un membre', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom et prénom', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: phoneCtrl,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Numéro de téléphone', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: role,
-                decoration: const InputDecoration(labelText: 'Rôle', border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'Caissier', child: Text('Caissier')),
-                  DropdownMenuItem(value: 'Gestionnaire', child: Text('Gestionnaire')),
-                  DropdownMenuItem(value: 'Proprietaire', child: Text('Propriétaire')),
-                ],
-                onChanged: (v) => setState(() => role = v ?? 'Caissier'),
-              ),
-            ],
+        builder: (ctx, setDlgState) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            'Inviter un membre',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF111827)),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Annuler', style: TextStyle(color: Color(0xFF6B7280))),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // PRENOM *
+                TextField(
+                  controller: prenomCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Prenom *',
+                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // NOM *
+                TextField(
+                  controller: nomCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Nom *',
+                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // TELEPHONE *
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Téléphone *',
+                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // ROLE * (Gerant / Caissier / Magasinier)
+                DropdownButtonFormField<String>(
+                  value: role,
+                  decoration: InputDecoration(
+                    labelText: 'Role *',
+                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Gerant', child: Text('Gerant')),
+                    DropdownMenuItem(value: 'Caissier', child: Text('Caissier')),
+                    DropdownMenuItem(value: 'Magasinier', child: Text('Magasinier')),
+                  ],
+                  onChanged: (v) => setDlgState(() => role = v ?? 'Caissier'),
+                ),
+              ],
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy),
-              onPressed: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Invitation envoyée !')),
-                );
-              },
-              child: const Text('Inviter', style: TextStyle(color: Colors.white)),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFD1D5DB)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Annuler', style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.bold, fontSize: 14)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryNavy,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Invitation envoyée à ${prenomCtrl.text} (${role}) !')),
+                        );
+                      },
+                      child: const Text('Inviter', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
