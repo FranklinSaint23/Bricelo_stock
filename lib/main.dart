@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/app_theme.dart';
-import 'screens/main_shell.dart';
+import 'screens/screens.dart';
 import 'services/supabase_config.dart';
 
 Future<void> main() async {
