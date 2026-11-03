@@ -1,3 +1,4 @@
+import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class NewTransferScreen extends StatefulWidget {
@@ -22,7 +23,7 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1B5E20),
+        backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: const Text(
@@ -66,7 +67,7 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                             width: isActive ? 28 : 8,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: isActive ? const Color(0xFF1B5E20) : const Color(0xFFD1D5DB),
+                              color: isActive ? AppTheme.primaryNavy : const Color(0xFFD1D5DB),
                               borderRadius: BorderRadius.circular(3),
                             ),
                           ),
@@ -94,7 +95,7 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                          color: isActive ? const Color(0xFF1B5E20) : const Color(0xFF9CA3AF),
+                          color: isActive ? AppTheme.primaryNavy : const Color(0xFF9CA3AF),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -290,7 +291,7 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B5E20),
+                backgroundColor: AppTheme.primaryNavy,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),

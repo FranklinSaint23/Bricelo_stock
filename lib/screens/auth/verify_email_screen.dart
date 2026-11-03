@@ -9,16 +9,23 @@ class VerifyEmailScreen extends StatefulWidget {
 }
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
-  final _emailController = TextEditingController(text: 'franklinnjiepi07@gmail.com');
+  final _emailController = TextEditingController(text: 'bagalwamugishotdan@gmail.com');
   bool _codeSent = false;
   final _codeController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _codeController.dispose();
+    super.dispose();
+  }
 
   void _sendVerificationCode() {
     setState(() => _codeSent = true);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Code à 6 chiffres envoyé à ${_emailController.text}'),
-        backgroundColor: const Color(0xFF15803D),
+        content: Text('${'Code à 6 chiffres envoyé à'.tr} ${_emailController.text}'),
+        backgroundColor: AppTheme.primaryNavy,
       ),
     );
   }
@@ -29,18 +36,28 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Email vérifié !', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text('Votre adresse email a été confirmée avec succès.'),
+          title: Text('Email vérifié !'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text('Votre adresse email a été confirmée avec succès.'.tr),
           actions: [
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF15803D)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryNavy,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () {
                 Navigator.pop(ctx);
                 Navigator.pop(context);
               },
-              child: const Text('OK', style: TextStyle(color: Colors.white)),
+              child: Text('OK'.tr, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Veuillez entrer les 6 chiffres reçus.'.tr),
+          backgroundColor: AppTheme.danger,
         ),
       );
     }
@@ -68,26 +85,26 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             ),
           ),
         ),
-        title: const Text(
-          'Vérifiez votre email',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
+        title: Text(
+          'Vérifiez votre email'.tr,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text(
-            'Vérifiez votre email',
-            style: TextStyle(
+          Text(
+            'Vérifiez votre email'.tr,
+            style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Color(0xFF111827),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Nous vous enverrons un code à 6 chiffres pour confirmer votre adresse email.',
-            style: TextStyle(
+          Text(
+            'Nous vous enverrons un code à 6 chiffres pour confirmer votre adresse email.'.tr,
+            style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF4B5563),
               height: 1.4,
@@ -116,7 +133,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: 'Email'.tr,
                     labelStyle: const TextStyle(color: Color(0xFF4B5563)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -132,14 +149,15 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF14532D),
+                      backgroundColor: AppTheme.primaryNavy,
+                      foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                     ),
                     onPressed: _sendVerificationCode,
-                    child: const Text(
-                      'Envoyer le code',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    child: Text(
+                      'Envoyer le code'.tr,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                   ),
                 ),
@@ -148,9 +166,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   const SizedBox(height: 20),
                   const Divider(color: Color(0xFFF3F4F6)),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Entrez le code reçu par email :',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                  Text(
+                    'Entrez le code reçu par email :'.tr,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -166,17 +184,18 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   SizedBox(
                     width: double.infinity,
-                    height: 44,
+                    height: 46,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryNavy,
+                        backgroundColor: AppTheme.accentGold,
+                        foregroundColor: AppTheme.primaryNavy,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                       ),
                       onPressed: _validateCode,
-                      child: const Text('Confirmer le code', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: Text('Confirmer le code'.tr, style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 15)),
                     ),
                   ),
                 ],

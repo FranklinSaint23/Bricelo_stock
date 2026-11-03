@@ -65,8 +65,8 @@ class _QuotesScreenState extends State<QuotesScreen> {
               },
             ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFFA7F3D0),
-        foregroundColor: const Color(0xFF064E3B),
+        backgroundColor: AppTheme.accentGold,
+        foregroundColor: AppTheme.primaryNavy,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.add, size: 20),

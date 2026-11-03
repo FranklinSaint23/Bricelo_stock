@@ -1,3 +1,4 @@
+import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 import 'package:stock_prime/services/app_state.dart';
@@ -141,10 +142,10 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                                     MaterialPageRoute(builder: (_) => const NewProductScreen()),
                                   );
                                 },
-                                icon: const Icon(Icons.add, color: Color(0xFF1B5E20), size: 18),
+                                icon: const Icon(Icons.add, color: AppTheme.primaryNavy, size: 18),
                                 label: const Text(
                                   'Ajouter un produit',
-                                  style: TextStyle(color: Color(0xFF1B5E20), fontWeight: FontWeight.bold),
+                                  style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
@@ -271,13 +272,13 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Stock de ${_selectedProduct!.name} ajusté à $newQty unités.'),
-                              backgroundColor: const Color(0xFF1B5E20),
+                              backgroundColor: AppTheme.primaryNavy,
                             ),
                           );
                           Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B5E20),
+                          backgroundColor: AppTheme.primaryNavy,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

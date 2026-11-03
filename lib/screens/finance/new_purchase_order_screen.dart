@@ -1,3 +1,4 @@
+import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class NewPurchaseOrderScreen extends StatefulWidget {
@@ -22,7 +23,7 @@ class _NewPurchaseOrderScreenState extends State<NewPurchaseOrderScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1B5E20),
+        backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
         title: const Text(
           'Nouveau bon d\'achat',
@@ -105,7 +106,7 @@ class _NewPurchaseOrderScreenState extends State<NewPurchaseOrderScreen> {
                   height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B5E20),
+                      backgroundColor: AppTheme.primaryNavy,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 22),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -144,7 +145,7 @@ class _NewPurchaseOrderScreenState extends State<NewPurchaseOrderScreen> {
           Container(
             height: 4,
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF1B5E20) : const Color(0xFFE5E7EB),
+              color: isActive ? AppTheme.primaryNavy : const Color(0xFFE5E7EB),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -156,7 +157,7 @@ class _NewPurchaseOrderScreenState extends State<NewPurchaseOrderScreen> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              color: isActive ? const Color(0xFF1B5E20) : const Color(0xFF9CA3AF),
+              color: isActive ? AppTheme.primaryNavy : const Color(0xFF9CA3AF),
             ),
           ),
         ],

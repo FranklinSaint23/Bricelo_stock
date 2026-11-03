@@ -1,3 +1,4 @@
+import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 
@@ -144,7 +145,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1B5E20),
+                                color: AppTheme.primaryNavy,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Text(

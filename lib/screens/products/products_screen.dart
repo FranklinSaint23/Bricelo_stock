@@ -267,7 +267,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                     flex: 2,
                                     child: Text(
                                       AppTheme.formatFCFA(p.sellPrice),
-                                      style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1B5E20), fontSize: 13),
+                                      style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.primaryNavy, fontSize: 13),
                                     ),
                                   ),
                                   // Stock

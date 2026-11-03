@@ -1,3 +1,4 @@
+import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 
@@ -21,7 +22,7 @@ class AboutScreen extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B5E20),
+                color: AppTheme.primaryNavy,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Center(
@@ -85,7 +86,7 @@ class AboutScreen extends StatelessWidget {
               children: [
                 Row(
                   children: const [
-                    Icon(Icons.check_circle, color: Color(0xFF1B5E20), size: 20),
+                    Icon(Icons.check_circle, color: AppTheme.accentGold, size: 20),
                     SizedBox(width: 8),
                     Text(
                       'Votre application est à jour',
@@ -102,7 +103,7 @@ class AboutScreen extends StatelessWidget {
                   },
                   child: const Text(
                     'Rechercher les mises à jour',
-                    style: TextStyle(color: Color(0xFF1B5E20), fontWeight: FontWeight.bold, fontSize: 14),
+                    style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
               ],

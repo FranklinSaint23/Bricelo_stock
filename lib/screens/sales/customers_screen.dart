@@ -1,3 +1,4 @@
+import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/screens.dart';
@@ -41,7 +42,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            backgroundColor: const Color(0xFF1B5E20),
+            backgroundColor: AppTheme.primaryNavy,
             elevation: 0,
             centerTitle: true,
             leading: Padding(
@@ -51,15 +52,15 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF86A789).withValues(alpha: 0.5),
+                    color: Colors.white.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 16),
+                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
                 ),
               ),
             ),
-            title: const Text(
-              'Clients',
+            title: Text(
+              'Clients'.tr,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
             ),
           ),
@@ -72,7 +73,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   controller: _searchCtrl,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: 'Rechercher un client...',
+                    hintText: 'Rechercher un client...'.tr,
                     hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
                     prefixIcon: const Icon(Icons.search, color: Color(0xFF4B5563)),
                     filled: true,
@@ -107,16 +108,14 @@ class _CustomersScreenState extends State<CustomersScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
-                              color: _selectedTab == 'Actifs' ? const Color(0xFFFEF3C7) : Colors.transparent,
+                              color: _selectedTab == 'Actifs' ? AppTheme.primaryNavy : Colors.transparent,
                               borderRadius: const BorderRadius.horizontal(left: Radius.circular(24)),
-                              border: _selectedTab == 'Actifs'
-                                  ? Border.all(color: const Color(0xFFF5B000), width: 1.2)
-                                  : null,
+                              border: _selectedTab == 'Actifs' ? Border.all(color: AppTheme.primaryNavy, width: 1.2) : null,
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
-                                'Actifs',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF111827)),
+                                'Actifs'.tr,
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _selectedTab == 'Actifs' ? AppTheme.accentGold : const Color(0xFF475569)),
                               ),
                             ),
                           ),
@@ -130,16 +129,14 @@ class _CustomersScreenState extends State<CustomersScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
-                              color: _selectedTab == 'Archivé' ? const Color(0xFFFEF3C7) : Colors.transparent,
+                              color: _selectedTab == 'Archivé' ? AppTheme.primaryNavy : Colors.transparent,
                               borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
-                              border: _selectedTab == 'Archivé'
-                                  ? Border.all(color: const Color(0xFFF5B000), width: 1.2)
-                                  : null,
+                              border: _selectedTab == 'Archivé' ? Border.all(color: AppTheme.primaryNavy, width: 1.2) : null,
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
-                                'Archivé',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF111827)),
+                                'Archivé'.tr,
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _selectedTab == 'Archivé' ? AppTheme.accentGold : const Color(0xFF475569)),
                               ),
                             ),
                           ),
@@ -154,19 +151,19 @@ class _CustomersScreenState extends State<CustomersScreen> {
               // CONTENU: LISTE OU ÉTAT VIDE
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.groups_outlined, size: 68, color: Color(0xFFD1D5DB)),
                             SizedBox(height: 14),
                             Text(
-                              'Aucun client.',
+                              'Aucun client.'.tr,
                               style: TextStyle(fontSize: 15, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500),
                             ),
                             SizedBox(height: 4),
                             Text(
-                              'Ajoutez votre premier client !',
+                              'Ajoutez votre premier client !'.tr,
                               style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
                             ),
                           ],
@@ -184,7 +181,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                               child: Icon(Icons.person, color: Color(0xFF92400E)),
                             ),
                             title: Text(c.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(c.phone.isNotEmpty ? c.phone : 'Aucun téléphone'),
+                            subtitle: Text(c.phone.isNotEmpty ? c.phone : 'Aucun téléphone'.tr),
                           );
                         },
                       ),
@@ -192,13 +189,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: const Color(0xFFA7F3D0),
-            foregroundColor: const Color(0xFF064E3B),
+            backgroundColor: AppTheme.accentGold,
+            foregroundColor: AppTheme.primaryNavy,
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             icon: const Icon(Icons.add, size: 20),
-            label: const Text(
-              'Ajouter',
+            label: Text(
+              'Ajouter'.tr,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
             onPressed: () {

@@ -1,3 +1,4 @@
+import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 import 'package:stock_prime/screens/inventory/new_transfer_screen.dart';
@@ -44,7 +45,7 @@ class _StockTransfersScreenState extends State<StockTransfersScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF1B5E20) : const Color(0xFFFED7AA),
+                        color: isSelected ? AppTheme.primaryNavy : const Color(0xFFFED7AA),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -97,7 +98,7 @@ class _StockTransfersScreenState extends State<StockTransfersScreen> {
             MaterialPageRoute(builder: (_) => const NewTransferScreen()),
           );
         },
-        backgroundColor: const Color(0xFFA7F3D0),
+        backgroundColor: AppTheme.accentGold,
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.add, color: Color(0xFF0F5132), size: 22),

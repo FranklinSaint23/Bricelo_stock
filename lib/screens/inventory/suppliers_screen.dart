@@ -1,3 +1,4 @@
+import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/screens.dart';
@@ -124,8 +125,8 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: const Color(0xFFA7F3D0),
-            foregroundColor: const Color(0xFF064E3B),
+            backgroundColor: AppTheme.accentGold,
+            foregroundColor: AppTheme.primaryNavy,
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             icon: const Icon(Icons.add, size: 20),

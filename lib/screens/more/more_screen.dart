@@ -1,6 +1,18 @@
-import 'package:stock_prime/screens/screens.dart';
+import 'package:stock_prime/screens/auth/verify_email_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
+import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/screens/auth/login_screen.dart';
+import 'package:stock_prime/screens/company/company_and_team_screen.dart';
+import 'package:stock_prime/screens/company/language_screen.dart';
+import 'package:stock_prime/screens/company/preferences_screen.dart';
+import 'package:stock_prime/screens/dashboard/bricelo_assistant_screen.dart';
+import 'package:stock_prime/screens/finance/accounting_screen.dart';
+import 'package:stock_prime/screens/finance/depreciation_report_screen.dart';
+import 'package:stock_prime/screens/finance/promotion_and_shop_screen.dart';
+import 'package:stock_prime/screens/finance/purchases_and_expenses_screen.dart';
+import 'package:stock_prime/screens/inventory/stock_sub_menu_screen.dart';
+import 'package:stock_prime/screens/sales/sales_and_customers_screen.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -10,155 +22,191 @@ class MoreScreen extends StatefulWidget {
 }
 
 class _MoreScreenState extends State<MoreScreen> {
-  final _searchCtrl = TextEditingController();
-  String _query = '';
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
+  final appState = AppState.instance;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = appState.isDarkMode;
+    final pageBg = isDark ? const Color(0xFF09121E) : const Color(0xFFEAF2FA);
+    final cardBg = isDark ? const Color(0xFF132238) : Colors.white;
+    final cardBorder = isDark ? const Color(0xFF1E3352) : const Color(0xFFE2E8F0);
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: pageBg,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
+        elevation: 0,
+        centerTitle: true,
         title: Text(
-          'Plus'.tr,
+          'Plus d\'options'.tr,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
         ),
-        centerTitle: true,
-        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         child: Column(
           children: [
-            // 1. RECHERCHER DANS LE MENU
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: TextField(
-                controller: _searchCtrl,
-                decoration: InputDecoration(
-                  hintText: 'Rechercher dans le menu'.tr,
-                  hintStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280), size: 20),
-                  suffixIcon: _query.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
-                          onPressed: () {
-                            setState(() {
-                              _searchCtrl.clear();
-                              _query = '';
-                            });
-                          },
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-                onChanged: (val) => setState(() => _query = val.toLowerCase()),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 2. CARTE PROFIL ENTREPRISE (Tappable -> Mon compte)
+            // ==========================================
+            // 1. CARTE PROFIL UTILISATEUR (Fidèle à l'Image 1)
+            // ==========================================
             InkWell(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyAccountScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CompanyAndTeamScreen()),
+                );
               },
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(22),
               child: Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: cardBorder, width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
+                    // Avatar circulaire avec photo
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE2E8F0),
-                        borderRadius: BorderRadius.circular(22),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.5), width: 1.5),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+                        ],
                       ),
-                      child: const Center(
-                        child: Text(
-                          'FN',
-                          style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 16),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset(
+                        'assets/images/hum.jpg',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: AppTheme.primaryNavy,
+                          child: const Center(
+                            child: Text(
+                              'DB',
+                              style: TextStyle(
+                                color: AppTheme.accentGold,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
+
+                    // Nom + Badge "Propriétaire" + Email
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Franklin Athletics',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1F2937)),
-                          ),
-                          const SizedBox(height: 4),
                           Row(
                             children: [
                               Text(
-                                'Proprietaire'.tr,
-                                style: const TextStyle(color: Color(0xFF065F46), fontSize: 11, fontWeight: FontWeight.bold),
+                                'Franklin SAINT',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15.5,
+                                  color: textColor,
+                                ),
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                'Formule Gratuit'.tr,
-                                style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
+                              // Badge Rôle "Propriétaire" (Pastel bleu doux comme l'Image 1)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFE0F2FE),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Propriétaire'.tr,
+                                  style: TextStyle(
+                                    color: isDark ? const Color(0xFF7DD3FC) : const Color(0xFF0284C7),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'franklin@gmail.com',
+                            style: TextStyle(
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right, size: 20, color: Color(0xFF9CA3AF)),
+
+                    // Chevron droit
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                      size: 22,
+                    ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-            // 3. BANNIÈRE E-MAIL NON VÉRIFIÉ
+            // ==========================================
+            // 2. BANNIÈRE E-MAIL NON VÉRIFIÉ (Navigation vers VerifyEmailScreen)
+            // ==========================================
             InkWell(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const VerifyEmailScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const VerifyEmailScreen()),
+                );
               },
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFEE2E2)),
+                  color: isDark ? const Color(0xFF2D1616) : const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isDark ? const Color(0xFF5A2323) : const Color(0xFFFECACA), width: 1.2),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.mail_outline, color: AppTheme.danger, size: 22),
-                    const SizedBox(width: 10),
+                    const Icon(Icons.mail_outline_rounded, color: AppTheme.danger, size: 22),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'E-mail non vérifié'.tr,
-                            style: const TextStyle(color: AppTheme.danger, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(
+                              color: AppTheme.danger,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Sécurisez votre compte — touchez pour vérifier'.tr,
-                            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
+                            style: TextStyle(
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),
@@ -171,7 +219,11 @@ class _MoreScreenState extends State<MoreScreen> {
                       ),
                       child: Text(
                         'À vérifier'.tr,
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -180,168 +232,359 @@ class _MoreScreenState extends State<MoreScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 4. LISTE DU MENU (Disposition classique originale en liste avec séparateurs)
+            // ==========================================
+            // 3. GRILLE DES FONCTIONNALITÉS EN SQUIRCLES PASTELS (Fidèle à l'Image 2)
+            // ==========================================
             Container(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                color: cardBg,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: cardBorder, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: Column(
-                children: _buildMenuItems(context),
+                children: [
+                  // Ligne 1 : Ventes, Stock, Achats, Boutique
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSquircleItem(
+                        icon: Icons.receipt_long_outlined,
+                        label: 'Ventes'.tr,
+                        pastelColor: const Color(0xFFF3E8FF), // Pastel Violet / Lavande
+                        iconColor: const Color(0xFF9333EA),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesAndCustomersScreen())),
+                        textColor: textColor,
+                      ),
+                      _buildSquircleItem(
+                        icon: Icons.warehouse_outlined,
+                        label: 'Stock'.tr,
+                        pastelColor: const Color(0xFFE0F2FE), // Pastel Bleu Ciel
+                        iconColor: const Color(0xFF0284C7),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StockSubMenuScreen())),
+                        textColor: textColor,
+                      ),
+                      _buildSquircleItem(
+                        icon: Icons.shopping_bag_outlined,
+                        label: 'Achats'.tr,
+                        pastelColor: const Color(0xFFE6F4EA), // Pastel Menthe Doux
+                        iconColor: const Color(0xFF137333),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasesAndExpensesScreen())),
+                        textColor: textColor,
+                      ),
+                      _buildSquircleItem(
+                        icon: Icons.storefront_outlined,
+                        label: 'Boutique'.tr,
+                        pastelColor: const Color(0xFFFCE7F3), // Pastel Rose / Framboise
+                        iconColor: const Color(0xFFDB2777),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PromotionAndShopScreen())),
+                        textColor: textColor,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+
+                  // Ligne 2 : Comptabilité, Pertes, Assistant IA, Équipe
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSquircleItem(
+                        icon: Icons.pie_chart_outline_rounded,
+                        label: 'Comptabilité'.tr,
+                        pastelColor: const Color(0xFFCCFBF1), // Pastel Turquoise
+                        iconColor: const Color(0xFF0F766E),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountingScreen())),
+                        textColor: textColor,
+                      ),
+                      _buildSquircleItem(
+                        icon: Icons.trending_down_rounded,
+                        label: 'Pertes'.tr,
+                        pastelColor: const Color(0xFFFFEDD5), // Pastel Pêche
+                        iconColor: const Color(0xFFEA580C),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen())),
+                        textColor: textColor,
+                      ),
+                      _buildSquircleItem(
+                        icon: Icons.smart_toy_outlined,
+                        label: 'Bricelo IA'.tr,
+                        pastelColor: const Color(0xFFFEF9C3), // Pastel Or Bricelo
+                        iconColor: const Color(0xFFB45309),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BriceloAssistantScreen())),
+                        textColor: textColor,
+                      ),
+                      _buildSquircleItem(
+                        icon: Icons.people_outline_rounded,
+                        label: 'Équipe'.tr,
+                        pastelColor: const Color(0xFFE0E7FF), // Pastel Indigo
+                        iconColor: const Color(0xFF4F46E5),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyAndTeamScreen())),
+                        textColor: textColor,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+
+                  // Ligne 3 : Préférences, Langue, Centre d'aide, Rapports
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSquircleItem(
+                        icon: Icons.tune_rounded,
+                        label: 'Préférences'.tr,
+                        pastelColor: const Color(0xFFF1F5F9), // Pastel Ardoise
+                        iconColor: const Color(0xFF475569),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PreferencesScreen())),
+                        textColor: textColor,
+                      ),
+                      _buildSquircleItem(
+                        icon: Icons.translate_rounded,
+                        label: 'Langue'.tr,
+                        pastelColor: const Color(0xFFEDE9FE), // Pastel Iris
+                        iconColor: const Color(0xFF7C3AED),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen())),
+                        textColor: textColor,
+                      ),
+                      _buildSquircleItem(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        label: 'Assistance'.tr,
+                        pastelColor: const Color(0xFFE0F2FE), // Pastel Ciel
+                        iconColor: const Color(0xFF0284C7),
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                              title: Row(
+                                children: [
+                                  const Icon(Icons.support_agent_rounded, color: AppTheme.primaryNavy),
+                                  const SizedBox(width: 8),
+                                  Text('Assistance Bricelo'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                ],
+                              ),
+                              content: Text(
+                                'Support vendeur Bricelo disponible au Cameroun via WhatsApp.'.tr,
+                                style: const TextStyle(fontSize: 13, height: 1.4),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: Text('Fermer'.tr, style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        textColor: textColor,
+                      ),
+                      _buildSquircleItem(
+                        icon: Icons.bar_chart_rounded,
+                        label: 'Clients'.tr,
+                        pastelColor: const Color(0xFFDCFCE7), // Pastel Émeraude clair
+                        iconColor: const Color(0xFF15803D),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesAndCustomersScreen())),
+                        textColor: textColor,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            // ==========================================
+            // 3. CARTE DU BAS : THÈME SOMBRE + DÉCONNEXION (Fidèle à l'Image 3)
+            // ==========================================
+            Container(
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: cardBorder, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Ligne Thème Sombre avec Switch toggle (Image 3)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        // Squircle pastel bleu pour l'icône du thème
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFE0F2FE),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                            color: isDark ? const Color(0xFF7DD3FC) : const Color(0xFF0284C7),
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            'Thème sombre'.tr,
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                        // Switch interactif qui inverse immédiatement le thème de toute l'application
+                        Switch.adaptive(
+                          value: isDark,
+                          onChanged: (val) {
+                            appState.toggleDarkMode(val);
+                          },
+                          activeThumbColor: AppTheme.accentGold,
+                          activeTrackColor: AppTheme.primaryNavy,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Séparateur fin
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    indent: 74,
+                    color: isDark ? const Color(0xFF1E3352) : const Color(0xFFF1F5F9),
+                  ),
+
+                  // Ligne Se Déconnecter en rouge (Image 3)
+                  InkWell(
+                    onTap: () => _confirmLogout(context),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      child: Row(
+                        children: [
+                          // Squircle pastel rouge pour l'icône de déconnexion
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF451A1A) : const Color(0xFFFEE2E2),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.logout_rounded,
+                              color: Color(0xFFDC2626),
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              'Se déconnecter'.tr,
+                              style: const TextStyle(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFDC2626),
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Color(0xFF94A3B8),
+                            size: 22,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  List<Widget> _buildMenuItems(BuildContext context) {
-    final allItems = <Map<String, dynamic>>[
-      {
-        'icon': Icons.receipt_long_outlined,
-        'title': 'Ventes & clients'.tr,
-        'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesAndCustomersScreen())),
-      },
-      {
-        'icon': Icons.campaign_outlined,
-        'title': 'Promotion & boutique'.tr,
-        'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PromotionAndShopScreen())),
-      },
-      {
-        'icon': Icons.warehouse_outlined,
-        'title': 'Stock'.tr,
-        'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StockSubMenuScreen())),
-      },
-      {
-        'icon': Icons.shopping_cart_outlined,
-        'title': 'Achats & dépenses'.tr,
-        'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasesAndExpensesScreen())),
-      },
-      {
-        'icon': Icons.trending_down_outlined,
-        'title': 'Pertes & dépréciations'.tr,
-        'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen())),
-      },
-      {
-        'icon': Icons.menu_book_outlined,
-        'title': 'Comptabilité & trésorerie'.tr,
-        'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountingScreen())),
-      },
-      {
-        'icon': Icons.badge_outlined,
-        'title': 'Entreprise & équipe'.tr,
-        'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyAndTeamScreen())),
-        'badge': Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: AppTheme.badgeOrange,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            'À compléter'.tr,
-            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-          ),
-        ),
-      },
-      {
-        'icon': Icons.settings_outlined,
-        'title': 'Préférences'.tr,
-        'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PreferencesScreen())),
-      },
-      {
-        'icon': Icons.language_outlined,
-        'title': 'Langue de l\'application'.tr,
-        'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen())),
-      },
-      {
-        'icon': Icons.smart_toy_outlined,
-        'title': 'Assistant Bricelo'.tr,
-        'onTap': () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BriceloAssistantScreen())),
-      },
-      {
-        'icon': Icons.help_outline,
-        'title': 'Centre d\'aide'.tr,
-        'onTap': () {},
-      },
-      {
-        'icon': Icons.logout_rounded,
-        'title': 'Se déconnecter'.tr,
-        'onTap': () => _confirmLogout(context),
-        'textColor': const Color(0xFFDC2626),
-        'iconColor': const Color(0xFFDC2626),
-      },
-    ];
-
-    final filtered = _query.isEmpty
-        ? allItems
-        : allItems.where((item) => (item['title'] as String).toLowerCase().contains(_query)).toList();
-
-    final widgets = <Widget>[];
-    for (int i = 0; i < filtered.length; i++) {
-      final item = filtered[i];
-      widgets.add(
-        _buildMenuItem(
-          item['icon'] as IconData,
-          item['title'] as String,
-          item['onTap'] as VoidCallback,
-          badge: item['badge'] as Widget?,
-          textColor: (item['textColor'] as Color?) ?? const Color(0xFF1F2937),
-          iconColor: (item['iconColor'] as Color?) ?? const Color(0xFF374151),
-        ),
-      );
-      if (i < filtered.length - 1) {
-        widgets.add(_buildDivider());
-      }
-    }
-
-    return widgets;
-  }
-
-  Widget _buildMenuItem(
-    IconData icon,
-    String title,
-    VoidCallback onTap, {
-    Widget? badge,
-    Color textColor = const Color(0xFF1F2937),
-    Color iconColor = const Color(0xFF374151),
+  // Widget squircle pastel individuel avec label centré en dessous (Image 2)
+  Widget _buildSquircleItem({
+    required IconData icon,
+    required String label,
+    required Color pastelColor,
+    required Color iconColor,
+    required VoidCallback onTap,
+    required Color textColor,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: iconColor),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor),
+    return SizedBox(
+      width: 72,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Bouton Squircle Pastel
+          Material(
+            color: pastelColor,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(20),
+              splashColor: iconColor.withValues(alpha: 0.18),
+              highlightColor: iconColor.withValues(alpha: 0.08),
+              child: Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: Icon(
+                    icon,
+                    color: iconColor,
+                    size: 26,
+                  ),
+                ),
               ),
             ),
-            if (badge != null) ...[
-              badge,
-              const SizedBox(width: 8),
-            ],
-            const Icon(Icons.arrow_forward_ios, size: 13, color: Color(0xFF9CA3AF)),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+
+          // Label centré sous le squircle
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: textColor,
+              height: 1.15,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
-  }
-
-  Widget _buildDivider() {
-    return const Divider(height: 1, indent: 48, color: Color(0xFFF3F4F6));
   }
 
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text('Se déconnecter'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Êtes-vous sûr de vouloir vous déconnecter ?'.tr),
         actions: [

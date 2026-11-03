@@ -46,7 +46,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _buildWebValueCard('VALEUR DU STOCK (VENTE)'.tr, '0 F CFA', Icons.trending_up, const Color(0xFF1B5E20)),
+                  child: _buildWebValueCard('VALEUR DU STOCK (VENTE)'.tr, '0 F CFA', Icons.trending_up, AppTheme.accentGold),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -90,7 +90,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   // 4 Boutons d'action Web
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B5E20),
+                      backgroundColor: AppTheme.primaryNavy,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -310,7 +310,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 onPressed: () {
                                   Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
                                 },
-                                child: Text('Réassort'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1B5E20))),
+                                child: Text('Réassort'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.primaryNavy)),
                               ),
                             ],
                           ),

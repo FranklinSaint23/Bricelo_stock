@@ -986,7 +986,7 @@ class _PosScreenState extends State<PosScreen> {
                   Text('Encaissement Rapide'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   Text(
                     AppTheme.formatFCFA(appState.cartTotal),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1B5E20)),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryNavy),
                   ),
                 ],
               ),

@@ -29,7 +29,7 @@ class _BrandScreenState extends State<BrandScreen> {
   final List<Map<String, dynamic>> _palettes = [
     {'bg': const Color(0xFF0D1B2E), 'dot': const Color(0xFFF5B000)}, // Navy Bricelo + Gold
     {'bg': Colors.white, 'dot': const Color(0xFFDC2626)}, // Blanc + Rouge
-    {'bg': const Color(0xFF064E3B), 'dot': const Color(0xFFF5B000)}, // Vert + Jaune
+    {'bg': AppTheme.primaryNavy, 'dot': const Color(0xFFF5B000)}, // Vert + Jaune
     {'bg': const Color(0xFFFDF2F8), 'dot': const Color(0xFFDB2777)}, // Rose
     {'bg': const Color(0xFF1E3A8A), 'dot': const Color(0xFF38BDF8)}, // Bleu royal
     {'bg': const Color(0xFFFFF7ED), 'dot': const Color(0xFFEA580C)}, // Peche

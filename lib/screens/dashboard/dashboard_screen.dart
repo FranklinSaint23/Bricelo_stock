@@ -192,7 +192,7 @@ class DashboardScreen extends StatelessWidget {
                               title: 'Point de vente (POS)'.tr,
                               subtitle: 'Caisse rapide & encaissement'.tr,
                               icon: Icons.point_of_sale,
-                              color: const Color(0xFF1B5E20),
+                              color: AppTheme.primaryNavy,
                               onTap: () {
                                 final shell = context.findAncestorStateOfType<State>();
                                 // Switch to tab 1 if inside MainShell
@@ -341,7 +341,7 @@ class DashboardScreen extends StatelessWidget {
                                         ),
                                         Text(
                                           AppTheme.formatFCFA(sale.total),
-                                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF1B5E20)),
+                                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppTheme.primaryNavy),
                                         ),
                                       ],
                                     ),

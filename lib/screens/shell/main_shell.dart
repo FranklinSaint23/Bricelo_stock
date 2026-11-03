@@ -367,7 +367,7 @@ class _MainShellState extends State<MainShell> {
                             // Bouton Action Rapide : + Vente POS
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1B5E20),
+                                backgroundColor: AppTheme.primaryNavy,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

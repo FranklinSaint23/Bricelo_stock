@@ -132,7 +132,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: const Color(0xFFA7F3D0).withValues(alpha: 0.7),
+            color: AppTheme.accentGold.withValues(alpha: 0.7),
             child: const Text(
               '0 vente(s) · 0 F CFA',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827)),

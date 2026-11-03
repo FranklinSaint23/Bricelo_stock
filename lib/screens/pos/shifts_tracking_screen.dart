@@ -58,7 +58,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: !_isShiftsEnabled ? const Color(0xFFA7F3D0).withValues(alpha: 0.7) : Colors.white,
+                color: !_isShiftsEnabled ? AppTheme.accentGold.withValues(alpha: 0.7) : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: !_isShiftsEnabled ? const Color(0xFF059669) : const Color(0xFFE5E7EB),
@@ -111,7 +111,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _isShiftsEnabled ? const Color(0xFFA7F3D0).withValues(alpha: 0.7) : Colors.white,
+                color: _isShiftsEnabled ? AppTheme.accentGold.withValues(alpha: 0.7) : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _isShiftsEnabled ? const Color(0xFF059669) : const Color(0xFFE5E7EB),
