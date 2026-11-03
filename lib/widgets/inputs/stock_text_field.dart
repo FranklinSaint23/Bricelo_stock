@@ -56,7 +56,7 @@ class StockTextField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFF1B5E20), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFFFFB800), width: 1.5),
         ),
       ),
     );

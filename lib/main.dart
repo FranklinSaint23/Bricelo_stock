@@ -5,22 +5,26 @@ import 'screens/screens.dart';
 import 'services/supabase_config.dart';
 import 'services/app_state.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Supabase.initialize(
-      url: SupabaseConfig.url,
-      anonKey: SupabaseConfig.anonKey,
-    );
-  } catch (e) {
-    debugPrint('Erreur initialisation Supabase: $e');
-  }
-
+  // Lance l'application IMMÉDIATEMENT : aucun délai d'écran noir
   runApp(const BriceloStockApp());
+
+  // Initialisation asynchrone de Supabase en tâche de fond pendant le Splash Screen
+  () async {
+    try {
+      await Supabase.initialize(
+        url: SupabaseConfig.url,
+        anonKey: SupabaseConfig.anonKey,
+      );
+    } catch (e) {
+      debugPrint('Erreur initialisation Supabase: $e');
+    }
+  }();
 }
 
-final supabase = Supabase.instance.client;
+SupabaseClient get supabase => Supabase.instance.client;
 
 class BriceloStockApp extends StatelessWidget {
   const BriceloStockApp({super.key});

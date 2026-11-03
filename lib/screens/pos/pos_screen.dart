@@ -169,7 +169,7 @@ class _PosScreenState extends State<PosScreen> {
                                 const SizedBox(height: 18),
                                 ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF1B5E20),
+                                    backgroundColor: AppTheme.primaryNavy,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -206,7 +206,7 @@ class _PosScreenState extends State<PosScreen> {
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
-                                      color: cartItem != null ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+                                      color: cartItem != null ? AppTheme.accentGold : const Color(0xFFE2E8F0),
                                       width: cartItem != null ? 2 : 1,
                                     ),
                                     boxShadow: const [
@@ -231,7 +231,7 @@ class _PosScreenState extends State<PosScreen> {
                                                 child: Center(
                                                   child: Icon(
                                                     Icons.inventory_2_outlined,
-                                                    color: cartItem != null ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                                                    color: cartItem != null ? AppTheme.accentGold : const Color(0xFF94A3B8),
                                                     size: 40,
                                                   ),
                                                 ),
@@ -271,7 +271,7 @@ class _PosScreenState extends State<PosScreen> {
                                             Text(
                                               AppTheme.formatFCFA(p.sellPrice),
                                               style: const TextStyle(
-                                                color: Color(0xFF1B5E20),
+                                                color: AppTheme.primaryNavy,
                                                 fontWeight: FontWeight.w900,
                                                 fontSize: 14,
                                               ),
@@ -288,7 +288,7 @@ class _PosScreenState extends State<PosScreen> {
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF10B981),
+                                              color: AppTheme.accentGold,
                                               borderRadius: BorderRadius.circular(12),
                                               boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
                                             ),
@@ -444,7 +444,7 @@ class _PosScreenState extends State<PosScreen> {
                                         child: Container(
                                           padding: const EdgeInsets.all(4),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF1B5E20),
+                                            color: AppTheme.primaryNavy,
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: const Icon(Icons.add, size: 14, color: Colors.white),
@@ -506,7 +506,7 @@ class _PosScreenState extends State<PosScreen> {
                             style: const TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 20,
-                              color: Color(0xFF1B5E20),
+                              color: AppTheme.primaryNavy,
                             ),
                           ),
                         ],
@@ -520,8 +520,8 @@ class _PosScreenState extends State<PosScreen> {
                           Expanded(
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF16A34A),
-                                foregroundColor: Colors.white,
+                                backgroundColor: AppTheme.accentGold,
+                                foregroundColor: AppTheme.primaryNavy,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -611,7 +611,7 @@ class _PosScreenState extends State<PosScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1B5E20),
+        backgroundColor: AppTheme.primaryNavy,
         title: Text(
           'Point de vente'.tr,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
@@ -626,7 +626,7 @@ class _PosScreenState extends State<PosScreen> {
                 height: 38,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF86A789).withValues(alpha: 0.5),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(19),
                 ),
                 child: Row(
@@ -786,7 +786,7 @@ class _PosScreenState extends State<PosScreen> {
                             height: 48,
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1B5E20),
+                                backgroundColor: AppTheme.primaryNavy,
                                 elevation: 0,
                                 padding: const EdgeInsets.symmetric(horizontal: 24),
                                 shape: RoundedRectangleBorder(
@@ -852,7 +852,7 @@ class _PosScreenState extends State<PosScreen> {
                                     AppTheme.formatFCFA(p.sellPrice),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1B5E20),
+                                      color: AppTheme.primaryNavy,
                                       fontSize: 13,
                                     ),
                                   ),
@@ -867,7 +867,7 @@ class _PosScreenState extends State<PosScreen> {
                                   width: 32,
                                   height: 32,
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFF1B5E20),
+                                    color: AppTheme.primaryNavy,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(Icons.add, color: Colors.white, size: 20),
@@ -893,7 +893,7 @@ class _PosScreenState extends State<PosScreen> {
                                       width: 24,
                                       height: 24,
                                       decoration: const BoxDecoration(
-                                        color: Color(0xFF1B5E20),
+                                        color: AppTheme.primaryNavy,
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(Icons.add, color: Colors.white, size: 16),
@@ -923,7 +923,7 @@ class _PosScreenState extends State<PosScreen> {
                   height: 52,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B5E20),
+                    color: AppTheme.primaryNavy,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -951,13 +951,13 @@ class _PosScreenState extends State<PosScreen> {
                           const SizedBox(width: 12),
                           Text(
                             'Payer'.tr,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.w900, fontSize: 16),
                           ),
                         ],
                       ),
                       Text(
                         AppTheme.formatFCFA(appState.cartTotal),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.w900, fontSize: 16),
                       ),
                     ],
                   ),

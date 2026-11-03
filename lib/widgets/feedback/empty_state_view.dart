@@ -52,7 +52,7 @@ class EmptyStateView extends StatelessWidget {
               const SizedBox(height: 18),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B5E20),
+                  backgroundColor: const Color(0xFF0D1B2E),
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),

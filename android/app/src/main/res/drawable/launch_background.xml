@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Clean solid Bricelo navy background: avoids tiny launcher icon on cold boot -->
+<!-- Solid Bricelo Navy background with centered official Bricelo squircle logo -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/bricelo_navy" />
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/bricelo_splash_card" />
+    </item>
 </layer-list>

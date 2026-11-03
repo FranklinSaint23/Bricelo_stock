@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ Splash Screen Theme: Uses official Bricelo squircle splash card directly -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowSplashScreenBackground">@color/bricelo_navy</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/bricelo_splash_card</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/bricelo_navy</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/bricelo_navy</item>
+    </style>
+</resources>

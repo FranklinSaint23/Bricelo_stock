@@ -33,10 +33,10 @@ class StockAppBar extends StatelessWidget implements PreferredSizeWidget {
     return StockAppBar(
       key: key,
       title: title,
-      backgroundColor: const Color(0xFF1B5E20),
+      backgroundColor: const Color(0xFF0D1B2E),
       titleColor: Colors.white,
-      backButtonColor: const Color(0xFF86A789).withValues(alpha: 0.5),
-      backIconColor: Colors.black87,
+      backButtonColor: Colors.white.withValues(alpha: 0.15),
+      backIconColor: Colors.white,
       onBack: onBack,
       actions: actions,
       showBottomDivider: false,
