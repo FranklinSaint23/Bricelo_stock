@@ -197,9 +197,12 @@ class PurchasesAndExpensesScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.save_outlined, color: AppTheme.accentGold, size: 18),
                           const SizedBox(width: 8),
-                          Text(
-                            'Valider la dépense ($category)',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          Flexible(
+                            child: Text(
+                              'Valider la dépense ($category)',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -253,13 +256,11 @@ class PurchasesAndExpensesScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildRow(Icons.people_outline, 'Fournisseurs'.tr, isLocked: false, onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Liste des fournisseurs')),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SuppliersScreen()));
                 }),
                 _buildDivider(),
                 _buildRow(Icons.assignment_outlined, 'Bons d\'achat'.tr, isLocked: false, onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchaseOrdersScreen()));
                 }),
                 _buildDivider(),
                 _buildRow(Icons.payments_outlined, 'Dépenses'.tr, isLocked: false, onTap: () {
@@ -293,9 +294,7 @@ class PurchasesAndExpensesScreen extends StatelessWidget {
                 _buildRow(Icons.balance_outlined, 'Coût d\'achat'.tr, isLocked: true),
                 _buildDivider(),
                 _buildRow(Icons.description_outlined, 'Dettes fournisseurs'.tr, isLocked: false, onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Dettes fournisseurs'.tr)),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplierDebtsScreen()));
                 }),
               ],
             ),

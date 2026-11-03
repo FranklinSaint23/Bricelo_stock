@@ -200,7 +200,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
-                            color: Color(0xFF15803D),
+                            color: AppTheme.primaryNavy,
                           ),
                         ),
                       ],
@@ -371,7 +371,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       },
                       child: const Text(
                         'Annuler',
-                        style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontSize: 15),
+                        style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                     ),
                   ),
@@ -383,7 +383,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _nameController.text.trim().isNotEmpty
-                            ? const Color(0xFF14532D)
+                            ? AppTheme.primaryNavy
                             : const Color(0xFFD1D5DB),
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),

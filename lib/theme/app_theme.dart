@@ -22,6 +22,10 @@ class AppTheme {
   static const Color badgeRed = Color(0xFFFF3B30);
   static const Color danger = Color(0xFFDC2626);
 
+  // Mode sombre
+  static const Color darkScaffold = Color(0xFF09121E);
+  static const Color darkSurface = Color(0xFF0F1E31);
+
   // Fonds & surfaces
   static const Color background = Color(0xFFFFFFFF);
   static const Color surfaceRaised = Color(0xFFF8FAFC);

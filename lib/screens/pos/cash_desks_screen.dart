@@ -134,7 +134,7 @@ class _CashDesksScreenState extends State<CashDesksScreen> {
                       onTap: _showAddCashDeskDialog,
                       child: const Text(
                         'Ajouter une caisse',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF15803D)),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryNavy),
                       ),
                     ),
                   ],

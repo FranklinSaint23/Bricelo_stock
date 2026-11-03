@@ -58,7 +58,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
                     subtitle: Text('Valable jusqu\'au ${q['validUntil']}'),
                     trailing: Text(
                       AppTheme.formatFCFA(q['total'] as num),
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
                     ),
                   ),
                 );

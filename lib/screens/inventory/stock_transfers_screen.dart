@@ -101,11 +101,11 @@ class _StockTransfersScreenState extends State<StockTransfersScreen> {
         backgroundColor: AppTheme.accentGold,
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.add, color: Color(0xFF0F5132), size: 22),
+        icon: const Icon(Icons.add, color: Color(0xFF0D1B2E), size: 22),
         label: const Text(
           'Créer',
           style: TextStyle(
-            color: Color(0xFF0F5132),
+            color: Color(0xFF0D1B2E),
             fontWeight: FontWeight.bold,
             fontSize: 15,
           ),

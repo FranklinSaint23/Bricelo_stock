@@ -257,7 +257,7 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
             height: 48,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF14532D),
+                backgroundColor: AppTheme.primaryNavy,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 elevation: 0,
               ),
@@ -265,7 +265,7 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Personnalisation des factures enregistrée'),
-                    backgroundColor: Color(0xFF15803D),
+                    backgroundColor: AppTheme.primaryNavy,
                   ),
                 );
                 Navigator.pop(context);

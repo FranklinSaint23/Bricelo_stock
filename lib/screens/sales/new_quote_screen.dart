@@ -25,7 +25,7 @@ class _NewQuoteScreenState extends State<NewQuoteScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.person_add_alt_1, color: Color(0xFF14532D)),
+              leading: const Icon(Icons.person_add_alt_1, color: Color(0xFF0D1B2E)),
               title: const Text('Nouveau client', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               onTap: () {
                 Navigator.pop(ctx);
@@ -59,6 +59,10 @@ class _NewQuoteScreenState extends State<NewQuoteScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF0D1B2E),
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               if (nameCtrl.text.trim().isNotEmpty) {
                 setState(() => _selectedClient = nameCtrl.text.trim());
@@ -109,6 +113,10 @@ class _NewQuoteScreenState extends State<NewQuoteScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF0D1B2E),
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               final price = double.tryParse(priceCtrl.text) ?? 0;
               if (nameCtrl.text.trim().isNotEmpty) {
@@ -217,8 +225,8 @@ class _NewQuoteScreenState extends State<NewQuoteScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
-                icon: const Icon(Icons.build_outlined, size: 18, color: Color(0xFF14532D)),
-                label: const Text('Service', style: TextStyle(color: Color(0xFF14532D), fontWeight: FontWeight.bold, fontSize: 13)),
+                icon: const Icon(Icons.build_outlined, size: 18, color: Color(0xFF0D1B2E)),
+                label: const Text('Service', style: TextStyle(color: Color(0xFF0D1B2E), fontWeight: FontWeight.bold, fontSize: 13)),
                 onPressed: () => _addItem('Service'),
               ),
               const SizedBox(width: 12),
@@ -228,8 +236,8 @@ class _NewQuoteScreenState extends State<NewQuoteScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
-                icon: const Icon(Icons.inventory_2_outlined, size: 18, color: Color(0xFF14532D)),
-                label: const Text('Produit', style: TextStyle(color: Color(0xFF14532D), fontWeight: FontWeight.bold, fontSize: 13)),
+                icon: const Icon(Icons.inventory_2_outlined, size: 18, color: Color(0xFF0D1B2E)),
+                label: const Text('Produit', style: TextStyle(color: Color(0xFF0D1B2E), fontWeight: FontWeight.bold, fontSize: 13)),
                 onPressed: () => _addItem('Produit'),
               ),
             ],
@@ -251,7 +259,7 @@ class _NewQuoteScreenState extends State<NewQuoteScreen> {
                   Text('${entry.value['name']} (${entry.value['type']})', style: const TextStyle(fontWeight: FontWeight.w600)),
                   Row(
                     children: [
-                      Text('${entry.value['price']} F CFA', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
+                      Text('${entry.value['price']} F CFA', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D1B2E))),
                       IconButton(
                         icon: const Icon(Icons.close, size: 16, color: Colors.red),
                         onPressed: () => setState(() => _quoteItems.removeAt(entry.key)),
@@ -306,7 +314,7 @@ class _NewQuoteScreenState extends State<NewQuoteScreen> {
                 height: 48,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF14532D),
+                    backgroundColor: Color(0xFF0D1B2E),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                     elevation: 0,
                   ),

@@ -1,3 +1,4 @@
+import 'package:stock_prime/screens/screens.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 
@@ -46,13 +47,19 @@ class PromotionAndShopScreen extends StatelessWidget {
                 _buildDivider(),
                 _buildRow(Icons.campaign_outlined, 'Catalogues à partager', isLocked: true),
                 _buildDivider(),
-                _buildRow(Icons.storefront_outlined, 'Boutique en ligne', isLocked: false),
+                _buildRow(Icons.storefront_outlined, 'Boutique en ligne', isLocked: false, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const OnlineShopScreen()));
+                }),
                 _buildDivider(),
-                _buildRow(Icons.shopping_cart_outlined, 'Commandes en ligne', isLocked: false),
+                _buildRow(Icons.shopping_cart_outlined, 'Commandes en ligne', isLocked: false, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const OnlineOrdersScreen()));
+                }),
                 _buildDivider(),
                 _buildRow(Icons.assignment_outlined, 'Commande externe', isLocked: false),
                 _buildDivider(),
-                _buildRow(Icons.movie_creation_outlined, 'Studio vidéo', isLocked: false),
+                _buildRow(Icons.movie_creation_outlined, 'Studio vidéo', isLocked: false, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const VideoStudioScreen()));
+                }),
                 _buildDivider(),
                 _buildRow(Icons.chat_bubble_outline, 'Catalogue WhatsApp & Facebook', isLocked: true),
               ],
@@ -63,9 +70,9 @@ class PromotionAndShopScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(IconData icon, String title, {required bool isLocked}) {
+  Widget _buildRow(IconData icon, String title, {required bool isLocked, VoidCallback? onTap}) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         child: Row(

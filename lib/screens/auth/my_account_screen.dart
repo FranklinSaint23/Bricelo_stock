@@ -206,7 +206,7 @@ class MyAccountScreen extends StatelessWidget {
                         ),
                         child: const Text(
                           'Propriétaire',
-                          style: TextStyle(color: Color(0xFF065F46), fontSize: 11, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: AppTheme.primaryNavy, fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],

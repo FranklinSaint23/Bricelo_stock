@@ -70,7 +70,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> {
                 children: [
                   Icon(
                     !_isShiftsEnabled ? Icons.radio_button_checked : Icons.radio_button_off,
-                    color: !_isShiftsEnabled ? const Color(0xFF047857) : const Color(0xFF9CA3AF),
+                    color: !_isShiftsEnabled ? AppTheme.primaryNavy : const Color(0xFF9CA3AF),
                     size: 22,
                   ),
                   const SizedBox(width: 12),
@@ -123,7 +123,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> {
                 children: [
                   Icon(
                     _isShiftsEnabled ? Icons.radio_button_checked : Icons.radio_button_off,
-                    color: _isShiftsEnabled ? const Color(0xFF047857) : const Color(0xFF9CA3AF),
+                    color: _isShiftsEnabled ? AppTheme.primaryNavy : const Color(0xFF9CA3AF),
                     size: 22,
                   ),
                   const SizedBox(width: 12),

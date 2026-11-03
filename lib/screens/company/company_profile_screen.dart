@@ -110,7 +110,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
           Center(
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF047857), width: 1.2),
+                side: const BorderSide(color: Color(0xFF0D1B2E), width: 1.2),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
@@ -119,10 +119,10 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                   const SnackBar(content: Text('Sélectionnez une image de logo')),
                 );
               },
-              icon: const Icon(Icons.camera_alt_outlined, size: 18, color: Color(0xFF047857)),
+              icon: const Icon(Icons.camera_alt_outlined, size: 18, color: Color(0xFF0D1B2E)),
               label: const Text(
                 'Ajouter un logo',
-                style: TextStyle(color: Color(0xFF047857), fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(color: Color(0xFF0D1B2E), fontWeight: FontWeight.bold, fontSize: 13),
               ),
             ),
           ),
@@ -310,7 +310,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
             height: 48,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF14532D),
+                backgroundColor: Color(0xFF0D1B2E),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 elevation: 0,
               ),
@@ -318,7 +318,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Profil d\'entreprise enregistré avec succès'),
-                    backgroundColor: Color(0xFF15803D),
+                    backgroundColor: Color(0xFF0D1B2E),
                   ),
                 );
                 Navigator.pop(context);
@@ -332,7 +332,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Annuler',
-                style: TextStyle(color: Color(0xFF14532D), fontWeight: FontWeight.bold, fontSize: 14),
+                style: TextStyle(color: Color(0xFF0D1B2E), fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ),
           ),

@@ -356,6 +356,11 @@ class AppState extends ChangeNotifier {
   }
 
   // --- ACTIONS DETTES FOURNISSEURS ---
+  void addSupplierDebt(SupplierDebt debt) {
+    supplierDebts.insert(0, debt);
+    notifyListeners();
+  }
+
   void recordSupplierPayment(String debtId, double amount) {
     final debt = supplierDebts.firstWhere((d) => d.id == debtId);
     debt.paidAmount += amount;

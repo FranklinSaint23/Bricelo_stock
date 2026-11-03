@@ -179,13 +179,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     onPressed: () => Navigator.pop(ctx),
                     child: const Text(
                       'Annuler',
-                      style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                   ),
                   const SizedBox(width: 14),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF14532D),
+                      backgroundColor: AppTheme.primaryNavy,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

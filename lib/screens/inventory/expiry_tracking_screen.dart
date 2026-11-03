@@ -51,7 +51,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                 color: _strategy == 'FIFO' ? const Color(0xFFDCFCE7) : Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: _strategy == 'FIFO' ? const Color(0xFF166534) : const Color(0xFFD1D5DB),
+                  color: _strategy == 'FIFO' ? const Color(0xFF0D1B2E) : const Color(0xFFD1D5DB),
                   width: _strategy == 'FIFO' ? 1.2 : 1,
                 ),
               ),
@@ -60,7 +60,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                 children: [
                   Icon(
                     _strategy == 'FIFO' ? Icons.radio_button_checked : Icons.radio_button_off,
-                    color: _strategy == 'FIFO' ? const Color(0xFF166534) : const Color(0xFF6B7280),
+                    color: _strategy == 'FIFO' ? const Color(0xFF0D1B2E) : const Color(0xFF6B7280),
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -73,7 +73,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
-                            color: _strategy == 'FIFO' ? const Color(0xFF14532D) : const Color(0xFF111827),
+                            color: _strategy == 'FIFO' ? const Color(0xFF0D1B2E) : const Color(0xFF111827),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -81,7 +81,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                           'Les ventes déstockent les lots les plus anciens d\'abord. Recommandé pour la plupart des commerces.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: _strategy == 'FIFO' ? const Color(0xFF166534) : const Color(0xFF6B7280),
+                            color: _strategy == 'FIFO' ? const Color(0xFF0D1B2E) : const Color(0xFF6B7280),
                             height: 1.3,
                           ),
                         ),
@@ -104,7 +104,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                 color: _strategy == 'FEFO' ? const Color(0xFFDCFCE7) : Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: _strategy == 'FEFO' ? const Color(0xFF166534) : const Color(0xFFD1D5DB),
+                  color: _strategy == 'FEFO' ? const Color(0xFF0D1B2E) : const Color(0xFFD1D5DB),
                   width: _strategy == 'FEFO' ? 1.2 : 1,
                 ),
               ),
@@ -113,7 +113,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                 children: [
                   Icon(
                     _strategy == 'FEFO' ? Icons.radio_button_checked : Icons.radio_button_off,
-                    color: _strategy == 'FEFO' ? const Color(0xFF166534) : const Color(0xFF6B7280),
+                    color: _strategy == 'FEFO' ? const Color(0xFF0D1B2E) : const Color(0xFF6B7280),
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -126,7 +126,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
-                            color: _strategy == 'FEFO' ? const Color(0xFF14532D) : const Color(0xFF111827),
+                            color: _strategy == 'FEFO' ? const Color(0xFF0D1B2E) : const Color(0xFF111827),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -134,7 +134,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                           'Les ventes déstockent les lots qui périment le plus tôt. Pour les produits périssables.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: _strategy == 'FEFO' ? const Color(0xFF166534) : const Color(0xFF6B7280),
+                            color: _strategy == 'FEFO' ? const Color(0xFF0D1B2E) : const Color(0xFF6B7280),
                             height: 1.3,
                           ),
                         ),

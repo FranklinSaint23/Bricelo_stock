@@ -193,7 +193,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                           onPressed: () => Navigator.pop(ctx),
                           child: const Text(
                             'Annuler',
-                            style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontSize: 14),
+                            style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 14),
                           ),
                         ),
                       ),
@@ -204,7 +204,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                         height: 44,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF14532D),
+                            backgroundColor: AppTheme.primaryNavy,
                             elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                           ),
@@ -417,12 +417,12 @@ class _OutletsScreenState extends State<OutletsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
-                        Icon(Icons.sell_outlined, color: Color(0xFF15803D), size: 18),
+                        Icon(Icons.sell_outlined, color: AppTheme.primaryNavy, size: 18),
                         SizedBox(width: 8),
                         Text(
                           'Prix spécifiques',
                           style: TextStyle(
-                            color: Color(0xFF15803D),
+                            color: AppTheme.primaryNavy,
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                           ),
