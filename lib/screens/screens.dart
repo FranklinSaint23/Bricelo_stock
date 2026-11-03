@@ -1,10 +1,11 @@
-// Barrel export of all modularized screens for Stock Prime
+// Barrel export of all modularized screens for Bricelo Stock
 export 'shell/main_shell.dart';
+export 'splash/splash_screen.dart';
 export 'auth/login_screen.dart';
 export 'auth/verify_email_screen.dart';
 export 'auth/my_account_screen.dart';
 export 'dashboard/dashboard_screen.dart';
-export 'dashboard/pilo_assistant_screen.dart';
+export 'dashboard/bricelo_assistant_screen.dart';
 export 'pos/pos_screen.dart';
 export 'pos/shifts_tracking_screen.dart';
 export 'pos/cash_desks_screen.dart';
@@ -58,3 +59,4 @@ export 'inventory/stock_transfers_screen.dart';
 export 'inventory/new_transfer_screen.dart';
 export 'inventory/stock_depreciation_screen.dart';
 export 'inventory/stock_adjustment_screen.dart';
+export '../services/translations.dart';

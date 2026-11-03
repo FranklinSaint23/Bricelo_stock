@@ -1,25 +1,32 @@
+export 'package:stock_prime/services/translations.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Palette Officielle BRICÉLO
+  // Palette Officielle BRICELO STOCK
+  // Bleu Nuit profond du logo
   static const Color primaryNavy = Color(0xFF0D1B2E);
-  // Alias de compatibilité
   static const Color navy900 = Color(0xFF0D1B2E);
-  static const Color gold500 = Color(0xFFF5B000);
-  static const Color gold400 = Color(0xFFFFD04D);
-       // Bleu Nuit Bricélo officiel
-  static const Color navy800 = Color(0xFF162540);          // Bleu Nuit relevé
+  static const Color navy800 = Color(0xFF162540);
   static const Color navy700 = Color(0xFF1E3052);
-  static const Color circleNavy = Color(0xFF1E3052);        // Fond rond bouton retour
-  
-  static const Color accentGold = Color(0xFFF5B000);        // Or Bricélo officiel
-  static const Color goldLight = Color(0xFFFEF3C7);         // Or clair doux pour sélections
-  static const Color goldBorder = Color(0xFFFDE68A);
-  static const Color gold600 = Color(0xFFD99C00);
+  static const Color circleNavy = Color(0xFF1E3052);
 
+  // Or Bricélo chaleureux & éclatant (fidèle au chariot éclair du logo officiel)
+  static const Color accentGold = Color(0xFFFFB800);
+  static const Color gold500 = Color(0xFFFFB800);
+  static const Color gold600 = Color(0xFFE5A600);
+  static const Color gold400 = Color(0xFFFFCC33);
+  static const Color goldLight = Color(0xFFFFF9E6);
+  static const Color goldBorder = Color(0xFFFFE082);
+
+  // Rouge dynamique de l'étiquette 'MARKET & STOCK'
+  static const Color badgeRed = Color(0xFFFF3B30);
+  static const Color danger = Color(0xFFDC2626);
+
+  // Fonds & surfaces
   static const Color background = Color(0xFFFFFFFF);
   static const Color surfaceRaised = Color(0xFFF8FAFC);
 
+  // Ardoise neutre
   static const Color slate200 = Color(0xFFE2E8F0);
   static const Color slate300 = Color(0xFFCBD5E1);
   static const Color slate400 = Color(0xFF94A3B8);
@@ -28,20 +35,54 @@ class AppTheme {
   static const Color slate700 = Color(0xFF334155);
   static const Color slate800 = Color(0xFF1E293B);
 
+  // Statuts
   static const Color success = Color(0xFF16A34A);
-  static const Color danger = Color(0xFFDC2626);
   static const Color warning = Color(0xFFD97706);
   static const Color info = Color(0xFF0EA5E9);
   static const Color badgeOrange = Color(0xFFF97316);
   static const Color orangeMoney = Color(0xFFFF6600);
   static const Color mtnYellow = Color(0xFFFFCC00);
 
+  
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF09121E),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: accentGold,
+        brightness: Brightness.dark,
+        primary: accentGold,
+        secondary: accentGold,
+        surface: const Color(0xFF0F1E31),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: primaryNavy,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: accentGold,
+        foregroundColor: primaryNavy,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF0F1E31),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF1E3052), width: 1),
+        ),
+      ),
+    );
+  }
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: Colors.white,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryNavy,
+        seedColor: accentGold,
         primary: primaryNavy,
         secondary: accentGold,
         surface: Colors.white,
@@ -51,6 +92,10 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: accentGold,
+        foregroundColor: primaryNavy,
       ),
       cardTheme: CardThemeData(
         color: Colors.white,

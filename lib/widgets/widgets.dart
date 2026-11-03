@@ -1,3 +1,4 @@
+export 'package:stock_prime/services/translations.dart';
 export 'app_bar/stock_app_bar.dart';
 export 'cards/kpi_card.dart';
 export 'tabs/segmented_tab_bar.dart';

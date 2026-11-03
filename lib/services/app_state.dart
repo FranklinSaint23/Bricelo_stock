@@ -2,6 +2,21 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 
 class AppState extends ChangeNotifier {
+  String currentLanguage = 'fr'; // 'fr' or 'en'
+  bool isDarkMode = false;
+
+  void toggleDarkMode(bool val) {
+    if (isDarkMode == val) return;
+    isDarkMode = val;
+    notifyListeners();
+  }
+  String get language => currentLanguage;
+
+  void setLanguage(String lang) {
+    if (currentLanguage == lang) return;
+    currentLanguage = lang;
+    notifyListeners();
+  }
   // Singleton pour accès global immédiat et réactif
   static final AppState instance = AppState._internal();
   factory AppState() => instance;

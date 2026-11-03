@@ -1,3 +1,4 @@
+import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/screens/screens.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
@@ -30,251 +31,559 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return AnimatedBuilder(
       animation: appState,
       builder: (context, _) {
+        final isDesktop = MediaQuery.of(context).size.width >= 800;
         final products = appState.products.where((p) {
           final matchesSearch = p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
               p.barcode.contains(_searchQuery);
           return matchesSearch;
         }).toList();
 
-        return Scaffold(
-          backgroundColor: Colors.white,
-          appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
-            title: const Text(
-              'Produits',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
-            ),
-            centerTitle: true,
-            elevation: 0,
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: InkWell(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Catalogue actualisé !')),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(20),
+        if (isDesktop) {
+          return _buildDesktopProducts(context, products);
+        }
+
+        return _buildMobileProducts(context, products);
+      },
+    );
+  }
+
+  // ==========================================
+  // VERSION GRAND ÉCRAN WEB / DESKTOP (TABLEAU)
+  // ==========================================
+  Widget _buildDesktopProducts(BuildContext context, List<Product> products) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Barre d'outils Web (Recherche + Filtres + Actions)
+            Row(
+              children: [
+                // Champ Recherche
+                Expanded(
+                  flex: 4,
                   child: Container(
-                    width: 38,
-                    height: 38,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))],
                     ),
-                    child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+                    child: TextField(
+                      controller: _searchCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Rechercher par nom, code-barres...'.tr,
+                        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                        prefixIcon: const Icon(Icons.search, color: Color(0xFF64748B), size: 20),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      ),
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          body: Stack(
-            children: [
-              Column(
-                children: [
-                  // 1. RECHERCHE
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                const SizedBox(width: 14),
+
+                // Filtres Catégories
+                Row(
+                  children: _tabs.map((tab) {
+                    final isSel = _selectedTab == tab;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(tab.tr),
+                        selected: isSel,
+                        selectedColor: AppTheme.primaryNavy,
+                        backgroundColor: Colors.white,
+                        labelStyle: TextStyle(
+                          color: isSel ? AppTheme.accentGold : const Color(0xFF475569),
+                          fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: isSel ? AppTheme.primaryNavy : const Color(0xFFE2E8F0)),
+                        ),
+                        onSelected: (_) => setState(() => _selectedTab = tab),
                       ),
-                      child: TextField(
-                        controller: _searchCtrl,
-                        decoration: const InputDecoration(
-                          hintText: 'Rechercher un produit',
-                          hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                          prefixIcon: Icon(Icons.search, color: Color(0xFF6B7280), size: 20),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                        onChanged: (v) => setState(() => _searchQuery = v),
-                      ),
-                    ),
-                  ),
+                    );
+                  }).toList(),
+                ),
 
-                  // 2. FILTRES PILLS : Tous | Produits | Services | Packs
-                  Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: _tabs.map((tab) {
-                        final isSel = _selectedTab == tab;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: InkWell(
-                            onTap: () => setState(() => _selectedTab = tab),
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isSel ? AppTheme.primaryNavy : const Color(0xFFF3F4F6),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                tab,
-                                style: TextStyle(
-                                  color: isSel ? Colors.white : const Color(0xFF374151),
-                                  fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
+                const Spacer(),
 
-                  // 3. BANNIÈRE QUOTA : Produits 0 / 25
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Produits',
-                          style: TextStyle(color: Color(0xFF1E40AF), fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${products.length} / 25',
-                          style: const TextStyle(color: Color(0xFF1E40AF), fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
+                // Bouton Importer CSV
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryNavy,
+                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
+                  icon: const Icon(Icons.upload_file, size: 16),
+                  label: Text('Importer'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ImportProductsScreen()));
+                  },
+                ),
+                const SizedBox(width: 10),
 
-                  // 4. CONTENU : LISTE OU ÉTAT VIDE
-                  Expanded(
-                    child: products.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                // Bouton Nouveau Produit
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryNavy,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  icon: const Icon(Icons.add, color: AppTheme.accentGold, size: 18),
+                  label: Text('Ajouter un produit'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Compteur de Produits
+            Row(
+              children: [
+                Text(
+                  '${products.length} ${'articles au total'.tr}',
+                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${products.length} / 25 Gratuit',
+                    style: const TextStyle(color: Color(0xFF1E40AF), fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Tableau de Produits
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))],
+                ),
+                child: products.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.inventory_2_outlined, size: 64, color: Color(0xFFCBD5E1)),
+                            const SizedBox(height: 12),
+                            Text('Aucun produit pour l\'instant.'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF334155))),
+                            const SizedBox(height: 4),
+                            Text('Cliquez sur « Ajouter un produit » pour démarrer.'.tr, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: products.length + 1,
+                        separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        itemBuilder: (context, idx) {
+                          if (idx == 0) {
+                            // En-tête du Tableau
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              color: const Color(0xFFF8FAFC),
+                              child: Row(
                                 children: [
-                                  const Icon(Icons.inventory_2_outlined, size: 70, color: Color(0xFFD1D5DB)),
-                                  const SizedBox(height: 14),
-                                  const Text(
-                                    'Aucun produit pour l\'instant.',
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF374151)),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Ajoutez votre premier produit !',
-                                    style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppTheme.primaryNavy,
-                                      side: const BorderSide(color: Color(0xFFD1D5DB)),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                  Expanded(flex: 3, child: Text('PRODUIT'.tr, style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 11))),
+                                  Expanded(flex: 2, child: Text('CODE-BARRES'.tr, style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 11))),
+                                  Expanded(flex: 2, child: Text('PRIX DE VENTE'.tr, style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 11))),
+                                  Expanded(flex: 2, child: Text('STOCK'.tr, style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 11))),
+                                  Expanded(flex: 2, child: Text('STATUT'.tr, style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 11))),
+                                  const SizedBox(width: 80, child: Text('ACTIONS', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 11))),
+                                ],
+                              ),
+                            );
+                          }
+
+                          final p = products[idx - 1];
+                          final isLow = p.stock <= 5 && p.stock > 0;
+                          final isOut = p.stock == 0;
+
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)));
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              child: Row(
+                                children: [
+                                  // Produit (Icon + Name)
+                                  Expanded(
+                                    flex: 3,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 38,
+                                          height: 38,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 20),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            p.name,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    icon: const Icon(Icons.description_outlined, size: 18),
-                                    label: const Text('Importer une liste (Excel / CSV)', style: TextStyle(fontWeight: FontWeight.w600)),
-                                    onPressed: () {
-                                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ImportProductsScreen()));
-                                    },
+                                  ),
+                                  // Code-barres
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      p.barcode.isNotEmpty ? p.barcode : '—',
+                                      style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                                    ),
+                                  ),
+                                  // Prix de vente
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      AppTheme.formatFCFA(p.sellPrice),
+                                      style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1B5E20), fontSize: 13),
+                                    ),
+                                  ),
+                                  // Stock
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      '${p.stock} ${p.unit}',
+                                      style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E293B), fontSize: 12),
+                                    ),
+                                  ),
+                                  // Statut
+                                  Expanded(
+                                    flex: 2,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: isOut
+                                            ? const Color(0xFFFEE2E2)
+                                            : isLow
+                                                ? const Color(0xFFFEF3C7)
+                                                : const Color(0xFFECFDF5),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        isOut
+                                            ? 'Rupture'.tr
+                                            : isLow
+                                                ? 'Stock bas'.tr
+                                                : 'En stock'.tr,
+                                        style: TextStyle(
+                                          color: isOut
+                                              ? const Color(0xFFDC2626)
+                                              : isLow
+                                                  ? const Color(0xFFD97706)
+                                                  : const Color(0xFF059669),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Actions
+                                  SizedBox(
+                                    width: 80,
+                                    child: Row(
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF64748B)),
+                                          onPressed: () {
+                                            Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)));
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          )
-                        : ListView.separated(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: products.length,
-                            separatorBuilder: (_, index) => const Divider(height: 1, color: Color(0xFFE5E7EB)),
-                            itemBuilder: (context, idx) {
-                              final p = products[idx];
-                              return InkWell(
-                                onTap: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)));
-                                },
-                                child: ListTile(
-                                  leading: Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF3F4F6),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 22),
-                                  ),
-                                  title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                  subtitle: Text('Stock : ${p.stock} ${p.unit} • Réf: ${p.barcode}', style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
-                                  trailing: Text(
-                                    AppTheme.formatFCFA(p.sellPrice),
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryNavy),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                ],
-              ),
-
-              // SPEED DIAL OVERLAY QUAND LE FAB EST DÉPLIÉ (Screenshot 1)
-              if (_isFabExpanded)
-                Positioned.fill(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _isFabExpanded = false),
-                    child: Container(
-                      color: Colors.white.withOpacity(0.85),
-                      padding: const EdgeInsets.only(bottom: 90, right: 16),
-                      alignment: Alignment.bottomRight,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          // 1. Bouton "Importer des produits"
-                          _buildSpeedDialItem(
-                            label: 'Importer des produits',
-                            icon: Icons.upload_file_outlined,
-                            onTap: () {
-                              setState(() => _isFabExpanded = false);
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const AddProductsWizard()));
-                            },
-                          ),
-                          const SizedBox(height: 14),
-                          // 2. Bouton "Ajouter un produit"
-                          _buildSpeedDialItem(
-                            label: 'Ajouter un produit',
-                            icon: Icons.add_box_outlined,
-                            onTap: () {
-                              setState(() => _isFabExpanded = false);
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
-                            },
-                          ),
-                        ],
+                          );
+                        },
                       ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // VERSION MOBILE (100% PRÉSERVÉE)
+  // ==========================================
+  Widget _buildMobileProducts(BuildContext context, List<Product> products) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: AppTheme.primaryNavy,
+        title: Text(
+          'Produits'.tr,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+        ),
+        centerTitle: true,
+        elevation: 0,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: InkWell(
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Catalogue actualisé !'.tr)),
+                );
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              // 1. RECHERCHE
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Rechercher un produit'.tr,
+                      hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280), size: 20),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
+                    onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                 ),
+              ),
+
+              // 2. FILTRES PILLS : Tous | Produits | Services | Packs
+              Container(
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: _tabs.map((tab) {
+                    final isSel = _selectedTab == tab;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: InkWell(
+                        onTap: () => setState(() => _selectedTab = tab),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSel ? AppTheme.primaryNavy : const Color(0xFFF3F4F6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            tab.tr,
+                            style: TextStyle(
+                              color: isSel ? Colors.white : const Color(0xFF374151),
+                              fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+
+              // 3. BANNIÈRE QUOTA : Produits 0 / 25
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Produits'.tr,
+                      style: const TextStyle(color: Color(0xFF1E40AF), fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      '${products.length} / 25',
+                      style: const TextStyle(color: Color(0xFF1E40AF), fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 4. CONTENU : LISTE OU ÉTAT VIDE
+              Expanded(
+                child: products.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.inventory_2_outlined, size: 70, color: Color(0xFFD1D5DB)),
+                              const SizedBox(height: 14),
+                              Text(
+                                'Aucun produit pour l\'instant.'.tr,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF374151)),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Ajoutez votre premier produit !'.tr,
+                                style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                              ),
+                              const SizedBox(height: 24),
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.primaryNavy,
+                                  side: const BorderSide(color: Color(0xFFD1D5DB)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                ),
+                                icon: const Icon(Icons.description_outlined, size: 18),
+                                label: Text(
+                                  'Importer une liste (Excel / CSV)'.tr,
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ImportProductsScreen()));
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: products.length,
+                        separatorBuilder: (_, index) => const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                        itemBuilder: (context, idx) {
+                          final p = products[idx];
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)));
+                            },
+                            child: ListTile(
+                              leading: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3F4F6),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 22),
+                              ),
+                              title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              subtitle: Text(
+                                '${'Stock :'.tr} ${p.stock} ${p.unit} • Réf: ${p.barcode}',
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                              ),
+                              trailing: Text(
+                                AppTheme.formatFCFA(p.sellPrice),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryNavy),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
             ],
           ),
 
-          // FAB EN BAS À DROITE (Screenshot 1 & 2)
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: AppTheme.primaryNavy,
-            foregroundColor: AppTheme.accentGold,
-            elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
-            child: Icon(_isFabExpanded ? Icons.close : Icons.add, size: 28),
-          ),
-        );
-      },
+          // SPEED DIAL OVERLAY QUAND LE FAB EST DÉPLIÉ
+          if (_isFabExpanded)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => setState(() => _isFabExpanded = false),
+                child: Container(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  padding: const EdgeInsets.only(bottom: 90, right: 16),
+                  alignment: Alignment.bottomRight,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // 1. Bouton "Importer des produits"
+                      _buildSpeedDialItem(
+                        label: 'Importer des produits'.tr,
+                        icon: Icons.upload_file_outlined,
+                        onTap: () {
+                          setState(() => _isFabExpanded = false);
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddProductsWizard()));
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      // 2. Bouton "Ajouter un produit"
+                      _buildSpeedDialItem(
+                        label: 'Ajouter un produit'.tr,
+                        icon: Icons.add_box_outlined,
+                        onTap: () {
+                          setState(() => _isFabExpanded = false);
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+
+      // FAB EN BAS À DROITE
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppTheme.primaryNavy,
+        foregroundColor: AppTheme.accentGold,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
+        child: Icon(_isFabExpanded ? Icons.close : Icons.add, size: 28),
+      ),
     );
   }
 

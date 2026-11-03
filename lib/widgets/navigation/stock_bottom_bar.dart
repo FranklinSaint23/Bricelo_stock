@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:stock_prime/theme/app_theme.dart';
 
 class StockBottomBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final Color selectedItemColor;
 
   const StockBottomBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
-    this.selectedItemColor = const Color(0xFF1B5E20),
   });
 
   @override
@@ -17,43 +16,45 @@ class StockBottomBar extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+        border: Border(
+          top: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+        ),
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: onTap,
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: selectedItemColor,
+        selectedItemColor: AppTheme.accentGold,
         unselectedItemColor: const Color(0xFF6B7280),
         selectedFontSize: 11,
         unselectedFontSize: 11,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Accueil',
+            icon: const Icon(Icons.home_outlined),
+            activeIcon: const Icon(Icons.home),
+            label: 'Accueil'.tr,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            activeIcon: Icon(Icons.shopping_cart),
-            label: 'Vente',
+            icon: const Icon(Icons.shopping_cart_outlined),
+            activeIcon: const Icon(Icons.shopping_cart),
+            label: 'Vente'.tr,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_2_outlined),
-            activeIcon: Icon(Icons.inventory_2),
-            label: 'Produits',
+            icon: const Icon(Icons.inventory_2_outlined),
+            activeIcon: const Icon(Icons.inventory_2),
+            label: 'Produits'.tr,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.warehouse_outlined),
-            activeIcon: Icon(Icons.warehouse),
-            label: 'Stock',
+            icon: const Icon(Icons.warehouse_outlined),
+            activeIcon: const Icon(Icons.warehouse),
+            label: 'Stock'.tr,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz),
-            activeIcon: Icon(Icons.more_horiz),
-            label: 'Plus',
+            icon: const Icon(Icons.more_horiz),
+            activeIcon: const Icon(Icons.more_horiz),
+            label: 'Plus'.tr,
           ),
         ],
       ),
