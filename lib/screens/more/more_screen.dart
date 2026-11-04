@@ -297,10 +297,10 @@ class _MoreScreenState extends State<MoreScreen> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Container(
                             color: AppTheme.primaryNavy,
-                            child: const Center(
+                            child: Center(
                               child: Text(
-                                'FS',
-                                style: TextStyle(
+                                appState.userInitials,
+                                style: const TextStyle(
                                   color: AppTheme.accentGold,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
@@ -319,7 +319,7 @@ class _MoreScreenState extends State<MoreScreen> {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    'Franklin SAINT',
+                                    appState.displayUserName,
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15.5,
@@ -349,7 +349,7 @@ class _MoreScreenState extends State<MoreScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              'franklin@gmail.com',
+                              appState.userEmail.isNotEmpty ? appState.userEmail : appState.displayCompanyName,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -767,8 +767,10 @@ class _MoreScreenState extends State<MoreScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 0,
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
+              await appState.logout();
+              if (!context.mounted) return;
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => const LoginScreen()),

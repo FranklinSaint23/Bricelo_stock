@@ -1,42 +1,41 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
 
 class AppState extends ChangeNotifier {
+  static const String _storageKey = 'bricelo_dynamic_state_v2';
+
+  static final AppState instance = AppState._internal();
+  factory AppState() => instance;
+  AppState._internal();
+
+  bool _initialized = false;
+
+  // --- Onboarding & Authentification ---
+  bool hasSelectedLanguage = false;
+  bool isLoggedIn = false;
   String currentLanguage = 'fr'; // 'fr' or 'en'
   bool isDarkMode = false;
 
-  void toggleDarkMode(bool val) {
-    if (isDarkMode == val) return;
-    isDarkMode = val;
-    notifyListeners();
-  }
-  String get language => currentLanguage;
+  // --- Profil Utilisateur & Entreprise (100% Dynamique, aucun nom prédéfini) ---
+  String userName = '';
+  String companyName = '';
+  String userEmail = '';
+  String userPhone = '';
+  String userRole = 'Propriétaire';
 
-  void setLanguage(String lang) {
-    if (currentLanguage == lang) return;
-    currentLanguage = lang;
-    notifyListeners();
-  }
-  // Singleton pour accès global immédiat et réactif
-  static final AppState instance = AppState._internal();
-  factory AppState() => instance;
-  AppState._internal() {
-    _initSampleData();
-  }
+  // --- Boutique Active & Liste des Boutiques ---
+  bool isBossMode = true;
+  String currentStore = 'Boutique Principale';
+  List<String> availableStores = [];
 
-  // --- Configuration & Mode ---
-  bool isBossMode = true; // Si faux : masque prix d'achat et marges aux caissiers
-  String currentStore = 'Boutique BRICÉLO Akwa (Douala)';
-  final List<String> availableStores = [
-    'Boutique BRICÉLO Akwa (Douala)',
-    'Magasin BRICÉLO Bastos (Yaoundé)',
-    'Dépôt Central Bonamoussadi (Douala)',
-  ];
-
-  double openingCash = 25000.0; // Fond de caisse d'ouverture du jour
+  double openingCash = 0.0;
   bool isSyncedToBricelo = true;
 
-  // --- Données Centrales ---
+  // --- Données Centrales 100% Dynamiques ---
+  List<CategoryItem> categories = [];
   List<Customer> customers = [];
   List<Supplier> suppliers = [];
   List<Product> products = [];
@@ -48,56 +47,553 @@ class AppState extends ChangeNotifier {
   List<Expense> expenses = [];
   List<StockMovement> stockMovements = [];
 
-  
-  void addCustomer(Customer customer) {
-    customers.add(customer);
+  // --- Getters d'affichage sécurisés ---
+  String get language => currentLanguage;
+  String get displayUserName => userName.trim().isNotEmpty ? userName.trim() : (currentLanguage == 'en' ? 'Manager' : 'Gérant');
+  String get displayCompanyName => companyName.trim().isNotEmpty ? companyName.trim() : (currentLanguage == 'en' ? 'My Store' : 'Ma Boutique');
+
+  String get userInitials {
+    final name = displayUserName;
+    final parts = name.split(RegExp(r'\s+')).where((s) => s.isNotEmpty).toList();
+    if (parts.isEmpty) return 'BS';
+    if (parts.length == 1) {
+      return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
+    }
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+  }
+
+  SupabaseClient? get _supabase {
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // --- INITIALISATION & PERSISTANCE LOCALE + SUPABASE ---
+  Future<void> initStorage() async {
+    if (_initialized) return;
+    _initialized = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_storageKey);
+      if (raw != null && raw.isNotEmpty) {
+        final Map<String, dynamic> data = jsonDecode(raw);
+        hasSelectedLanguage = data['hasSelectedLanguage'] as bool? ?? false;
+        isLoggedIn = data['isLoggedIn'] as bool? ?? false;
+        currentLanguage = (data['currentLanguage'] ?? 'fr').toString();
+        isDarkMode = data['isDarkMode'] as bool? ?? false;
+        userName = (data['userName'] ?? '').toString();
+        companyName = (data['companyName'] ?? '').toString();
+        userEmail = (data['userEmail'] ?? '').toString();
+        userPhone = (data['userPhone'] ?? '').toString();
+        userRole = (data['userRole'] ?? 'Propriétaire').toString();
+        currentStore = (data['currentStore'] ?? (companyName.isNotEmpty ? companyName : 'Boutique Principale')).toString();
+        openingCash = (data['openingCash'] as num?)?.toDouble() ?? 0.0;
+
+        availableStores = (data['availableStores'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .where((s) => s.isNotEmpty)
+            .toList();
+        if (availableStores.isEmpty && currentStore.isNotEmpty) {
+          availableStores = [currentStore];
+        }
+
+        categories = (data['categories'] as List<dynamic>? ?? [])
+            .map((e) => CategoryItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        customers = (data['customers'] as List<dynamic>? ?? [])
+            .map((e) => Customer.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        suppliers = (data['suppliers'] as List<dynamic>? ?? [])
+            .map((e) => Supplier.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        products = (data['products'] as List<dynamic>? ?? [])
+            .map((e) => Product.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        sales = (data['sales'] as List<dynamic>? ?? [])
+            .map((e) => Sale.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        debts = (data['debts'] as List<dynamic>? ?? [])
+            .map((e) => CustomerDebt.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        supplierDebts = (data['supplierDebts'] as List<dynamic>? ?? [])
+            .map((e) => SupplierDebt.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        expenses = (data['expenses'] as List<dynamic>? ?? [])
+            .map((e) => Expense.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        stockMovements = (data['stockMovements'] as List<dynamic>? ?? [])
+            .map((e) => StockMovement.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Erreur chargement local: $e');
+    }
+
+    // Synchronisation asynchrone depuis Supabase si connecté
+    if (isLoggedIn) {
+      syncFromSupabase();
+    }
+  }
+
+  Future<void> _saveToPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final payload = {
+        'hasSelectedLanguage': hasSelectedLanguage,
+        'isLoggedIn': isLoggedIn,
+        'currentLanguage': currentLanguage,
+        'isDarkMode': isDarkMode,
+        'userName': userName,
+        'companyName': companyName,
+        'userEmail': userEmail,
+        'userPhone': userPhone,
+        'userRole': userRole,
+        'currentStore': currentStore,
+        'availableStores': availableStores,
+        'openingCash': openingCash,
+        'categories': categories.map((e) => e.toJson()).toList(),
+        'customers': customers.map((e) => e.toJson()).toList(),
+        'suppliers': suppliers.map((e) => e.toJson()).toList(),
+        'products': products.map((e) => e.toJson()).toList(),
+        'sales': sales.map((e) => e.toJson()).toList(),
+        'debts': debts.map((e) => e.toJson()).toList(),
+        'supplierDebts': supplierDebts.map((e) => e.toJson()).toList(),
+        'expenses': expenses.map((e) => e.toJson()).toList(),
+        'stockMovements': stockMovements.map((e) => e.toJson()).toList(),
+      };
+      await prefs.setString(_storageKey, jsonEncode(payload));
+    } catch (e) {
+      debugPrint('Erreur sauvegarde locale: $e');
+    }
+  }
+
+  Future<void> syncFromSupabase() async {
+    final sb = _supabase;
+    if (sb == null) return;
+    try {
+      // 1. Catégories
+      try {
+        final rows = await sb.from('categories').select().order('created_at');
+        if (rows.isNotEmpty) {
+          final remoteCats = (rows as List).map((r) => CategoryItem.fromJson(Map<String, dynamic>.from(r))).toList();
+          for (final rc in remoteCats) {
+            if (!categories.any((c) => c.id == rc.id || c.name.toLowerCase() == rc.name.toLowerCase())) {
+              categories.add(rc);
+            }
+          }
+        }
+      } catch (_) {}
+
+      // 2. Produits
+      try {
+        final rows = await sb.from('products').select().order('created_at', ascending: false);
+        if (rows.isNotEmpty) {
+          final remoteProds = (rows as List).map((r) => Product.fromJson(Map<String, dynamic>.from(r))).toList();
+          for (final rp in remoteProds) {
+            final idx = products.indexWhere((p) => p.id == rp.id);
+            if (idx == -1) {
+              products.add(rp);
+            }
+          }
+        }
+      } catch (_) {}
+
+      // 3. Clients
+      try {
+        final rows = await sb.from('customers').select().order('created_at', ascending: false);
+        if (rows.isNotEmpty) {
+          final remoteCusts = (rows as List).map((r) => Customer.fromJson(Map<String, dynamic>.from(r))).toList();
+          for (final rc in remoteCusts) {
+            if (!customers.any((c) => c.id == rc.id)) {
+              customers.add(rc);
+            }
+          }
+        }
+      } catch (_) {}
+
+      // 4. Fournisseurs
+      try {
+        final rows = await sb.from('suppliers').select().order('created_at', ascending: false);
+        if (rows.isNotEmpty) {
+          final remoteSups = (rows as List).map((r) => Supplier.fromJson(Map<String, dynamic>.from(r))).toList();
+          for (final rs in remoteSups) {
+            if (!suppliers.any((s) => s.id == rs.id)) {
+              suppliers.add(rs);
+            }
+          }
+        }
+      } catch (_) {}
+
+      await _saveToPrefs();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Info sync Supabase: $e');
+    }
+  }
+
+  // --- LANGUE & THÈME ---
+  void toggleDarkMode(bool val) {
+    if (isDarkMode == val) return;
+    isDarkMode = val;
+    _saveToPrefs();
     notifyListeners();
+  }
+
+  void setLanguage(String lang) {
+    currentLanguage = lang;
+    hasSelectedLanguage = true;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  Future<void> completeLanguageOnboarding(String lang) async {
+    currentLanguage = lang;
+    hasSelectedLanguage = true;
+    await _saveToPrefs();
+    notifyListeners();
+  }
+
+  // --- AUTHENTIFICATION & PROFIL UTILISATEUR ---
+  Future<void> registerUser({
+    required String fullName,
+    required String shopName,
+    required String phone,
+    required String email,
+    required String password,
+  }) async {
+    userName = fullName.trim();
+    companyName = shopName.trim().isNotEmpty ? shopName.trim() : 'Boutique ${userName.split(' ').first}';
+    userPhone = phone.trim();
+    userEmail = email.trim();
+    userRole = 'Propriétaire';
+    currentStore = companyName;
+    if (!availableStores.contains(currentStore)) {
+      availableStores.insert(0, currentStore);
+    }
+    isLoggedIn = true;
+    hasSelectedLanguage = true;
+
+    await _saveToPrefs();
+    notifyListeners();
+
+    // Enregistrement asynchrone sur Supabase
+    final sb = _supabase;
+    if (sb != null) {
+      () async {
+        try {
+          if (userEmail.isNotEmpty && password.length >= 6) {
+            await sb.auth.signUp(
+              email: userEmail,
+              password: password,
+              data: {
+                'full_name': userName,
+                'company_name': companyName,
+                'phone': userPhone,
+              },
+            );
+          }
+        } catch (_) {}
+        try {
+          await sb.from('stores').upsert({
+            'name': currentStore,
+            'phone': userPhone,
+          }, onConflict: 'name');
+        } catch (_) {}
+        try {
+          await sb.from('user_profiles').upsert({
+            'id': userPhone.isNotEmpty ? userPhone : (userEmail.isNotEmpty ? userEmail : 'user_${DateTime.now().millisecondsSinceEpoch}'),
+            'full_name': userName,
+            'company_name': companyName,
+            'email': userEmail,
+            'phone': userPhone,
+            'language': currentLanguage,
+          });
+        } catch (_) {}
+      }();
+    }
+  }
+
+  Future<void> loginUser({
+    required String identifier,
+    required String password,
+    String? fallbackName,
+    String? fallbackShop,
+  }) async {
+    final cleanId = identifier.trim();
+    final sb = _supabase;
+
+    if (sb != null) {
+      // 1. Tentative connexion Supabase Auth si email
+      if (cleanId.contains('@') && password.isNotEmpty) {
+        try {
+          final res = await sb.auth.signInWithPassword(email: cleanId, password: password);
+          final meta = res.user?.userMetadata ?? {};
+          if (meta['full_name'] != null) userName = meta['full_name'].toString();
+          if (meta['company_name'] != null) companyName = meta['company_name'].toString();
+          if (meta['phone'] != null) userPhone = meta['phone'].toString();
+          userEmail = cleanId;
+        } catch (_) {}
+      }
+
+      // 2. Recherche dans user_profiles Supabase
+      try {
+        final rows = await sb
+            .from('user_profiles')
+            .select()
+            .or('phone.eq.$cleanId,email.eq.$cleanId,id.eq.$cleanId')
+            .limit(1);
+        if ((rows as List).isNotEmpty) {
+          final prof = rows.first;
+          userName = (prof['full_name'] ?? userName).toString();
+          companyName = (prof['company_name'] ?? companyName).toString();
+          userEmail = (prof['email'] ?? userEmail).toString();
+          userPhone = (prof['phone'] ?? userPhone).toString();
+        }
+      } catch (_) {}
+    }
+
+    // 3. Si profil local ou identifiant saisi
+    if (userName.trim().isEmpty) {
+      if (fallbackName != null && fallbackName.trim().isNotEmpty) {
+        userName = fallbackName.trim();
+      } else if (cleanId.contains('@')) {
+        final localPart = cleanId.split('@').first.replaceAll(RegExp(r'[._-]'), ' ');
+        userName = localPart.isNotEmpty
+            ? localPart.split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ')
+            : 'Gérant';
+        userEmail = cleanId;
+      } else {
+        userName = 'Gérant';
+        userPhone = cleanId;
+      }
+    } else {
+      if (cleanId.contains('@') && userEmail.isEmpty) userEmail = cleanId;
+      if (!cleanId.contains('@') && userPhone.isEmpty) userPhone = cleanId;
+    }
+
+    if (companyName.trim().isEmpty) {
+      companyName = (fallbackShop != null && fallbackShop.trim().isNotEmpty)
+          ? fallbackShop.trim()
+          : 'Boutique $displayUserName';
+    }
+
+    currentStore = companyName;
+    if (!availableStores.contains(currentStore)) {
+      availableStores.insert(0, currentStore);
+    }
+
+    isLoggedIn = true;
+    hasSelectedLanguage = true;
+    await _saveToPrefs();
+    notifyListeners();
+
+    await syncFromSupabase();
+  }
+
+  Future<void> updateUserProfile({
+    String? fullName,
+    String? name,
+    String? shopName,
+    String? company,
+    String? phone,
+    String? email,
+  }) async {
+    fullName ??= name;
+    shopName ??= company;
+    if (fullName != null && fullName.trim().isNotEmpty) userName = fullName.trim();
+    if (shopName != null && shopName.trim().isNotEmpty) {
+      final oldStore = companyName;
+      companyName = shopName.trim();
+      if (currentStore == oldStore || currentStore == 'Boutique Principale') {
+        currentStore = companyName;
+      }
+      if (!availableStores.contains(companyName)) {
+        availableStores.insert(0, companyName);
+      }
+    }
+    if (phone != null) userPhone = phone.trim();
+    if (email != null) userEmail = email.trim();
+
+    await _saveToPrefs();
+    notifyListeners();
+
+    final sb = _supabase;
+    if (sb != null) {
+      try {
+        await sb.from('user_profiles').upsert({
+          'id': userPhone.isNotEmpty ? userPhone : (userEmail.isNotEmpty ? userEmail : 'user_default'),
+          'full_name': userName,
+          'company_name': companyName,
+          'email': userEmail,
+          'phone': userPhone,
+          'language': currentLanguage,
+        });
+      } catch (_) {}
+    }
+  }
+
+  Future<void> logout() async {
+    isLoggedIn = false;
+    await _saveToPrefs();
+    try {
+      await _supabase?.auth.signOut();
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  // --- GESTION DYNAMIQUE DES CATÉGORIES ---
+  void addCategory(CategoryItem cat) {
+    if (categories.any((c) => c.name.toLowerCase() == cat.name.toLowerCase())) return;
+    categories.add(cat);
+    _saveToPrefs();
+    notifyListeners();
+
+    final sb = _supabase;
+    if (sb != null) {
+      sb.from('categories').upsert({
+        'id': cat.id,
+        'name': cat.name,
+        'parent_name': cat.parent,
+        'tva': cat.tva,
+      }).then((_) {}, onError: (_) {});
+    }
+  }
+
+  void updateCategory(CategoryItem cat) {
+    final idx = categories.indexWhere((c) => c.id == cat.id);
+    if (idx != -1) {
+      categories[idx] = cat;
+      _saveToPrefs();
+      notifyListeners();
+      _supabase?.from('categories').upsert({
+        'id': cat.id,
+        'name': cat.name,
+        'parent_name': cat.parent,
+        'tva': cat.tva,
+      }).then((_) {}, onError: (_) {});
+    }
+  }
+
+  void removeCategory(String id) {
+    categories.removeWhere((c) => c.id == id);
+    _saveToPrefs();
+    notifyListeners();
+    _supabase?.from('categories').delete().eq('id', id).then((_) {}, onError: (_) {});
+  }
+
+  // --- GESTION DYNAMIQUE DES BOUTIQUES ---
+  void addStore(String name, {String type = 'Boutique', String address = ''}) {
+    final clean = name.trim();
+    if (clean.isEmpty) return;
+    if (!availableStores.contains(clean)) {
+      availableStores.add(clean);
+    }
+    currentStore = clean;
+    _saveToPrefs();
+    notifyListeners();
+
+    _supabase?.from('stores').upsert({
+      'name': clean,
+      'address': address,
+      'phone': userPhone,
+    }, onConflict: 'name').then((_) {}, onError: (_) {});
+  }
+
+  void removeStore(String name) {
+    if (availableStores.length <= 1) return;
+    availableStores.remove(name);
+    if (currentStore == name) {
+      currentStore = availableStores.first;
+    }
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  // --- GESTION DYNAMIQUE DES CLIENTS ---
+  void addCustomer(Customer customer) {
+    customers.insert(0, customer);
+    _saveToPrefs();
+    notifyListeners();
+
+    _supabase?.from('customers').upsert({
+      'id': customer.id,
+      'name': customer.name,
+      'phone': customer.phone,
+      'email': customer.email,
+      'address': customer.address,
+    }).then((_) {}, onError: (_) {});
   }
 
   void updateCustomer(Customer customer) {
     final index = customers.indexWhere((c) => c.id == customer.id);
     if (index != -1) {
       customers[index] = customer;
+      _saveToPrefs();
       notifyListeners();
+
+      _supabase?.from('customers').upsert({
+        'id': customer.id,
+        'name': customer.name,
+        'phone': customer.phone,
+        'email': customer.email,
+        'address': customer.address,
+      }).then((_) {}, onError: (_) {});
     }
   }
 
   void removeCustomer(String id) {
     customers.removeWhere((c) => c.id == id);
+    _saveToPrefs();
     notifyListeners();
+    _supabase?.from('customers').delete().eq('id', id).then((_) {}, onError: (_) {});
   }
 
-  
+  // --- GESTION DYNAMIQUE DES FOURNISSEURS ---
   void addSupplier(Supplier supplier) {
-    suppliers.add(supplier);
+    suppliers.insert(0, supplier);
+    _saveToPrefs();
     notifyListeners();
+
+    _supabase?.from('suppliers').upsert({
+      'id': supplier.id,
+      'name': supplier.name,
+      'phone': supplier.phone,
+      'email': supplier.email,
+      'category': supplier.contactName,
+      'address': supplier.address,
+    }).then((_) {}, onError: (_) {});
   }
 
   void updateSupplier(Supplier supplier) {
     final index = suppliers.indexWhere((s) => s.id == supplier.id);
     if (index != -1) {
       suppliers[index] = supplier;
+      _saveToPrefs();
       notifyListeners();
+
+      _supabase?.from('suppliers').upsert({
+        'id': supplier.id,
+        'name': supplier.name,
+        'phone': supplier.phone,
+        'email': supplier.email,
+        'category': supplier.contactName,
+        'address': supplier.address,
+      }).then((_) {}, onError: (_) {});
     }
   }
 
   void removeSupplier(String id) {
     suppliers.removeWhere((s) => s.id == id);
+    _saveToPrefs();
     notifyListeners();
-  }
-
-  void _initSampleData() {
-    products = [];
-    sales = [];
-    debts = [];
-    supplierDebts = [];
-    expenses = [];
-    stockMovements = [];
-    cart = [];
-    heldCarts = [];
+    _supabase?.from('suppliers').delete().eq('id', id).then((_) {}, onError: (_) {});
   }
 
   void resetAllData() {
+    categories.clear();
     customers.clear();
     suppliers.clear();
     products.clear();
@@ -108,6 +604,7 @@ class AppState extends ChangeNotifier {
     stockMovements.clear();
     cart.clear();
     heldCarts.clear();
+    _saveToPrefs();
     notifyListeners();
   }
 
@@ -118,8 +615,7 @@ class AppState extends ChangeNotifier {
 
   int get todaySalesCount => sales.length;
   double get todayRevenue => sales.fold(0.0, (sum, sale) => sum + sale.total);
-  
-  // Marge brute estimée du jour
+
   double get todayGrossMargin {
     double totalMargin = 0;
     for (var sale in sales) {
@@ -148,7 +644,6 @@ class AppState extends ChangeNotifier {
   double get totalCustomerDebt => debts.where((d) => !d.isSettled).fold(0.0, (sum, d) => sum + d.remainingDebt);
   double get totalSupplierDebt => supplierDebts.where((d) => !d.isSettled).fold(0.0, (sum, d) => sum + d.remainingDebt);
 
-  // Espèces théoriques dans le tiroir
   double get cashInDrawerExpected {
     final cashSales = sales.where((s) => s.paymentMethod == 'Espèces').fold(0.0, (sum, s) => sum + s.total);
     double debtCash = 0;
@@ -238,23 +733,29 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- FINALISATION DE VENTE (POS Checkout) ---
+  // --- FINALISATION DE VENTE (POS Checkout) + SYNC SUPABASE ---
   Sale finalizeSale({
     required String paymentMethod,
     required double amountReceived,
     double changeReturned = 0,
     String customerName = 'Client Comptoir',
     String customerPhone = '',
-    String cashierName = 'Caissier Principal',
+    String? cashierName,
   }) {
     final now = DateTime.now();
     final ticketNumber = 'SP-${1000 + sales.length + 1}';
-    final itemsSummary = cart.map((item) => SaleItemSummary(
-      productName: item.product.name,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      total: item.total,
-    )).toList();
+    final itemsSummary = cart
+        .map((item) => SaleItemSummary(
+              productName: item.product.name,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              total: item.total,
+            ))
+        .toList();
+
+    final effectiveCashier = (cashierName != null && cashierName.trim().isNotEmpty)
+        ? cashierName.trim()
+        : displayUserName;
 
     final sale = Sale(
       id: 'sale_${now.millisecondsSinceEpoch}',
@@ -268,70 +769,145 @@ class AppState extends ChangeNotifier {
       changeReturned: changeReturned,
       customerName: customerName.trim().isEmpty ? 'Client Comptoir' : customerName.trim(),
       customerPhone: customerPhone,
-      cashierName: cashierName,
+      cashierName: effectiveCashier,
       storeName: currentStore,
     );
 
+    final sb = _supabase;
+
     // Décrémenter le stock des produits et enregistrer les mouvements
     for (var item in cart) {
-      final p = products.firstWhere((prod) => prod.id == item.product.id);
-      p.stock -= item.quantity;
-      if (p.stock < 0) p.stock = 0;
+      final pIdx = products.indexWhere((prod) => prod.id == item.product.id);
+      if (pIdx != -1) {
+        final p = products[pIdx];
+        if (p.productType != 'Service') {
+          p.stock -= item.quantity;
+          if (p.stock < 0) p.stock = 0;
+        }
 
-      stockMovements.insert(0, StockMovement(
-        id: 'sm_${DateTime.now().millisecondsSinceEpoch}',
-        productId: p.id,
-        productName: p.name,
-        type: 'VENTE (-)',
-        quantity: item.quantity,
-        newStock: p.stock,
-        reason: 'Ticket #$ticketNumber',
-        date: now,
-      ));
+        final sm = StockMovement(
+          id: 'sm_${DateTime.now().millisecondsSinceEpoch}_${p.id}',
+          productId: p.id,
+          productName: p.name,
+          type: 'VENTE (-)',
+          quantity: item.quantity,
+          newStock: p.stock,
+          reason: 'Ticket #$ticketNumber',
+          date: now,
+        );
+        stockMovements.insert(0, sm);
+
+        if (sb != null) {
+          sb.from('products').update({'stock': p.stock}).eq('id', p.id).then((_) {}, onError: (_) {});
+          sb.from('stock_movements').upsert({
+            'id': sm.id,
+            'product_name': sm.productName,
+            'movement_type': sm.type,
+            'quantity': sm.quantity,
+            'reason': sm.reason,
+            'author': effectiveCashier,
+          }).then((_) {}, onError: (_) {});
+        }
+      }
     }
 
     // Si vente à crédit, enregistrer dans le cahier de dettes
     if (paymentMethod == 'À Crédit') {
-      debts.insert(0, CustomerDebt(
+      final debt = CustomerDebt(
         id: 'debt_${now.millisecondsSinceEpoch}',
-        customerName: customerName.trim().isEmpty ? 'Client Anonyme' : customerName.trim(),
+        customerName: customerName.trim().isEmpty ? 'Client Comptoir' : customerName.trim(),
         customerPhone: customerPhone,
         initialDebt: cartTotal,
         paidAmount: amountReceived > 0 ? amountReceived : 0,
         createdAt: now,
         lastPaymentDate: now,
         itemsSummary: itemsSummary.map((i) => '${i.quantity}x ${i.productName}').toList(),
-        payments: amountReceived > 0 ? [
-          DebtPayment(
-            id: 'dp_${now.millisecondsSinceEpoch}',
-            amount: amountReceived,
-            date: now,
-            paymentMethod: 'Espèces',
-            note: 'Acompte initial à la vente',
-          ),
-        ] : [],
-      ));
+        payments: amountReceived > 0
+            ? [
+                DebtPayment(
+                  id: 'dp_${now.millisecondsSinceEpoch}',
+                  amount: amountReceived,
+                  date: now,
+                  paymentMethod: 'Espèces',
+                  note: 'Acompte initial à la vente',
+                ),
+              ]
+            : [],
+      );
+      debts.insert(0, debt);
+
+      if (sb != null) {
+        sb.from('customer_debts').upsert({
+          'id': debt.id,
+          'customer_name': debt.customerName,
+          'phone': debt.customerPhone,
+          'total_debt': debt.initialDebt,
+          'remaining_amount': debt.remainingDebt,
+          'store_name': currentStore,
+        }).then((_) {}, onError: (_) {});
+      }
     }
 
     sales.insert(0, sale);
     cart.clear();
+    _saveToPrefs();
     notifyListeners();
+
+    // Sauvegarde asynchrone de la vente sur Supabase
+    if (sb != null) {
+      () async {
+        try {
+          await sb.from('sales').upsert({
+            'id': sale.ticketNumber,
+            'sale_date': sale.createdAt.toIso8601String(),
+            'total_amount': sale.total,
+            'amount_received': sale.amountReceived,
+            'change_returned': sale.changeReturned,
+            'payment_method': sale.paymentMethod,
+            'status': sale.paymentMethod == 'À Crédit' ? 'CREDIT' : 'COMPLETED',
+            'customer_name': sale.customerName,
+            'cashier_name': sale.cashierName,
+            'store_name': sale.storeName,
+          });
+          for (final it in sale.items) {
+            await sb.from('sale_items').insert({
+              'sale_id': sale.ticketNumber,
+              'product_name': it.productName,
+              'quantity': it.quantity,
+              'unit_price': it.unitPrice,
+            });
+          }
+        } catch (_) {}
+      }();
+    }
+
     return sale;
   }
 
   // --- ACTIONS DETTES CLIENTS ---
   void recordCustomerDebtPayment(String debtId, double amount, String method, {String note = 'Versement'}) {
-    final debt = debts.firstWhere((d) => d.id == debtId);
+    final idx = debts.indexWhere((d) => d.id == debtId);
+    if (idx == -1) return;
+    final debt = debts[idx];
     debt.paidAmount += amount;
     debt.lastPaymentDate = DateTime.now();
-    debt.payments.insert(0, DebtPayment(
-      id: 'dp_${DateTime.now().millisecondsSinceEpoch}',
-      amount: amount,
-      date: DateTime.now(),
-      paymentMethod: method,
-      note: note,
-    ));
+    debt.payments.insert(
+      0,
+      DebtPayment(
+        id: 'dp_${DateTime.now().millisecondsSinceEpoch}',
+        amount: amount,
+        date: DateTime.now(),
+        paymentMethod: method,
+        note: note,
+      ),
+    );
+    _saveToPrefs();
     notifyListeners();
+
+    _supabase?.from('customer_debts').update({
+      'remaining_amount': debt.remainingDebt,
+      'last_activity': DateTime.now().toIso8601String(),
+    }).eq('id', debt.id).then((_) {}, onError: (_) {});
   }
 
   void addManualDebt({
@@ -342,7 +918,7 @@ class AppState extends ChangeNotifier {
     required String description,
   }) {
     final now = DateTime.now();
-    debts.insert(0, CustomerDebt(
+    final debt = CustomerDebt(
       id: 'debt_${now.millisecondsSinceEpoch}',
       customerName: customerName,
       customerPhone: customerPhone,
@@ -352,20 +928,35 @@ class AppState extends ChangeNotifier {
       createdAt: now,
       lastPaymentDate: now,
       itemsSummary: [description],
-    ));
+    );
+    debts.insert(0, debt);
+    _saveToPrefs();
     notifyListeners();
+
+    _supabase?.from('customer_debts').upsert({
+      'id': debt.id,
+      'customer_name': debt.customerName,
+      'phone': debt.customerPhone,
+      'total_debt': debt.initialDebt,
+      'remaining_amount': debt.remainingDebt,
+      'store_name': currentStore,
+    }).then((_) {}, onError: (_) {});
   }
 
   // --- ACTIONS DETTES FOURNISSEURS ---
   void addSupplierDebt(SupplierDebt debt) {
     supplierDebts.insert(0, debt);
+    _saveToPrefs();
     notifyListeners();
   }
 
   void recordSupplierPayment(String debtId, double amount) {
-    final debt = supplierDebts.firstWhere((d) => d.id == debtId);
-    debt.paidAmount += amount;
-    notifyListeners();
+    final idx = supplierDebts.indexWhere((d) => d.id == debtId);
+    if (idx != -1) {
+      supplierDebts[idx].paidAmount += amount;
+      _saveToPrefs();
+      notifyListeners();
+    }
   }
 
   // --- ACTIONS DÉPENSES ---
@@ -373,23 +964,42 @@ class AppState extends ChangeNotifier {
     required String category,
     required String description,
     required double amount,
-    String paidBy = 'Caissier Principal',
+    String? paidBy,
   }) {
-    expenses.insert(0, Expense(
+    final exp = Expense(
       id: 'e_${DateTime.now().millisecondsSinceEpoch}',
       category: category,
       description: description,
       amount: amount,
       createdAt: DateTime.now(),
-      paidBy: paidBy,
-    ));
+      paidBy: paidBy ?? displayUserName,
+    );
+    expenses.insert(0, exp);
+    _saveToPrefs();
     notifyListeners();
+
+    _supabase?.from('expenses').upsert({
+      'id': exp.id,
+      'title': exp.description,
+      'category': exp.category,
+      'amount': exp.amount,
+      'beneficiary': exp.paidBy,
+    }).then((_) {}, onError: (_) {});
   }
 
-  // --- ACTIONS GESTION DE STOCK ---
+  // --- ACTIONS GESTION DE PRODUITS & STOCK ---
   void addProduct(Product product) {
-    products.add(product);
-    stockMovements.insert(0, StockMovement(
+    products.insert(0, product);
+    if (product.category.trim().isNotEmpty &&
+        product.category != 'Non catégorisé' &&
+        !categories.any((c) => c.name.toLowerCase() == product.category.toLowerCase())) {
+      addCategory(CategoryItem(
+        id: 'cat_${DateTime.now().millisecondsSinceEpoch}',
+        name: product.category,
+      ));
+    }
+
+    final sm = StockMovement(
       id: 'sm_${DateTime.now().millisecondsSinceEpoch}',
       productId: product.id,
       productName: product.name,
@@ -398,29 +1008,89 @@ class AppState extends ChangeNotifier {
       newStock: product.stock,
       reason: 'Création du produit',
       date: DateTime.now(),
-    ));
+    );
+    stockMovements.insert(0, sm);
+    _saveToPrefs();
     notifyListeners();
+
+    _supabase?.from('products').upsert({
+      'id': product.id,
+      'name': product.name,
+      'category': product.category,
+      'price': product.sellPrice,
+      'purchase_price': product.buyPrice,
+      'stock': product.stock,
+      'min_stock': product.minStockAlert,
+      'barcode': product.barcode,
+      'unit': product.unit,
+      'product_type': product.productType,
+      'store_name': currentStore,
+    }).then((_) {}, onError: (_) {});
+  }
+
+  void updateProduct(Product updated) {
+    final idx = products.indexWhere((p) => p.id == updated.id);
+    if (idx != -1) {
+      products[idx] = updated;
+      _saveToPrefs();
+      notifyListeners();
+
+      _supabase?.from('products').upsert({
+        'id': updated.id,
+        'name': updated.name,
+        'category': updated.category,
+        'price': updated.sellPrice,
+        'purchase_price': updated.buyPrice,
+        'stock': updated.stock,
+        'min_stock': updated.minStockAlert,
+        'barcode': updated.barcode,
+        'unit': updated.unit,
+        'product_type': updated.productType,
+        'store_name': currentStore,
+      }).then((_) {}, onError: (_) {});
+    }
+  }
+
+  void removeProduct(String productId) {
+    products.removeWhere((p) => p.id == productId);
+    cart.removeWhere((c) => c.product.id == productId);
+    _saveToPrefs();
+    notifyListeners();
+
+    _supabase?.from('products').delete().eq('id', productId).then((_) {}, onError: (_) {});
   }
 
   void restockProduct({
     required String productId,
     required int quantity,
     required double buyCost,
-    String supplier = 'Grossiste Akwa',
+    String supplier = '',
   }) {
-    final p = products.firstWhere((prod) => prod.id == productId);
+    final idx = products.indexWhere((prod) => prod.id == productId);
+    if (idx == -1) return;
+    final p = products[idx];
     p.stock += quantity;
-    stockMovements.insert(0, StockMovement(
+    if (buyCost > 0) {
+      p.buyPrice = buyCost;
+    }
+    final sm = StockMovement(
       id: 'sm_${DateTime.now().millisecondsSinceEpoch}',
       productId: p.id,
       productName: p.name,
       type: 'RÉASSORT (+)',
       quantity: quantity,
       newStock: p.stock,
-      reason: 'Fournisseur: $supplier - Coût: ${buyCost.toStringAsFixed(0)} FCFA',
+      reason: supplier.isNotEmpty ? 'Fournisseur: $supplier' : 'Approvisionnement',
       date: DateTime.now(),
-    ));
+    );
+    stockMovements.insert(0, sm);
+    _saveToPrefs();
     notifyListeners();
+
+    _supabase?.from('products').update({
+      'stock': p.stock,
+      'purchase_price': p.buyPrice,
+    }).eq('id', p.id).then((_) {}, onError: (_) {});
   }
 
   void adjustStock({
@@ -428,10 +1098,12 @@ class AppState extends ChangeNotifier {
     required int newStock,
     required String reason,
   }) {
-    final p = products.firstWhere((prod) => prod.id == productId);
+    final idx = products.indexWhere((prod) => prod.id == productId);
+    if (idx == -1) return;
+    final p = products[idx];
     final diff = newStock - p.stock;
     p.stock = newStock;
-    stockMovements.insert(0, StockMovement(
+    final sm = StockMovement(
       id: 'sm_${DateTime.now().millisecondsSinceEpoch}',
       productId: p.id,
       productName: p.name,
@@ -440,13 +1112,18 @@ class AppState extends ChangeNotifier {
       newStock: newStock.round(),
       reason: reason,
       date: DateTime.now(),
-    ));
+    );
+    stockMovements.insert(0, sm);
+    _saveToPrefs();
     notifyListeners();
+
+    _supabase?.from('products').update({'stock': p.stock}).eq('id', p.id).then((_) {}, onError: (_) {});
   }
 
   // --- PARAMÈTRES & BOUTIQUE ---
   void switchStore(String store) {
     currentStore = store;
+    _saveToPrefs();
     notifyListeners();
   }
 

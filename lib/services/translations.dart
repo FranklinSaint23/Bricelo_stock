@@ -17,9 +17,10 @@ class AppTranslations {
     final monthName = isEn ? monthsEn[now.month - 1] : monthsFr[now.month - 1];
     
     if (isEn) {
-      return '$dayName, $monthName ${now.day}';
+      return '$dayName, $monthName ${now.day}, ${now.year}';
     } else {
-      return '$dayName ${now.day} $monthName';
+      final capMonth = '${monthName[0].toUpperCase()}${monthName.substring(1)}';
+      return '$dayName ${now.day} $capMonth ${now.year}';
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:stock_prime/services/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 
@@ -82,9 +83,9 @@ class _BrandScreenState extends State<BrandScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ENTETE ENTREPRISE
-            const Text(
-              'Franklin Athletics',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+            Text(
+              AppState.instance.displayCompanyName,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
             ),
             const SizedBox(height: 6),
             const Text(

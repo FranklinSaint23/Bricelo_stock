@@ -13,7 +13,14 @@ class OnlineShopScreen extends StatefulWidget {
 class _OnlineShopScreenState extends State<OnlineShopScreen> {
   final appState = AppState.instance;
 
-  String _shopSlug = 'franklin-athletics';
+  late String _shopSlug;
+
+  @override
+  void initState() {
+    super.initState();
+    final raw = appState.displayCompanyName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    _shopSlug = raw.isNotEmpty ? raw : 'ma-boutique';
+  }
   bool _isShopActive = false;
   bool _acceptOrders = false;
   bool _proposeDelivery = false;
@@ -425,7 +432,7 @@ class _OnlineShopScreenState extends State<OnlineShopScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
-                  'Les prix et le stock affichés sont ceux de Boutique principale.',
+                  'Les prix et le stock affichés sont ceux de ${appState.currentStore}.',
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
@@ -503,7 +510,7 @@ class _OnlineShopScreenState extends State<OnlineShopScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              'Franklin Athletics — Boutique en ligne à Cameroun',
+                              '${appState.displayCompanyName} — Boutique en ligne au Cameroun',
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -512,7 +519,7 @@ class _OnlineShopScreenState extends State<OnlineShopScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Franklin Athletics à Cameroun : $publishedCount produit(s). Commandez en ligne, livraison ou retrait en boutique.',
+                              '${appState.displayCompanyName} : $publishedCount produit(s). Commandez en ligne, livraison ou retrait en boutique.',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563),

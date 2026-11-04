@@ -189,7 +189,7 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Dépôt Central Bonamoussadi',
+                          'Entrepôt Secondaire',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

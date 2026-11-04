@@ -102,7 +102,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                       context: context,
                       applicationName: 'Bricelo Stock',
                       applicationVersion: '1.0.0 (Bricélo Edition)',
-                      applicationLegalese: '© 2026 Franklin Njiepi / Bricélo',
+                      applicationLegalese: '© 2026 Bricélo Stock',
                     );
                   },
                 ),

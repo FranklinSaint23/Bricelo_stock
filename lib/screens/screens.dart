@@ -64,3 +64,6 @@ export 'inventory/new_transfer_screen.dart';
 export 'inventory/stock_depreciation_screen.dart';
 export 'inventory/stock_adjustment_screen.dart';
 export '../services/translations.dart';
+
+export 'auth/language_onboarding_screen.dart';
+export '../widgets/sale_receipt_dialog.dart';

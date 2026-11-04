@@ -1,126 +1,187 @@
--- ========================================================
--- SCHÉMA DE BASE DE DONNÉES : STOCK PRIME (SaaS Caisse & Stock)
--- Adapté au Cameroun (Douala, Yaoundé, FCFA, OM/MoMo, Dettes)
--- ========================================================
+-- =================================================================================
+-- BRICELO / STOCKPLUS : SCRIPT DE CREATION DE LA BASE DE DONNÉES SUPABASE (100% DYNAMIQUE)
+-- Copiez tout ce code et exécutez-le dans "SQL Editor" sur votre Dashboard Supabase.
+-- =================================================================================
 
--- 1. Boutiques / Points de vente
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 1. PROFILS UTILISATEURS / BOUTIQUES
+CREATE TABLE IF NOT EXISTS public.user_profiles (
+    id TEXT PRIMARY KEY,
+    full_name TEXT NOT NULL,
+    company_name TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
+    role TEXT DEFAULT 'Administrateur (Gérant)',
+    language TEXT DEFAULT 'fr',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2. BOUTIQUES & POINTS DE VENTE (Stores)
 CREATE TABLE IF NOT EXISTS public.stores (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
-    city TEXT NOT NULL DEFAULT 'Douala',
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
     address TEXT,
     phone TEXT,
-    created_at TIMESTAMPTZ DEFAULT now()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 2. Produits & Inventaire
+-- 3. CATÉGORIES DE PRODUITS (Categories)
+CREATE TABLE IF NOT EXISTS public.categories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    parent_name TEXT DEFAULT 'Aucune (Catégorie principale)',
+    tva DOUBLE PRECISION DEFAULT 19.25,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 4. PRODUITS (Products)
 CREATE TABLE IF NOT EXISTS public.products (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    category TEXT NOT NULL DEFAULT 'Général',
-    barcode TEXT,
-    buy_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    sell_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    stock_quantity INT NOT NULL DEFAULT 0,
-    min_stock_alert INT NOT NULL DEFAULT 5,
-    is_synced_bricelo BOOLEAN DEFAULT false,
-    bricelo_product_id TEXT,
-    image_url TEXT,
-    created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
+    category TEXT NOT NULL,
+    price DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    purchase_price DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    stock INTEGER NOT NULL DEFAULT 0,
+    min_stock INTEGER NOT NULL DEFAULT 5,
+    barcode TEXT NOT NULL,
+    unit TEXT DEFAULT 'Pièce (Pce)',
+    product_type TEXT DEFAULT 'Produit',
+    store_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Index pour recherche rapide et scan code-barres en caisse
-CREATE INDEX IF NOT EXISTS idx_products_barcode ON public.products(barcode);
-CREATE INDEX IF NOT EXISTS idx_products_store ON public.products(store_id);
+-- 5. CLIENTS (Customers)
+CREATE TABLE IF NOT EXISTS public.customers (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    email TEXT DEFAULT '',
+    address TEXT DEFAULT '',
+    loyalty_points INTEGER DEFAULT 0,
+    total_spent DOUBLE PRECISION DEFAULT 0.0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
--- 3. Ventes & Encaissements (Tickets de caisse)
+-- 6. FOURNISSEURS (Suppliers)
+CREATE TABLE IF NOT EXISTS public.suppliers (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    email TEXT DEFAULT '',
+    category TEXT DEFAULT 'Marchandises Générales',
+    address TEXT DEFAULT '',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 7. VENTES (Sales)
 CREATE TABLE IF NOT EXISTS public.sales (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
-    ticket_number TEXT NOT NULL,
-    total_amount NUMERIC(12, 2) NOT NULL,
-    payment_method TEXT NOT NULL, -- 'cash', 'orange_money', 'mtn_momo', 'credit'
+    id TEXT PRIMARY KEY,
+    sale_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    total_amount DOUBLE PRECISION NOT NULL,
+    amount_received DOUBLE PRECISION DEFAULT 0.0,
+    change_returned DOUBLE PRECISION DEFAULT 0.0,
+    payment_method TEXT NOT NULL,
+    status TEXT NOT NULL,
     customer_name TEXT DEFAULT 'Client Comptoir',
-    customer_phone TEXT,
-    cashier_name TEXT DEFAULT 'Caissier Principal',
-    created_at TIMESTAMPTZ DEFAULT now()
+    cashier_name TEXT DEFAULT 'Gérant',
+    store_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 4. Lignes d'articles par vente
+-- 8. LIGNES DE VENTE (Sale Items)
 CREATE TABLE IF NOT EXISTS public.sale_items (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    sale_id UUID REFERENCES public.sales(id) ON DELETE CASCADE,
-    product_id UUID REFERENCES public.products(id) ON DELETE SET NULL,
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    sale_id TEXT REFERENCES public.sales(id) ON DELETE CASCADE,
     product_name TEXT NOT NULL,
-    quantity INT NOT NULL DEFAULT 1,
-    buy_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    unit_price NUMERIC(12, 2) NOT NULL,
-    total_price NUMERIC(12, 2) NOT NULL
+    quantity INTEGER NOT NULL,
+    unit_price DOUBLE PRECISION NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 5. Carnet de Dettes & Crédits Clients
+-- 9. DETTES CLIENTS (Customer Debts)
 CREATE TABLE IF NOT EXISTS public.customer_debts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY,
     customer_name TEXT NOT NULL,
-    customer_phone TEXT NOT NULL,
-    initial_debt NUMERIC(12, 2) NOT NULL,
-    paid_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    is_settled BOOLEAN DEFAULT false,
-    notes TEXT,
-    items_summary TEXT[],
-    created_at TIMESTAMPTZ DEFAULT now(),
-    last_payment_date TIMESTAMPTZ DEFAULT now()
+    phone TEXT,
+    total_debt DOUBLE PRECISION NOT NULL,
+    remaining_amount DOUBLE PRECISION NOT NULL,
+    due_date TIMESTAMP WITH TIME ZONE,
+    last_activity TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+    store_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 6. Versements / Acomptes sur dettes
+-- 10. HISTORIQUE PAIEMENTS DETTES (Debt Payments)
 CREATE TABLE IF NOT EXISTS public.debt_payments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    debt_id UUID REFERENCES public.customer_debts(id) ON DELETE CASCADE,
-    amount NUMERIC(12, 2) NOT NULL,
-    payment_method TEXT DEFAULT 'cash',
-    notes TEXT,
-    created_at TIMESTAMPTZ DEFAULT now()
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    debt_id TEXT REFERENCES public.customer_debts(id) ON DELETE CASCADE,
+    amount DOUBLE PRECISION NOT NULL,
+    payment_method TEXT NOT NULL,
+    payment_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 7. Clôtures de Caisse Journalières (Z de Caisse)
+-- 11. DÉPENSES (Expenses)
+CREATE TABLE IF NOT EXISTS public.expenses (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,
+    amount DOUBLE PRECISION NOT NULL,
+    payment_method TEXT DEFAULT 'Espèces (Caisse)',
+    beneficiary TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    expense_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 12. MOUVEMENTS DE STOCK (Stock Movements)
+CREATE TABLE IF NOT EXISTS public.stock_movements (
+    id TEXT PRIMARY KEY,
+    product_name TEXT NOT NULL,
+    movement_type TEXT NOT NULL,
+    quantity INTEGER NOT NULL,
+    reason TEXT DEFAULT '',
+    author TEXT DEFAULT '',
+    movement_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 13. SESSIONS DE CAISSE (Cash Shifts)
 CREATE TABLE IF NOT EXISTS public.cash_shifts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
-    opened_at TIMESTAMPTZ DEFAULT now(),
-    closed_at TIMESTAMPTZ,
-    initial_cash NUMERIC(12, 2) DEFAULT 0,
-    actual_cash NUMERIC(12, 2),
-    expected_cash NUMERIC(12, 2),
-    total_sales NUMERIC(12, 2) DEFAULT 0,
-    total_orange_money NUMERIC(12, 2) DEFAULT 0,
-    total_mtn_momo NUMERIC(12, 2) DEFAULT 0,
-    total_credit NUMERIC(12, 2) DEFAULT 0,
-    is_closed BOOLEAN DEFAULT false
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    store_name TEXT NOT NULL,
+    opened_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    closed_at TIMESTAMP WITH TIME ZONE,
+    initial_float DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    final_cash_counted DOUBLE PRECISION,
+    status TEXT DEFAULT 'OPEN'
 );
 
--- 8. Données initiales d'exemple (Cameroun)
-INSERT INTO public.stores (name, city, address, phone)
-VALUES 
-    ('Boutique BRICÉLO Akwa', 'Douala', 'Boulevard de la Liberté, Akwa', '+237 6 52 70 42 18'),
-    ('Magasin BRICÉLO Bastos', 'Yaoundé', 'Face Ambassade, Bastos', '+237 6 99 00 11 22')
-ON CONFLICT DO NOTHING;
-
--- RLS (Row Level Security) activé avec accès public pour le client API
+-- ACTIVATION RLS & POLITIQUES D'ACCÈS PUBLIC (POUR SYNCHRONISATION DIRECTE)
+ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.suppliers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sale_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customer_debts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.debt_payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.stock_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cash_shifts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read-write for stores" ON public.stores FOR ALL USING (true);
-CREATE POLICY "Allow public read-write for products" ON public.products FOR ALL USING (true);
-CREATE POLICY "Allow public read-write for sales" ON public.sales FOR ALL USING (true);
-CREATE POLICY "Allow public read-write for sale_items" ON public.sale_items FOR ALL USING (true);
-CREATE POLICY "Allow public read-write for customer_debts" ON public.customer_debts FOR ALL USING (true);
-CREATE POLICY "Allow public read-write for debt_payments" ON public.debt_payments FOR ALL USING (true);
-CREATE POLICY "Allow public read-write for cash_shifts" ON public.cash_shifts FOR ALL USING (true);
+DO $$
+DECLARE
+    tbl TEXT;
+BEGIN
+    FOREACH tbl IN ARRAY ARRAY[
+        'user_profiles', 'stores', 'categories', 'products', 'customers',
+        'suppliers', 'sales', 'sale_items', 'customer_debts', 'debt_payments',
+        'expenses', 'stock_movements', 'cash_shifts'
+    ]
+    LOOP
+        EXECUTE format('DROP POLICY IF EXISTS "Enable all access for %I" ON public.%I;', tbl, tbl);
+        EXECUTE format('CREATE POLICY "Enable all access for %I" ON public.%I FOR ALL USING (true) WITH CHECK (true);', tbl, tbl);
+    END LOOP;
+END
+$$;

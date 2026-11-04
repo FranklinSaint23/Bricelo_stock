@@ -34,8 +34,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
         final isDesktop = MediaQuery.of(context).size.width >= 800;
         final products = appState.products.where((p) {
           final matchesSearch = p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              p.barcode.contains(_searchQuery);
-          return matchesSearch;
+              p.barcode.contains(_searchQuery) ||
+              p.category.toLowerCase().contains(_searchQuery.toLowerCase());
+          bool matchesTab = true;
+          if (_selectedTab == 'Produits') matchesTab = p.productType == 'Produit';
+          if (_selectedTab == 'Services') matchesTab = p.productType == 'Service';
+          if (_selectedTab == 'Packs') matchesTab = p.productType == 'Pack';
+          return matchesSearch && matchesTab;
         }).toList();
 
         if (isDesktop) {
@@ -356,8 +361,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
             padding: const EdgeInsets.only(right: 12),
             child: InkWell(
               onTap: () {
+                appState.syncFromSupabase();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Catalogue actualisé !'.tr)),
+                  SnackBar(content: Text('Catalogue synchronisé !'.tr)),
                 );
               },
               borderRadius: BorderRadius.circular(20),

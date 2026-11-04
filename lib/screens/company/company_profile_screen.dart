@@ -1,3 +1,4 @@
+import 'package:stock_prime/services/app_state.dart';
 import 'package:flutter/material.dart';
 
 class CompanyProfileScreen extends StatefulWidget {
@@ -8,9 +9,18 @@ class CompanyProfileScreen extends StatefulWidget {
 }
 
 class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
-  final _nameController = TextEditingController(text: 'Franklin Athletics');
-  final _phoneController = TextEditingController();
-  final _emailController = TextEditingController(text: 'franklinnjiepi07@gmail.com');
+  late final TextEditingController _nameController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _emailController;
+
+  @override
+  void initState() {
+    super.initState();
+    final appState = AppState.instance;
+    _nameController = TextEditingController(text: appState.displayCompanyName);
+    _phoneController = TextEditingController(text: appState.userPhone);
+    _emailController = TextEditingController(text: appState.userEmail);
+  }
   final _addressController = TextEditingController();
   final _taxLabelController = TextEditingController(text: 'NIU');
   final _taxIdController = TextEditingController();
@@ -314,7 +324,13 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 elevation: 0,
               ),
-              onPressed: () {
+              onPressed: () async {
+                await AppState.instance.updateUserProfile(
+                  company: _nameController.text.trim(),
+                  phone: _phoneController.text.trim(),
+                  email: _emailController.text.trim(),
+                );
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Profil d\'entreprise enregistré avec succès'),

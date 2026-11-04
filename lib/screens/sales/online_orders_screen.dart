@@ -63,7 +63,7 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
           orderNumber: 'CMD-${1000 + nextNum}',
           customerName: 'Client Boutique #$nextNum',
           customerPhone: '+237 690 12 34 56',
-          customerAddress: 'Douala, Akwa',
+          customerAddress: 'Cameroun',
           items: ['2x Ciment Dangote 50kg', '1x Brouette Pro'],
           totalAmount: 25000,
           createdAt: now,

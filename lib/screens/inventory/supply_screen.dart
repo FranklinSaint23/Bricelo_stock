@@ -68,8 +68,6 @@ class _SupplyScreenState extends State<SupplyScreen> {
     super.initState();
     if (appState.suppliers.isNotEmpty) {
       _selectedSupplier = appState.suppliers.first.name;
-    } else {
-      _selectedSupplier = 'Grossiste Ets NANA & Fils (Akwa)';
     }
   }
 
@@ -328,15 +326,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
       builder: (context, _) {
         final isDark = appState.isDarkMode;
 
-        final supplierList = appState.suppliers.isNotEmpty
-            ? appState.suppliers.map((s) => s.name).toList()
-            : [
-                'Grossiste Ets NANA & Fils (Akwa)',
-                'Société Camerounaise d\'Importation (SCI)',
-                'Oraimo Store Officiel Douala',
-                'Usine Mousse Bassa',
-                'Grossiste Marché Central Yaoundé',
-              ];
+        final supplierList = appState.suppliers.map((s) => s.name).toList();
 
         return Scaffold(
           backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
@@ -459,15 +449,80 @@ class _SupplyScreenState extends State<SupplyScreen> {
                     ),
                     const SizedBox(height: 18),
 
-                    // 3. FOURNISSEUR DROPDOWN (Si Achat fournisseur)
+                    // 3. FOURNISSEUR DROPDOWN DYNAMIQUE (+ AJOUT RAPIDE)
                     if (_selectedMode == 'Achat fournisseur') ...[
-                      Text(
-                        'Fournisseur *',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: isDark ? Colors.white : const Color(0xFF111827),
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Fournisseur *',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: isDark ? Colors.white : const Color(0xFF111827),
+                            ),
+                          ),
+                          TextButton.icon(
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            icon: const Icon(Icons.add_circle_outline, size: 15, color: AppTheme.primaryNavy),
+                            label: const Text(
+                              '+ Nouveau fournisseur',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.primaryNavy),
+                            ),
+                            onPressed: () {
+                              final nameCtrl = TextEditingController();
+                              final phoneCtrl = TextEditingController();
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  title: const Text('Nouveau fournisseur', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      TextField(
+                                        controller: nameCtrl,
+                                        autofocus: true,
+                                        decoration: const InputDecoration(labelText: 'Nom du fournisseur *', border: OutlineInputBorder()),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      TextField(
+                                        controller: phoneCtrl,
+                                        keyboardType: TextInputType.phone,
+                                        decoration: const InputDecoration(labelText: 'Téléphone', border: OutlineInputBorder()),
+                                      ),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white),
+                                      onPressed: () {
+                                        final n = nameCtrl.text.trim();
+                                        if (n.isNotEmpty) {
+                                          appState.addSupplier(
+                                            Supplier(
+                                              id: 'sup_${DateTime.now().millisecondsSinceEpoch}',
+                                              name: n,
+                                              phone: phoneCtrl.text.trim(),
+                                              contactName: 'Général',
+                                            ),
+                                          );
+                                          setState(() => _selectedSupplier = n);
+                                        }
+                                        Navigator.pop(ctx);
+                                      },
+                                      child: const Text('Ajouter'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 6),
                       Container(

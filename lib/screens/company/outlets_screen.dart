@@ -1,3 +1,4 @@
+import 'package:stock_prime/services/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 
@@ -12,7 +13,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
   final List<Map<String, dynamic>> _outlets = [
     {
       'id': '1',
-      'name': 'Boutique principale',
+      'name': AppState.instance.currentStore,
       'type': 'Boutique',
       'isDefault': true,
       'hasSpecificPrices': true,
@@ -212,6 +213,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                             final name = nameController.text.trim();
                             if (name.isNotEmpty) {
                               final discount = int.tryParse(discountController.text) ?? 0;
+                              AppState.instance.addStore(name, type: selectedType, address: addressController.text.trim());
                               setState(() {
                                 _outlets.add({
                                   'id': DateTime.now().millisecondsSinceEpoch.toString(),

@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
+import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/shell/main_shell.dart';
+import 'package:stock_prime/screens/auth/language_onboarding_screen.dart';
+import 'package:stock_prime/screens/auth/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,26 +25,42 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: const Duration(milliseconds: 900),
     );
 
-    // Démarrage visible à 96% avec un léger rebond naturel vers 1.0 (aucun fondu noir !)
     _scaleAnimation = Tween<double>(begin: 0.96, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
 
     _controller.forward();
+    _bootApp();
+  }
 
-    // Transition fluide vers l'écran principal après 2 secondes
-    Timer(const Duration(milliseconds: 2000), () {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, anim1, anim2) => const MainShell(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 350),
-        ),
-      );
-    });
+  Future<void> _bootApp() async {
+    final start = DateTime.now();
+    await AppState.instance.initStorage();
+    final elapsed = DateTime.now().difference(start).inMilliseconds;
+    if (elapsed < 1600) {
+      await Future.delayed(Duration(milliseconds: 1600 - elapsed));
+    }
+    if (!mounted) return;
+
+    final state = AppState.instance;
+    Widget nextScreen;
+    if (!state.hasSelectedLanguage) {
+      nextScreen = const LanguageOnboardingScreen();
+    } else if (!state.isLoggedIn) {
+      nextScreen = const LoginScreen();
+    } else {
+      nextScreen = const MainShell();
+    }
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, anim1, anim2) => nextScreen,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 350),
+      ),
+    );
   }
 
   @override
@@ -57,7 +76,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Arrière-plan dégradé subtil Bricelo Navy
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -71,8 +89,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-
-          // Lueur dorée en arrière-plan du logo
           Center(
             child: Container(
               width: 240,
@@ -89,8 +105,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-
-          // Contenu centré : Image 2 immédiatement visible dès le 1er frame !
           Center(
             child: AnimatedBuilder(
               animation: _controller,
@@ -100,7 +114,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Logo officiel Bricelo dans sa carte blanche squircle
                       Container(
                         width: 120,
                         height: 120,
@@ -135,8 +148,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // Titre Bricelo Stock Doré Officiel
                       const Text(
                         'BRICELO STOCK',
                         style: TextStyle(
@@ -147,8 +158,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         ),
                       ),
                       const SizedBox(height: 6),
-
-                      // Sous-titre Market & Stock
                       const Text(
                         'Market & Stock',
                         style: TextStyle(
@@ -164,8 +173,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               },
             ),
           ),
-
-          // Bas de page : Loader doré élégant & Slogan
           Positioned(
             left: 0,
             right: 0,
@@ -184,7 +191,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Gestion & Commerce au Cameroun',
+                  'Gestion & Commerce Connecté',
                   style: TextStyle(
                     color: Colors.white38,
                     fontSize: 11,

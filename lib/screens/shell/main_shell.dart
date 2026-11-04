@@ -127,7 +127,7 @@ class _MainShellState extends State<MainShell> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Boutique principale'.tr,
+                                appState.currentStore,
                                 style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -249,26 +249,26 @@ class _MainShellState extends State<MainShell> {
                                     color: AppTheme.accentGold,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: const Center(
+                                  child: Center(
                                     child: Text(
-                                      'FA',
-                                      style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 13),
+                                      appState.userInitials,
+                                      style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 13),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
-                                const Expanded(
+                                Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Franklin Athletics',
-                                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        appState.displayCompanyName,
+                                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       Text(
-                                        'Propriétaire',
-                                        style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w600),
+                                        appState.userRole,
+                                        style: const TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w600),
                                       ),
                                     ],
                                   ),
