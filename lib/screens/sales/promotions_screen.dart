@@ -249,3 +249,4 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
     );
   }
 }
+

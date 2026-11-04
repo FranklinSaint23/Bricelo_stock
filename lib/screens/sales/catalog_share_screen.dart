@@ -169,3 +169,4 @@ class CatalogShareScreen extends StatelessWidget {
     );
   }
 }
+

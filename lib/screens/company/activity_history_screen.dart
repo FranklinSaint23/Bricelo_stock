@@ -154,3 +154,4 @@ class ActivityHistoryScreen extends StatelessWidget {
     );
   }
 }
+
