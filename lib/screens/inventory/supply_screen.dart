@@ -42,6 +42,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
 
   String _selectedMode = 'Achat fournisseur'; // 'Achat fournisseur', 'Stock existant'
   String? _selectedSupplier;
+  String _selectedStore = '';
   bool _tvaDeductible = false;
   bool _alreadyPaid = false;
   final _notesCtrl = TextEditingController();
@@ -68,6 +69,12 @@ class _SupplyScreenState extends State<SupplyScreen> {
     super.initState();
     if (appState.suppliers.isNotEmpty) {
       _selectedSupplier = appState.suppliers.first.name;
+    }
+    if (appState.outlets.isNotEmpty) {
+      final def = appState.outlets.firstWhere((o) => o.isDefault, orElse: () => appState.outlets.first);
+      _selectedStore = def.name;
+    } else {
+      _selectedStore = appState.currentStore;
     }
   }
 
@@ -198,7 +205,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
-                                              'Prix d\'achat: ${AppTheme.formatFCFA(p.buyPrice)} • Stock actuel: ${p.stock}',
+                                              'Prix d\'achat: ${AppTheme.formatFCFA(p.buyPrice)} • Stock ($_selectedStore): ${p.stockForStore(_selectedStore)}',
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: isDark ? Colors.white60 : const Color(0xFF6B7280),
@@ -280,6 +287,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
         quantity: item.quantity,
         buyCost: item.buyPrice,
         supplier: _selectedSupplier ?? 'Fournisseur',
+        storeName: _selectedStore,
       );
     }
 
@@ -445,6 +453,77 @@ class _SupplyScreenState extends State<SupplyScreen> {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 2.5 SÉLECTION DE LA BOUTIQUE DE DESTINATION
+                    Row(
+                      children: [
+                        const Icon(Icons.storefront, size: 16, color: AppTheme.primaryNavy),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Boutique de destination *',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: isDark ? Colors.white : const Color(0xFF111827),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? AppTheme.darkSurface : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: appState.outlets.any((o) => o.name == _selectedStore)
+                              ? _selectedStore
+                              : (appState.outlets.isNotEmpty ? appState.outlets.first.name : appState.currentStore),
+                          isExpanded: true,
+                          dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
+                          icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.primaryNavy),
+                          items: appState.outlets.map((o) {
+                            return DropdownMenuItem<String>(
+                              value: o.name,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.storefront_outlined, size: 16, color: o.isDefault ? AppTheme.accentGold : Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    o.name,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: isDark ? Colors.white : const Color(0xFF111827),
+                                    ),
+                                  ),
+                                  if (o.isDefault) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.accentGold.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text('Par défaut', style: TextStyle(fontSize: 10, color: AppTheme.accentGold, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() => _selectedStore = val);
+                            }
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(height: 18),

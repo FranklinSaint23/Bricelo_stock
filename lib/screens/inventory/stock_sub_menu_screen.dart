@@ -50,8 +50,11 @@ class StockSubMenuScreen extends StatelessWidget {
                 _buildDivider(),
                 _buildRow(
                   icon: Icons.assignment_outlined,
-                  title: 'Inventaires',
-                  isLocked: true,
+                  title: 'Inventaires'.tr,
+                  isLocked: false,
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const PhysicalInventoryScreen()));
+                  },
                 ),
                 _buildDivider(),
                 _buildRow(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
+import 'package:stock_prime/screens/sales/debts_screen.dart';
+import 'package:stock_prime/screens/finance/accounting_detail_views.dart';
 
 class AccountingScreen extends StatelessWidget {
   const AccountingScreen({super.key});
@@ -7,16 +9,56 @@ class AccountingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      {'icon': Icons.book_outlined, 'title': 'Journal & activation'},
-      {'icon': Icons.balance_outlined, 'title': 'Balance'},
-      {'icon': Icons.people_outline, 'title': 'Clients à crédit'},
-      {'icon': Icons.bar_chart_outlined, 'title': 'Compte de résultat'},
-      {'icon': Icons.description_outlined, 'title': 'Bilan'},
-      {'icon': Icons.receipt_outlined, 'title': 'TVA'},
-      {'icon': Icons.badge_outlined, 'title': 'Paie'},
-      {'icon': Icons.apartment_outlined, 'title': 'Immobilisations'},
-      {'icon': Icons.event_available_outlined, 'title': 'Clôture'},
-      {'icon': Icons.photo_library_outlined, 'title': 'Médiathèque'},
+      {
+        'icon': Icons.book_outlined,
+        'title': 'Journal & activation',
+        'builder': (BuildContext ctx) => const AccountingJournalScreen(),
+      },
+      {
+        'icon': Icons.balance_outlined,
+        'title': 'Balance',
+        'builder': (BuildContext ctx) => const TrialBalanceScreen(),
+      },
+      {
+        'icon': Icons.people_outline,
+        'title': 'Clients à crédit',
+        'builder': (BuildContext ctx) => const DebtsScreen(),
+      },
+      {
+        'icon': Icons.bar_chart_outlined,
+        'title': 'Compte de résultat',
+        'builder': (BuildContext ctx) => const IncomeStatementScreen(),
+      },
+      {
+        'icon': Icons.description_outlined,
+        'title': 'Bilan',
+        'builder': (BuildContext ctx) => const BalanceSheetScreen(),
+      },
+      {
+        'icon': Icons.receipt_outlined,
+        'title': 'TVA',
+        'builder': (BuildContext ctx) => const VatReportScreen(),
+      },
+      {
+        'icon': Icons.badge_outlined,
+        'title': 'Paie',
+        'builder': (BuildContext ctx) => const PayrollScreen(),
+      },
+      {
+        'icon': Icons.apartment_outlined,
+        'title': 'Immobilisations',
+        'builder': (BuildContext ctx) => const FixedAssetsScreen(),
+      },
+      {
+        'icon': Icons.event_available_outlined,
+        'title': 'Clôture',
+        'builder': (BuildContext ctx) => const DailyClosingScreen(),
+      },
+      {
+        'icon': Icons.photo_library_outlined,
+        'title': 'Médiathèque',
+        'builder': (BuildContext ctx) => const AccountingMediaScreen(),
+      },
     ];
 
     return Scaffold(
@@ -57,7 +99,15 @@ class AccountingScreen extends StatelessWidget {
               children: [
                 for (int i = 0; i < items.length; i++) ...[
                   if (i > 0) const Divider(height: 1, indent: 52, color: Color(0xFFF3F4F6)),
-                  _buildLockedRow(items[i]['icon'] as IconData, items[i]['title'] as String),
+                  _buildNavRow(
+                    context,
+                    icon: items[i]['icon'] as IconData,
+                    title: items[i]['title'] as String,
+                    onTap: () {
+                      final builder = items[i]['builder'] as Widget Function(BuildContext);
+                      Navigator.push(context, MaterialPageRoute(builder: builder));
+                    },
+                  ),
                 ],
               ],
             ),
@@ -67,9 +117,14 @@ class AccountingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLockedRow(IconData icon, String title) {
+  Widget _buildNavRow(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
@@ -82,7 +137,7 @@ class AccountingScreen extends StatelessWidget {
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF1F2937)),
               ),
             ),
-            const Icon(Icons.lock_outline, size: 20, color: Color(0xFF374151)),
+            const Icon(Icons.chevron_right, size: 20, color: Color(0xFF9CA3AF)),
           ],
         ),
       ),

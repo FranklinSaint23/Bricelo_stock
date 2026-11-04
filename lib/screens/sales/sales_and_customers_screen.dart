@@ -69,7 +69,7 @@ class SalesAndCustomersScreen extends StatelessWidget {
                 _buildRow(
                   icon: Icons.bar_chart_outlined,
                   title: 'Analyse des ventes',
-                  trailingIcon: Icons.lock_outline,
+                  trailingIcon: Icons.chevron_right,
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesAnalyticsScreen()));
                   },

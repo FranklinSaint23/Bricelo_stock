@@ -48,6 +48,8 @@ class Product {
   String? supplierName;
   String? imageUrl;
 
+  Map<String, int> stockByStore;
+
   Product({
     required this.id,
     required this.name,
@@ -63,7 +65,23 @@ class Product {
     this.isSyncedToBricelo = true,
     this.supplierName,
     this.imageUrl,
-  }) : wholesalePrice = wholesalePrice ?? (sellPrice * 0.9);
+    Map<String, int>? stockByStore,
+  })  : wholesalePrice = wholesalePrice ?? (sellPrice * 0.9),
+        stockByStore = stockByStore ?? {};
+
+  int stockForStore(String storeName) {
+    if (storeName == 'Tous' || storeName.trim().isEmpty) return stock;
+    return stockByStore[storeName.trim()] ?? stock;
+  }
+
+  void setStockForStore(String storeName, int qty) {
+    stockByStore[storeName.trim()] = qty;
+    if (stockByStore.length > 1) {
+      stock = stockByStore.values.fold(0, (sum, v) => sum + v);
+    } else {
+      stock = qty;
+    }
+  }
 
   double get margin => sellPrice - buyPrice;
   double get marginPercent => buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice) * 100 : 0;
@@ -86,11 +104,20 @@ class Product {
         'isSyncedToBricelo': isSyncedToBricelo,
         'supplierName': supplierName,
         'imageUrl': imageUrl,
+        'stockByStore': stockByStore,
       };
 
   factory Product.fromJson(Map<String, dynamic> j) {
     final sell = (j['sellPrice'] ?? j['price'] ?? 0).toDouble();
     final buy = (j['buyPrice'] ?? j['purchase_price'] ?? (sell * 0.7)).toDouble();
+    final rawMap = j['stockByStore'];
+    final Map<String, int> sMap = {};
+    if (rawMap is Map) {
+      rawMap.forEach((k, v) {
+        sMap[k.toString()] = (v as num?)?.toInt() ?? 0;
+      });
+    }
+
     return Product(
       id: (j['id'] ?? '').toString(),
       name: (j['name'] ?? '').toString(),
@@ -106,7 +133,7 @@ class Product {
       isSyncedToBricelo: j['isSyncedToBricelo'] as bool? ?? true,
       supplierName: j['supplierName']?.toString(),
       imageUrl: j['imageUrl']?.toString(),
-    );
+      stockByStore: sMap,);
   }
 }
 
@@ -394,6 +421,8 @@ class Expense {
   final DateTime createdAt;
   final String paidBy;
 
+  DateTime get date => createdAt;
+
   Expense({
     required this.id,
     required this.category,
@@ -577,5 +606,96 @@ class Supplier {
         notes: (j['notes'] ?? '').toString(),
         isArchived: j['isArchived'] as bool? ?? false,
         createdAt: DateTime.tryParse((j['createdAt'] ?? j['created_at'] ?? '').toString()) ?? DateTime.now(),
+      );
+}
+
+
+// ==========================================
+// MODÈLE BOUTIQUE & POINT DE VENTE (OUTLET)
+// ==========================================
+class StoreOutlet {
+  final String id;
+  String name;
+  String type; // 'Boutique' or 'Entrepôt'
+  bool isDefault;
+  bool hasSpecificPrices;
+  double discount;
+  String address;
+  String phone;
+  DateTime createdAt;
+
+  StoreOutlet({
+    required this.id,
+    required this.name,
+    this.type = 'Boutique',
+    this.isDefault = false,
+    this.hasSpecificPrices = false,
+    this.discount = 0.0,
+    this.address = '',
+    this.phone = '',
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'type': type,
+        'isDefault': isDefault,
+        'hasSpecificPrices': hasSpecificPrices,
+        'discount': discount,
+        'address': address,
+        'phone': phone,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+  factory StoreOutlet.fromJson(Map<String, dynamic> json) => StoreOutlet(
+        id: (json['id'] ?? '').toString(),
+        name: (json['name'] ?? '').toString(),
+        type: (json['type'] ?? 'Boutique').toString(),
+        isDefault: json['isDefault'] as bool? ?? false,
+        hasSpecificPrices: json['hasSpecificPrices'] as bool? ?? false,
+        discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
+        address: (json['address'] ?? '').toString(),
+        phone: (json['phone'] ?? '').toString(),
+        createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
+      );
+}
+
+// ==========================================
+// MODÈLE CAISSE ENREGISTREUSE (CASH DESK)
+// ==========================================
+class CashDesk {
+  final String id;
+  String name;
+  String storeName;
+  bool isDefault;
+  double balance;
+  DateTime createdAt;
+
+  CashDesk({
+    required this.id,
+    required this.name,
+    required this.storeName,
+    this.isDefault = false,
+    this.balance = 0.0,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'storeName': storeName,
+        'isDefault': isDefault,
+        'balance': balance,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+  factory CashDesk.fromJson(Map<String, dynamic> json) => CashDesk(
+        id: (json['id'] ?? '').toString(),
+        name: (json['name'] ?? '').toString(),
+        storeName: (json['storeName'] ?? '').toString(),
+        isDefault: json['isDefault'] as bool? ?? false,
+        balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
+        createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
       );
 }

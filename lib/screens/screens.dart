@@ -67,3 +67,12 @@ export '../services/translations.dart';
 
 export 'auth/language_onboarding_screen.dart';
 export '../widgets/sale_receipt_dialog.dart';
+export 'company/access_groups_screen.dart';
+export 'company/activity_history_screen.dart';
+export 'finance/expenses_analytics_screen.dart';
+export 'finance/purchase_costs_screen.dart';
+export 'finance/accounting_detail_views.dart';
+export 'inventory/physical_inventory_screen.dart';
+export 'sales/promotions_screen.dart';
+export 'sales/catalog_share_screen.dart';
+export 'sales/external_order_screen.dart';

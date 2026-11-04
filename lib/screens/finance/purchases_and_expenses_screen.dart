@@ -289,9 +289,13 @@ class PurchasesAndExpensesScreen extends StatelessWidget {
                   },
                 ),
                 _buildDivider(),
-                _buildRow(Icons.analytics_outlined, 'Analyse des sorties'.tr, isLocked: true),
+                _buildRow(Icons.analytics_outlined, 'Analyse des sorties'.tr, isLocked: false, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesAnalyticsScreen()));
+                }),
                 _buildDivider(),
-                _buildRow(Icons.balance_outlined, 'Coût d\'achat'.tr, isLocked: true),
+                _buildRow(Icons.balance_outlined, 'Coût d\'achat'.tr, isLocked: false, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchaseCostsScreen()));
+                }),
                 _buildDivider(),
                 _buildRow(Icons.description_outlined, 'Dettes fournisseurs'.tr, isLocked: false, onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplierDebtsScreen()));

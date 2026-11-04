@@ -43,9 +43,13 @@ class PromotionAndShopScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _buildRow(Icons.local_offer_outlined, 'Promotions', isLocked: true),
+                _buildRow(Icons.local_offer_outlined, 'Promotions', isLocked: false, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PromotionsScreen()));
+                }),
                 _buildDivider(),
-                _buildRow(Icons.campaign_outlined, 'Catalogues à partager', isLocked: true),
+                _buildRow(Icons.campaign_outlined, 'Catalogues à partager', isLocked: false, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CatalogShareScreen()));
+                }),
                 _buildDivider(),
                 _buildRow(Icons.storefront_outlined, 'Boutique en ligne', isLocked: false, onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const OnlineShopScreen()));
@@ -55,13 +59,17 @@ class PromotionAndShopScreen extends StatelessWidget {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const OnlineOrdersScreen()));
                 }),
                 _buildDivider(),
-                _buildRow(Icons.assignment_outlined, 'Commande externe', isLocked: false),
+                _buildRow(Icons.assignment_outlined, 'Commande externe', isLocked: false, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ExternalOrderScreen()));
+                }),
                 _buildDivider(),
                 _buildRow(Icons.movie_creation_outlined, 'Studio vidéo', isLocked: false, onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const VideoStudioScreen()));
                 }),
                 _buildDivider(),
-                _buildRow(Icons.chat_bubble_outline, 'Catalogue WhatsApp & Facebook', isLocked: true),
+                _buildRow(Icons.chat_bubble_outline, 'Catalogue WhatsApp & Facebook', isLocked: false, onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CatalogShareScreen()));
+                }),
               ],
             ),
           ),

@@ -131,7 +131,14 @@ class CompanyAndTeamScreen extends StatelessWidget {
                   },
                 ),
                 _buildDivider(),
-                _buildRow(icon: Icons.shield_outlined, title: 'Groupes d\'accès', isLocked: true),
+                _buildRow(
+                  icon: Icons.shield_outlined,
+                  title: 'Groupes d\'accès',
+                  isLocked: false,
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AccessGroupsScreen()));
+                  },
+                ),
                 _buildDivider(),
                 _buildRow(
                   icon: Icons.store_mall_directory_outlined,
@@ -149,7 +156,14 @@ class CompanyAndTeamScreen extends StatelessWidget {
                   },
                 ),
                 _buildDivider(),
-                _buildRow(icon: Icons.history, title: 'Historique d\'activité', isLocked: true),
+                _buildRow(
+                  icon: Icons.history,
+                  title: 'Historique d\'activité',
+                  isLocked: false,
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityHistoryScreen()));
+                  },
+                ),
               ],
             ),
           ),

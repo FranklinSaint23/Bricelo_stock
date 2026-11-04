@@ -30,6 +30,8 @@ class AppState extends ChangeNotifier {
   bool isBossMode = true;
   String currentStore = 'Boutique Principale';
   List<String> availableStores = [];
+  List<StoreOutlet> outlets = [];
+  List<CashDesk> cashDesks = [];
 
   double openingCash = 0.0;
   bool isSyncedToBricelo = true;
@@ -95,8 +97,50 @@ class AppState extends ChangeNotifier {
             .map((e) => e.toString())
             .where((s) => s.isNotEmpty)
             .toList();
-        if (availableStores.isEmpty && currentStore.isNotEmpty) {
-          availableStores = [currentStore];
+
+        outlets = (data['outlets'] as List<dynamic>? ?? [])
+            .map((e) => StoreOutlet.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+
+        cashDesks = (data['cashDesks'] as List<dynamic>? ?? [])
+            .map((e) => CashDesk.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+
+        if (outlets.isEmpty) {
+          final defaultName = currentStore.trim().isNotEmpty
+              ? currentStore.trim()
+              : (companyName.trim().isNotEmpty ? companyName.trim() : 'Boutique Principale');
+          currentStore = defaultName;
+          outlets = [
+            StoreOutlet(
+              id: 'outlet_default',
+              name: defaultName,
+              type: 'Boutique',
+              isDefault: true,
+              address: '',
+              phone: userPhone,
+            ),
+          ];
+          availableStores = [defaultName];
+        } else {
+          availableStores = outlets.map((o) => o.name).toList();
+          if (!availableStores.contains(currentStore)) {
+            currentStore = outlets.first.name;
+          }
+        }
+
+        // Ensure every store has its default Caisse "Caisse [Nom Boutique]"
+        for (final o in outlets) {
+          final defaultCaisseName = 'Caisse ${o.name}';
+          final hasCaisse = cashDesks.any((c) => c.storeName == o.name);
+          if (!hasCaisse) {
+            cashDesks.add(CashDesk(
+              id: 'caisse_${DateTime.now().millisecondsSinceEpoch}_${o.id}',
+              name: defaultCaisseName,
+              storeName: o.name,
+              isDefault: true,
+            ));
+          }
         }
 
         categories = (data['categories'] as List<dynamic>? ?? [])
@@ -153,6 +197,8 @@ class AppState extends ChangeNotifier {
         'userRole': userRole,
         'currentStore': currentStore,
         'availableStores': availableStores,
+        'outlets': outlets.map((e) => e.toJson()).toList(),
+        'cashDesks': cashDesks.map((e) => e.toJson()).toList(),
         'openingCash': openingCash,
         'categories': categories.map((e) => e.toJson()).toList(),
         'customers': customers.map((e) => e.toJson()).toList(),
@@ -509,6 +555,194 @@ class AppState extends ChangeNotifier {
       currentStore = availableStores.first;
     }
     _saveToPrefs();
+    notifyListeners();
+  }
+
+  
+  // --- GESTION DYNAMIQUE DES BOUTIQUES & CAISSES (100% PERSISTANT) ---
+  List<CashDesk> cashDesksForStore(String storeName) {
+    return cashDesks.where((c) => c.storeName.trim().toLowerCase() == storeName.trim().toLowerCase()).toList();
+  }
+
+  Future<void> addOutlet({
+    required String name,
+    String type = 'Boutique',
+    String address = '',
+    String phone = '',
+    double discount = 0.0,
+    bool isDefault = false,
+  }) async {
+    final cleanName = name.trim();
+    if (cleanName.isEmpty) return;
+
+    if (isDefault) {
+      for (final o in outlets) {
+        o.isDefault = false;
+      }
+    }
+
+    final outlet = StoreOutlet(
+      id: 'outlet_${DateTime.now().millisecondsSinceEpoch}',
+      name: cleanName,
+      type: type,
+      isDefault: isDefault || outlets.isEmpty,
+      address: address.trim(),
+      phone: phone.trim(),
+      discount: discount,
+    );
+
+    outlets.add(outlet);
+    if (!availableStores.contains(cleanName)) {
+      availableStores.add(cleanName);
+    }
+
+    // Création automatique de la caisse par défaut : "Caisse [Nom Boutique]"
+    final defaultCaisseName = 'Caisse $cleanName';
+    final hasCaisse = cashDesks.any((c) => c.name == defaultCaisseName && c.storeName == cleanName);
+    if (!hasCaisse) {
+      cashDesks.add(CashDesk(
+        id: 'caisse_${DateTime.now().millisecondsSinceEpoch}',
+        name: defaultCaisseName,
+        storeName: cleanName,
+        isDefault: true,
+      ));
+    }
+
+    if (outlet.isDefault) {
+      currentStore = cleanName;
+    }
+
+    await _saveToPrefs();
+    notifyListeners();
+
+    _supabase?.from('stores').upsert({
+      'name': cleanName,
+      'address': address,
+      'phone': phone.isNotEmpty ? phone : userPhone,
+    }, onConflict: 'name').then((_) {}, onError: (_) {});
+  }
+
+  Future<void> updateOutlet(
+    String id, {
+    required String name,
+    String type = 'Boutique',
+    String address = '',
+    String phone = '',
+    double discount = 0.0,
+    bool isDefault = false,
+  }) async {
+    final idx = outlets.indexWhere((o) => o.id == id);
+    if (idx == -1) return;
+
+    final oldName = outlets[idx].name;
+    final cleanName = name.trim();
+    if (cleanName.isEmpty) return;
+
+    if (isDefault) {
+      for (final o in outlets) {
+        o.isDefault = false;
+      }
+    }
+
+    outlets[idx].name = cleanName;
+    outlets[idx].type = type;
+    outlets[idx].address = address.trim();
+    outlets[idx].phone = phone.trim();
+    outlets[idx].discount = discount;
+    if (isDefault) outlets[idx].isDefault = true;
+
+    // Si le nom a changé, mettre à jour availableStores et les caisses rattachées
+    if (oldName != cleanName) {
+      final aIdx = availableStores.indexOf(oldName);
+      if (aIdx != -1) {
+        availableStores[aIdx] = cleanName;
+      } else if (!availableStores.contains(cleanName)) {
+        availableStores.add(cleanName);
+      }
+      if (currentStore == oldName) {
+        currentStore = cleanName;
+      }
+      for (final c in cashDesks) {
+        if (c.storeName == oldName) {
+          c.storeName = cleanName;
+          if (c.name.startsWith('Caisse $oldName')) {
+            c.name = 'Caisse $cleanName';
+          }
+        }
+      }
+      for (final p in products) {
+        if (p.stockByStore.containsKey(oldName)) {
+          final s = p.stockByStore.remove(oldName)!;
+          p.stockByStore[cleanName] = s;
+        }
+      }
+    }
+
+    await _saveToPrefs();
+    notifyListeners();
+  }
+
+  Future<void> deleteOutlet(String id) async {
+    if (outlets.length <= 1) return; // Impossible de supprimer la seule boutique
+    final idx = outlets.indexWhere((o) => o.id == id);
+    if (idx == -1) return;
+
+    final removedName = outlets[idx].name;
+    outlets.removeAt(idx);
+    availableStores.remove(removedName);
+    cashDesks.removeWhere((c) => c.storeName == removedName);
+
+    if (currentStore == removedName) {
+      currentStore = outlets.first.name;
+    }
+
+    await _saveToPrefs();
+    notifyListeners();
+  }
+
+  Future<void> addCashDesk({
+    required String name,
+    required String storeName,
+    bool isDefault = false,
+  }) async {
+    final clean = name.trim();
+    if (clean.isEmpty) return;
+
+    if (isDefault) {
+      for (final c in cashDesks) {
+        if (c.storeName == storeName) c.isDefault = false;
+      }
+    }
+
+    cashDesks.add(CashDesk(
+      id: 'caisse_${DateTime.now().millisecondsSinceEpoch}',
+      name: clean,
+      storeName: storeName,
+      isDefault: isDefault,
+    ));
+
+    await _saveToPrefs();
+    notifyListeners();
+  }
+
+  Future<void> updateCashDesk(String id, String newName) async {
+    final idx = cashDesks.indexWhere((c) => c.id == id);
+    if (idx == -1) return;
+    final clean = newName.trim();
+    if (clean.isEmpty) return;
+    cashDesks[idx].name = clean;
+    await _saveToPrefs();
+    notifyListeners();
+  }
+
+  Future<void> deleteCashDesk(String id) async {
+    final idx = cashDesks.indexWhere((c) => c.id == id);
+    if (idx == -1) return;
+    final desk = cashDesks[idx];
+    final count = cashDesks.where((c) => c.storeName == desk.storeName).length;
+    if (count <= 1) return; // Garder au moins 1 caisse par boutique
+    cashDesks.removeAt(idx);
+    await _saveToPrefs();
     notifyListeners();
   }
 
@@ -1065,11 +1299,14 @@ class AppState extends ChangeNotifier {
     required int quantity,
     required double buyCost,
     String supplier = '',
+    String? storeName,
   }) {
     final idx = products.indexWhere((prod) => prod.id == productId);
     if (idx == -1) return;
     final p = products[idx];
-    p.stock += quantity;
+    final targetStore = (storeName != null && storeName.trim().isNotEmpty) ? storeName.trim() : currentStore;
+    final currentStoreStock = p.stockForStore(targetStore);
+    p.setStockForStore(targetStore, currentStoreStock + quantity);
     if (buyCost > 0) {
       p.buyPrice = buyCost;
     }
@@ -1079,8 +1316,8 @@ class AppState extends ChangeNotifier {
       productName: p.name,
       type: 'RÉASSORT (+)',
       quantity: quantity,
-      newStock: p.stock,
-      reason: supplier.isNotEmpty ? 'Fournisseur: $supplier' : 'Approvisionnement',
+      newStock: p.stockForStore(targetStore),
+      reason: supplier.isNotEmpty ? 'Fournisseur: $supplier ($targetStore)' : 'Approvisionnement ($targetStore)',
       date: DateTime.now(),
     );
     stockMovements.insert(0, sm);
