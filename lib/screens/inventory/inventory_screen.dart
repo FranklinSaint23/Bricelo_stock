@@ -188,6 +188,35 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     return Scaffold(
       backgroundColor: pageBg,
+      appBar: AppBar(
+        backgroundColor: AppTheme.primaryNavy,
+        title: Text(
+          'Stock'.tr,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+        ),
+        centerTitle: true,
+        elevation: 0,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: InkWell(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen()));
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.help_outline, color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(

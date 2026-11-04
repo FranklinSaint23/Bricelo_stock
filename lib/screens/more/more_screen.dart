@@ -11,6 +11,8 @@ import 'package:stock_prime/screens/inventory/stock_sub_menu_screen.dart';
 import 'package:stock_prime/screens/finance/purchases_and_expenses_screen.dart';
 import 'package:stock_prime/screens/finance/depreciation_report_screen.dart';
 import 'package:stock_prime/screens/finance/accounting_screen.dart';
+import 'package:stock_prime/screens/finance/global_stats_screen.dart';
+import 'package:stock_prime/screens/finance/activity_reports_screen.dart';
 import 'package:stock_prime/screens/company/company_and_team_screen.dart';
 import 'package:stock_prime/screens/company/preferences_screen.dart';
 import 'package:stock_prime/screens/company/language_screen.dart';
@@ -94,6 +96,20 @@ class _MoreScreenState extends State<MoreScreen> {
         title: 'Comptabilité & trésorerie'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const AccountingScreen())),
         keywords: ['comptabilité', 'comptabilite', 'trésorerie', 'tresorerie', 'banque', 'caisse', 'finance', 'bilan'],
+      ),
+      // 7. Statistiques (globales)
+      _OriginalMenuItem(
+        icon: Icons.insights_rounded,
+        title: 'Statistiques (globales)'.tr,
+        onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const GlobalStatsScreen())),
+        keywords: ['statistique', 'statistiques', 'stat', 'stats', 'globale', 'globales', 'analyse', 'graphique', 'chiffre'],
+      ),
+      // 8. Rapports
+      _OriginalMenuItem(
+        icon: Icons.summarize_outlined,
+        title: 'Rapports'.tr,
+        onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const ActivityReportsScreen())),
+        keywords: ['rapport', 'rapports', 'activité', 'activite', 'période', 'periode', 'bilan', 'export', 'pdf'],
       ),
       // 7. Entreprise & équipe (avec badge À compléter)
       _OriginalMenuItem(
@@ -184,7 +200,7 @@ class _MoreScreenState extends State<MoreScreen> {
             Container(
               decoration: BoxDecoration(
                 color: cardBg,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: cardBorder, width: 1.2),
                 boxShadow: [
                   BoxShadow(
@@ -231,12 +247,12 @@ class _MoreScreenState extends State<MoreScreen> {
                     MaterialPageRoute(builder: (_) => const MyAccountScreen()),
                   );
                 },
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(14),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: cardBg,
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: cardBorder, width: 1.2),
                     boxShadow: [
                       BoxShadow(
@@ -348,12 +364,12 @@ class _MoreScreenState extends State<MoreScreen> {
                     MaterialPageRoute(builder: (_) => const VerifyEmailScreen()),
                   );
                 },
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(14),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF2D1616) : const Color(0xFFFEF2F2),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: isDark ? const Color(0xFF5A2323) : const Color(0xFFFECACA), width: 1.2),
                   ),
                   child: Row(
@@ -441,9 +457,9 @@ class _MoreScreenState extends State<MoreScreen> {
                 itemCount: filteredItems.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.15,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 1.22,
                 ),
                 itemBuilder: (context, index) {
                   return _buildFeatureCard(
@@ -464,7 +480,7 @@ class _MoreScreenState extends State<MoreScreen> {
             Container(
               decoration: BoxDecoration(
                 color: cardBg,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: cardBorder, width: 1.2),
                 boxShadow: [
                   BoxShadow(
@@ -530,7 +546,7 @@ class _MoreScreenState extends State<MoreScreen> {
                   // Ligne Se Déconnecter
                   InkWell(
                     onTap: () => _confirmLogout(context),
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       child: Row(
@@ -540,7 +556,7 @@ class _MoreScreenState extends State<MoreScreen> {
                             height: 44,
                             decoration: BoxDecoration(
                               color: isDark ? const Color(0xFF451A1A) : const Color(0xFFFEE2E2),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
                               Icons.logout_rounded,
@@ -591,13 +607,13 @@ class _MoreScreenState extends State<MoreScreen> {
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(13),
         border: Border.all(color: cardBorder, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0D1B2E).withValues(alpha: isDark ? 0.3 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -605,11 +621,11 @@ class _MoreScreenState extends State<MoreScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => item.onTap(context),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(13),
           splashColor: iconColor.withValues(alpha: 0.12),
           highlightColor: iconColor.withValues(alpha: 0.06),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -618,11 +634,11 @@ class _MoreScreenState extends State<MoreScreen> {
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      width: 50,
-                      height: 50,
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
                         color: iconBoxBg,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: iconBorderColor, width: 1),
                       ),
                       child: Center(

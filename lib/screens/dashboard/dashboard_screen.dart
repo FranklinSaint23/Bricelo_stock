@@ -609,7 +609,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Text(
                           '${'Bonjour'.tr}, ${appState.displayUserName} 👋',
                           style: const TextStyle(
-                            color: AppTheme.primaryNavy,
+                            color: Color(0xFF0F172A),
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.3,
@@ -617,24 +617,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 3),
-                        // DATE DU JOUR DYNAMIQUE SOUS BONJOUR NOM_USER
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xFF64748B)),
-                            const SizedBox(width: 5),
-                            Flexible(
-                              child: Text(
-                                AppTranslations.formattedCurrentDate,
-                                style: const TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                        const SizedBox(height: 2),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const OutletsScreen()));
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF10B981),
+                                  shape: BoxShape.circle,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  appState.currentStore,
+                                  style: const TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const Icon(Icons.keyboard_arrow_down, size: 14, color: Color(0xFF64748B)),
+                            ],
+                          ),
                         ),
                       ],
                     ),

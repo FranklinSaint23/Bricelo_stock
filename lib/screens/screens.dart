@@ -76,3 +76,5 @@ export 'inventory/physical_inventory_screen.dart';
 export 'sales/promotions_screen.dart';
 export 'sales/catalog_share_screen.dart';
 export 'sales/external_order_screen.dart';
+export 'finance/global_stats_screen.dart';
+export 'finance/activity_reports_screen.dart';
