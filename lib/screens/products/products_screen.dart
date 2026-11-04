@@ -342,7 +342,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   // ==========================================
   Widget _buildMobileProducts(BuildContext context, List<Product> products) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
         title: Text(
@@ -501,31 +501,116 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: products.length,
-                        separatorBuilder: (_, index) => const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                        separatorBuilder: (_, index) => const SizedBox(height: 10),
                         itemBuilder: (context, idx) {
                           final p = products[idx];
+                          final isOutOfStock = p.stock <= 0;
+                          final isLowStock = p.stock > 0 && p.stock <= 5;
+                          final stockColor = isOutOfStock
+                              ? const Color(0xFFDC2626)
+                              : (isLowStock ? const Color(0xFFD97706) : const Color(0xFF059669));
+                          final stockBg = isOutOfStock
+                              ? const Color(0xFFFEF2F2)
+                              : (isLowStock ? const Color(0xFFFFFBEB) : const Color(0xFFECFDF5));
+                          final stockBorder = isOutOfStock
+                              ? const Color(0xFFFECACA)
+                              : (isLowStock ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0));
+                          final stockText = isOutOfStock
+                              ? 'Épuisé'.tr
+                              : (isLowStock ? '${p.stock} restants' : '${p.stock} ${p.unit}');
+
                           return InkWell(
                             onTap: () {
                               Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)));
                             },
-                            child: ListTile(
-                              leading: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F4F6),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 22),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                              title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                              subtitle: Text(
-                                '${'Stock :'.tr} ${p.stock} ${p.unit} • Réf: ${p.barcode}',
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-                              ),
-                              trailing: Text(
-                                AppTheme.formatFCFA(p.sellPrice),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryNavy),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                                    ),
+                                    child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 24),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          p.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 14,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              'Réf: ${p.barcode}',
+                                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: stockBg,
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(color: stockBorder),
+                                              ),
+                                              child: Text(
+                                                stockText,
+                                                style: TextStyle(
+                                                  color: stockColor,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        AppTheme.formatFCFA(p.sellPrice),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 14,
+                                          color: AppTheme.primaryNavy,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      const Icon(Icons.arrow_forward_ios, size: 10, color: Color(0xFF94A3B8)),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           );

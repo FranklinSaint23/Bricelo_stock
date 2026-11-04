@@ -162,6 +162,7 @@ class AppState extends ChangeNotifier {
     return openingCash + cashSales + debtCash - todayExpensesTotal;
   }
 
+  List<Product> get lowStockProducts => products.where((p) => p.isLowStock).toList();
   int get lowStockCount => products.where((p) => p.isLowStock).length;
   int get outOfStockCount => products.where((p) => p.isOutOfStock).length;
 

@@ -411,47 +411,46 @@ class _MainShellState extends State<MainShell> {
         return Scaffold(
           body: _screens[_currentIndex],
           bottomNavigationBar: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
-            ),
-            child: BottomNavigationBar(
-              currentIndex: _currentIndex,
-              onTap: (idx) => setState(() => _currentIndex = idx),
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.white,
-              selectedItemColor: AppTheme.accentGold,
-              unselectedItemColor: const Color(0xFF6B7280),
-              selectedFontSize: 11,
-              unselectedFontSize: 11,
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-              items: [
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.home_outlined),
-                  activeIcon: const Icon(Icons.home),
-                  label: 'Accueil'.tr,
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.shopping_cart_outlined),
-                  activeIcon: const Icon(Icons.shopping_cart),
-                  label: 'Vente'.tr,
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.inventory_2_outlined),
-                  activeIcon: const Icon(Icons.inventory_2),
-                  label: 'Produits'.tr,
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.warehouse_outlined),
-                  activeIcon: const Icon(Icons.warehouse),
-                  label: 'Stock'.tr,
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.more_horiz),
-                  activeIcon: const Icon(Icons.more_horiz),
-                  label: 'Plus'.tr,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryNavy.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
                 ),
               ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Container(
+                height: 64,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildModernNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Accueil'.tr),
+                    _buildModernNavItem(
+                      1,
+                      Icons.shopping_cart_outlined,
+                      Icons.shopping_cart_rounded,
+                      'Vente'.tr,
+                      badge: appState.cart.isNotEmpty ? '' : null,
+                    ),
+                    _buildModernNavItem(2, Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Produits'.tr),
+                    _buildModernNavItem(
+                      3,
+                      Icons.warehouse_outlined,
+                      Icons.warehouse_rounded,
+                      'Stock'.tr,
+                      badge: appState.lowStockProducts.isNotEmpty ? '!' : null,
+                      badgeColor: AppTheme.danger,
+                    ),
+                    _buildModernNavItem(4, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Plus'.tr),
+                  ],
+                ),
+              ),
             ),
           ),
         );
@@ -534,4 +533,83 @@ class _MainShellState extends State<MainShell> {
       ),
     );
   }
+
+  Widget _buildModernNavItem(
+    int index,
+    IconData icon,
+    IconData activeIcon,
+    String label, {
+    String? badge,
+    Color? badgeColor,
+  }) {
+    final isSelected = _currentIndex == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _currentIndex = index),
+        borderRadius: BorderRadius.circular(16),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  isSelected ? activeIcon : icon,
+                  size: 24,
+                  color: isSelected ? AppTheme.primaryNavy : const Color(0xFF94A3B8),
+                ),
+                if (badge != null)
+                  Positioned(
+                    right: -8,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: badgeColor ?? AppTheme.accentGold,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Text(
+                        badge,
+                        style: TextStyle(
+                          color: (badgeColor == AppTheme.danger) ? Colors.white : AppTheme.primaryNavy,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppTheme.primaryNavy : const Color(0xFF94A3B8),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 3),
+            // Indicateur signature dot sous l item actif
+            Container(
+              width: 4,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isSelected ? AppTheme.accentGold : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 }

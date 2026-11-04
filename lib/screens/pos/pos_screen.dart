@@ -609,7 +609,7 @@ class _PosScreenState extends State<PosScreen> {
   // ==========================================
   Widget _buildMobileLayout(BuildContext context, List<Product> products) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
         title: Text(
@@ -817,26 +817,50 @@ class _PosScreenState extends State<PosScreen> {
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: products.length,
-                    separatorBuilder: (_, index) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                    separatorBuilder: (_, index) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final p = products[index];
                       final cartItem = appState.cart.cast<CartItem?>().firstWhere(
                             (ci) => ci?.product.id == p.id,
                             orElse: () => null,
                           );
+                      final isOutOfStock = p.stock <= 0;
+                      final isLowStock = p.stock > 0 && p.stock <= 5;
+                      final stockColor = isOutOfStock
+                          ? const Color(0xFFDC2626)
+                          : (isLowStock ? const Color(0xFFD97706) : const Color(0xFF059669));
+                      final stockBg = isOutOfStock
+                          ? const Color(0xFFFEF2F2)
+                          : (isLowStock ? const Color(0xFFFFFBEB) : const Color(0xFFECFDF5));
+                      final stockBorder = isOutOfStock
+                          ? const Color(0xFFFECACA)
+                          : (isLowStock ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0));
 
                       return Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.02),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: Row(
                           children: [
                             Container(
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF3F4F6),
-                                borderRadius: BorderRadius.circular(8),
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFF1F5F9)),
                               ),
-                              child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF9CA3AF), size: 24),
+                              child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 24),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -845,61 +869,116 @@ class _PosScreenState extends State<PosScreen> {
                                 children: [
                                   Text(
                                     p.name,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    AppTheme.formatFCFA(p.sellPrice),
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryNavy,
-                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                      color: Color(0xFF0F172A),
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        AppTheme.formatFCFA(p.sellPrice),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          color: AppTheme.primaryNavy,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: stockBg,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: stockBorder),
+                                        ),
+                                        child: Text(
+                                          isOutOfStock ? 'Épuisé'.tr : '${p.stock} en stock',
+                                          style: TextStyle(
+                                            color: stockColor,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
                             if (cartItem == null)
                               InkWell(
-                                onTap: () => appState.addToCart(p),
+                                onTap: isOutOfStock ? null : () => appState.addToCart(p),
                                 borderRadius: BorderRadius.circular(16),
                                 child: Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: const BoxDecoration(
-                                    color: AppTheme.primaryNavy,
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: isOutOfStock ? const Color(0xFFE2E8F0) : AppTheme.primaryNavy,
                                     shape: BoxShape.circle,
+                                    boxShadow: isOutOfStock
+                                        ? null
+                                        : [
+                                            BoxShadow(
+                                              color: AppTheme.primaryNavy.withValues(alpha: 0.25),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
                                   ),
-                                  child: const Icon(Icons.add, color: Colors.white, size: 20),
+                                  child: Icon(Icons.add_rounded, color: isOutOfStock ? const Color(0xFF94A3B8) : Colors.white, size: 20),
                                 ),
                               )
                             else
-                              Row(
-                                children: [
-                                  InkWell(
-                                    onTap: () => appState.removeFromCart(cartItem),
-                                    child: const Icon(Icons.remove_circle_outline, color: Color(0xFFDC2626), size: 22),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${cartItem.quantity}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  InkWell(
-                                    onTap: () => appState.updateCartQuantity(cartItem, 1),
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: const BoxDecoration(
-                                        color: AppTheme.primaryNavy,
-                                        shape: BoxShape.circle,
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    InkWell(
+                                      onTap: () => appState.updateCartQuantity(cartItem, -1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        width: 26,
+                                        height: 26,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.remove_rounded, size: 14, color: Color(0xFF0F172A)),
                                       ),
-                                      child: const Icon(Icons.add, color: Colors.white, size: 16),
                                     ),
-                                  ),
-                                ],
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      child: Text(
+                                        '${cartItem.quantity}',
+                                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+                                      ),
+                                    ),
+                                    InkWell(
+                                      onTap: () => appState.updateCartQuantity(cartItem, 1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        width: 26,
+                                        height: 26,
+                                        decoration: const BoxDecoration(
+                                          color: AppTheme.primaryNavy,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.add_rounded, size: 14, color: Colors.white),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                           ],
                         ),
