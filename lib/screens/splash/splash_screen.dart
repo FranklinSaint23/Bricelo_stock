@@ -29,8 +29,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Transition fluide vers l'écran principal après 4 secondes
-    Timer(const Duration(milliseconds: 4000), () {
+    // Transition fluide vers l'écran principal après 2 secondes
+    Timer(const Duration(milliseconds: 2000), () {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
