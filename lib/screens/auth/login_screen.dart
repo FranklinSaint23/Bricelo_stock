@@ -436,15 +436,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    _isNewUser
-                                        ? (isEn ? 'Create my store & Start' : 'Créer ma boutique & Démarrer')
-                                        : (isEn ? 'Sign In' : 'Se connecter'),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 15,
-                                      color: Colors.white,
+                                  Flexible(
+                                    child: Text(
+                                      _isNewUser
+                                          ? (isEn ? 'Create my store & Start' : 'Créer ma boutique & Démarrer')
+                                          : (isEn ? 'Sign In' : 'Se connecter'),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
