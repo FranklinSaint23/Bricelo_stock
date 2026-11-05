@@ -296,7 +296,7 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
               const SizedBox(height: 12),
             ],
 
-            // 7. DATE DU PAIEMENT
+            // 7. DATE DU PAIEMENT (Conforme Image 4)
             InkWell(
               onTap: () async {
                 final picked = await showDatePicker(
@@ -307,25 +307,18 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
                 );
                 if (picked != null) setState(() => _paymentDate = picked);
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
-                  borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8),
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'Date du paiement',
+                  labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                  suffixIcon: const Icon(Icons.calendar_month_outlined, size: 20, color: Color(0xFF334155)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Date du paiement', style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B))),
-                        const SizedBox(height: 2),
-                        Text(_formatDate(_paymentDate), style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF475569)),
-                  ],
+                child: Text(
+                  _formatDate(_paymentDate),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                 ),
               ),
             ),

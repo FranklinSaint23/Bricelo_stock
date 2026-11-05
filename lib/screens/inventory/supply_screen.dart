@@ -3,6 +3,7 @@ import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/widgets/widgets.dart';
+import 'package:stock_prime/screens/inventory/supply_success_screen.dart';
 
 class SupplyFee {
   String type; // 'Transport', 'Douane', 'Taxe', 'Assurance', 'Autre'
@@ -59,6 +60,8 @@ class _SupplyScreenState extends State<SupplyScreen> {
   String _selectedStore = '';
   bool _tvaDeductible = false;
   bool _alreadyPaid = false;
+  String _supplyPaymentMethod = 'Caisse';
+  DateTime _supplyPaymentDate = DateTime.now();
   final _notesCtrl = TextEditingController();
 
   // Liste des articles ajoutés
@@ -359,14 +362,23 @@ class _SupplyScreenState extends State<SupplyScreen> {
       );
     }
 
+    final now = DateTime.now();
+    final dateStr = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final seq = (appState.supplierDebts.length + 1).toString().padLeft(4, '0');
+    final orderRef = 'CMD-$dateStr-$seq';
+    final receptionRef = 'REC-$dateStr-$seq';
+    final invoiceRef = 'FAF-$dateStr-$seq';
+
+    String? debtId;
     // Si dette fournisseur
     if (_selectedMode == 'Achat fournisseur' && !_alreadyPaid && _grandTotal > 0 && _selectedSupplier != null) {
+      debtId = 'sdebt_${DateTime.now().millisecondsSinceEpoch}';
       appState.addSupplierDebt(
         SupplierDebt(
-          id: 'sdebt_${DateTime.now().millisecondsSinceEpoch}',
+          id: debtId,
           supplierName: _selectedSupplier!,
           supplierPhone: '',
-          invoiceRef: 'APPR-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+          invoiceRef: invoiceRef,
           totalAmount: _grandTotal,
           createdAt: DateTime.now(),
           dueDate: DateTime.now().add(const Duration(days: 15)),
@@ -374,25 +386,30 @@ class _SupplyScreenState extends State<SupplyScreen> {
       );
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppTheme.primaryNavy,
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: AppTheme.accentGold, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Approvisionnement de ${AppTheme.formatFCFA(_grandTotal)} validé avec succès !',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
+    final itemsSummary = _items.map((i) => {
+      'name': i.product.name,
+      'quantity': i.quantity,
+      'buyPrice': i.buyPrice,
+      'total': i.quantity * i.buyPrice,
+    }).toList();
+
+    // Naviguer vers l'écran de succès de l'approvisionnement (Image 1)
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SupplySuccessScreen(
+          supplierName: _selectedSupplier ?? 'Fournisseur',
+          orderRef: orderRef,
+          receptionRef: receptionRef,
+          invoiceRef: invoiceRef,
+          totalAmount: _grandTotal,
+          isAlreadyPaid: _alreadyPaid,
+          debtId: debtId,
+          items: itemsSummary,
+          storeName: _selectedStore,
         ),
       ),
     );
-
-    Navigator.pop(context);
   }
 
   @override
@@ -1270,6 +1287,89 @@ class _SupplyScreenState extends State<SupplyScreen> {
                           ),
                         ],
                       ),
+                      if (_alreadyPaid) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          'Moyen de paiement',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                            color: isDark ? Colors.white : const Color(0xFF334155),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildSupplyPaymentCard(
+                                title: 'Caisse ${appState.currentStore}',
+                                icon: Icons.payments_outlined,
+                                selected: _supplyPaymentMethod.startsWith('Caisse'),
+                                onTap: () => setState(() => _supplyPaymentMethod = 'Caisse ${appState.currentStore}'),
+                                isDark: isDark,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildSupplyPaymentCard(
+                                title: 'Mobile Money',
+                                icon: Icons.phone_android_rounded,
+                                selected: _supplyPaymentMethod == 'Mobile Money',
+                                onTap: () => setState(() => _supplyPaymentMethod = 'Mobile Money'),
+                                isDark: isDark,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildSupplyPaymentCard(
+                                title: 'Virement',
+                                icon: Icons.account_balance_rounded,
+                                selected: _supplyPaymentMethod == 'Virement',
+                                onTap: () => setState(() => _supplyPaymentMethod = 'Virement'),
+                                isDark: isDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _supplyPaymentDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2030),
+                            );
+                            if (picked != null) setState(() => _supplyPaymentDate = picked);
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Date du paiement',
+                              labelStyle: TextStyle(
+                                fontSize: 13,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              suffixIcon: Icon(
+                                Icons.calendar_month_outlined,
+                                size: 20,
+                                color: isDark ? Colors.white70 : const Color(0xFF334155),
+                              ),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            ),
+                            child: Text(
+                              '${_supplyPaymentDate.day.toString().padLeft(2, '0')}/${_supplyPaymentDate.month.toString().padLeft(2, '0')}/${_supplyPaymentDate.year}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 14),
                     ],
 
@@ -1381,6 +1481,50 @@ class _SupplyScreenState extends State<SupplyScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSupplyPaymentCard({
+    required String title,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFFFFBEB) : (isDark ? const Color(0xFF1E293B) : Colors.white),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: selected ? const Color(0xFFD97706) : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+              size: 18,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+                color: selected ? AppTheme.primaryNavy : (isDark ? Colors.white : const Color(0xFF0F172A)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
