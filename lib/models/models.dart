@@ -237,6 +237,8 @@ class Sale {
     this.storeName = 'Boutique Principale',
   });
 
+  double get subtotal => total + discountTotal;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'ticketNumber': ticketNumber,

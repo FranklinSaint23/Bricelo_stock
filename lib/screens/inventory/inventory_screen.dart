@@ -316,51 +316,32 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 3. SÉLECTEUR DYNAMIQUE DE BOUTIQUES / DÉPÔTS (Onglets à défilement)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+                // 3. SÉLECTEUR DYNAMIQUE DE BOUTIQUES / DÉPÔTS (Pilule délimitée)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+                  ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: availableStores.map((st) {
                       final isSel = _selectedStoreTab == st;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: InkWell(
-                          onTap: () => setState(() => _selectedStoreTab = st),
-                          borderRadius: BorderRadius.circular(20),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: isSel
-                                  ? AppTheme.primaryNavy
-                                  : (isDark ? const Color(0xFF132238) : Colors.white),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isSel ? AppTheme.accentGold : cardBorder,
-                                width: isSel ? 1.5 : 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (st != 'Tous')
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 6),
-                                    child: Icon(
-                                      Icons.storefront_rounded,
-                                      size: 14,
-                                      color: isSel ? AppTheme.accentGold : const Color(0xFF94A3B8),
-                                    ),
-                                  ),
-                                Text(
-                                  st.tr,
-                                  style: TextStyle(
-                                    fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                                    fontSize: 12.5,
-                                    color: isSel ? Colors.white : textColor,
-                                  ),
-                                ),
-                              ],
+                      return InkWell(
+                        onTap: () => setState(() => _selectedStoreTab = st),
+                        borderRadius: BorderRadius.circular(22),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: isSel ? const Color(0xFFFED7AA) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: Text(
+                            st,
+                            style: TextStyle(
+                              color: isSel ? const Color(0xFF9A3412) : const Color(0xFF1E293B),
+                              fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -444,115 +425,103 @@ class _InventoryScreenState extends State<InventoryScreen> {
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final p = products[index];
-        final currentQty = p.stockForStore(_selectedStoreTab);
-        final isOut = currentQty <= 0;
-        final isLow = currentQty <= p.minStockAlert && !isOut;
+    final storeTitle = _selectedStoreTab == 'Tous' ? appState.currentStore : _selectedStoreTab;
 
-        return Container(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: cardBorder),
+            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: InkWell(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)));
-            },
-            child: Row(
-              children: [
-                // Avatar ou Icône
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryNavy.withValues(alpha: isDark ? 0.4 : 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Center(
-                    child: Text(
-                      p.name.isNotEmpty ? p.name[0].toUpperCase() : 'P',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.accentGold),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
+          child: Text(
+            storeTitle,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: isDark ? Colors.white70 : const Color(0xFF334155),
+            ),
+          ),
+        ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+            final p = products[index];
+            final currentQty = p.stockForStore(_selectedStoreTab);
 
-                // Détails produit
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        p.name,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '${p.category} • ${AppTheme.formatFCFA(p.sellPrice)} / ${p.unit}',
-                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Badge Stock & Réassort
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: cardBorder),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 3, offset: Offset(0, 1)),
+                ],
+              ),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)));
+                },
+                child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
-                        color: isOut
-                            ? const Color(0xFFFEE2E2)
-                            : isLow
-                                ? const Color(0xFFFEF3C7)
-                                : const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(8),
+                        color: const Color(0xFF0D1B2E),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Text(
-                        '$currentQty ${p.unit}',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: isOut
-                              ? const Color(0xFFDC2626)
-                              : isLow
-                                  ? const Color(0xFFD97706)
-                                  : const Color(0xFF059669),
-                        ),
+                      child: const Center(
+                        child: Icon(Icons.inventory_2_rounded, color: AppTheme.accentGold, size: 24),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
-                      },
-                      child: Text(
-                        'Réassort'.tr,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.accentGold,
-                        ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            p.name,
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${p.category.isNotEmpty ? p.category : "Général"} | ${AppTheme.formatFCFA(p.sellPrice)}',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                        ],
                       ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '$currentQty',
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF15803D)),
+                        ),
+                        Text(
+                          p.unit.isNotEmpty ? p.unit : 'piece',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-        );
-      },
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 

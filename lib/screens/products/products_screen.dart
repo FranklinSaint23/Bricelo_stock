@@ -14,6 +14,7 @@ class ProductsScreen extends StatefulWidget {
 class _ProductsScreenState extends State<ProductsScreen> {
   final appState = AppState.instance;
   String _selectedTab = 'Tous';
+  String _selectedCategory = 'Toutes';
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
   bool _isFabExpanded = false;
@@ -40,7 +41,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
           if (_selectedTab == 'Produits') matchesTab = p.productType == 'Produit';
           if (_selectedTab == 'Services') matchesTab = p.productType == 'Service';
           if (_selectedTab == 'Packs') matchesTab = p.productType == 'Pack';
-          return matchesSearch && matchesTab;
+
+          bool matchesCat = true;
+          if (_selectedCategory != 'Toutes') {
+            matchesCat = p.category == _selectedCategory;
+          }
+
+          return matchesSearch && matchesTab && matchesCat;
         }).toList();
 
         if (isDesktop) {
@@ -409,7 +416,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
               // 2. FILTRES PILLS : Tous | Produits | Services | Packs
               Container(
-                height: 48,
+                height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: _tabs.map((tab) {
@@ -420,17 +427,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         onTap: () => setState(() => _selectedTab = tab),
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                           decoration: BoxDecoration(
-                            color: isSel ? AppTheme.primaryNavy : const Color(0xFFF3F4F6),
+                            color: isSel ? const Color(0xFF14532D) : Colors.white,
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: isSel ? const Color(0xFF14532D) : const Color(0xFFE2E8F0)),
                           ),
                           child: Text(
                             tab.tr,
                             style: TextStyle(
                               color: isSel ? Colors.white : const Color(0xFF374151),
-                              fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                              fontSize: 13,
+                              fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
+                              fontSize: 12.5,
                             ),
                           ),
                         ),
@@ -440,7 +448,121 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ),
               ),
 
-              // 3. BANNIÈRE QUOTA : Produits 0 / 25
+              // 2.bis FILTRES CATÉGORIES : Toutes | Catégorie 1 | + Nouvelle catégorie
+              SizedBox(
+                height: 42,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  children: [
+                    InkWell(
+                      onTap: () => setState(() => _selectedCategory = 'Toutes'),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _selectedCategory == 'Toutes' ? const Color(0xFF14532D) : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _selectedCategory == 'Toutes' ? const Color(0xFF14532D) : const Color(0xFFE2E8F0)),
+                        ),
+                        child: Text(
+                          'Toutes',
+                          style: TextStyle(
+                            color: _selectedCategory == 'Toutes' ? Colors.white : const Color(0xFF374151),
+                            fontWeight: _selectedCategory == 'Toutes' ? FontWeight.bold : FontWeight.w600,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ...appState.categories.map((c) {
+                      final isSel = _selectedCategory == c.name;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: InkWell(
+                          onTap: () => setState(() => _selectedCategory = c.name),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isSel ? const Color(0xFF14532D) : Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: isSel ? const Color(0xFF14532D) : const Color(0xFFE2E8F0)),
+                            ),
+                            child: Text(
+                              c.name,
+                              style: TextStyle(
+                                color: isSel ? Colors.white : const Color(0xFF374151),
+                                fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
+                                fontSize: 12.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                    InkWell(
+                      onTap: () {
+                        final catCtrl = TextEditingController();
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Nouvelle catégorie'),
+                            content: TextField(
+                              controller: catCtrl,
+                              autofocus: true,
+                              decoration: const InputDecoration(
+                                labelText: 'Nom de la catégorie',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy),
+                                onPressed: () {
+                                  final name = catCtrl.text.trim();
+                                  if (name.isNotEmpty) {
+                                    appState.addCategory(CategoryItem(
+                                      id: 'cat_${DateTime.now().millisecondsSinceEpoch}',
+                                      name: name,
+                                    ));
+                                    setState(() => _selectedCategory = name);
+                                    Navigator.pop(ctx);
+                                  }
+                                },
+                                child: const Text('Ajouter', style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.add, size: 16, color: Color(0xFF374151)),
+                            SizedBox(width: 4),
+                            Text(
+                              'Nouvelle catégorie',
+                              style: TextStyle(color: Color(0xFF374151), fontSize: 12.5, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 3. BANNIÈRE QUOTA AVEC PROGRESSION (Produits X / 25)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -448,16 +570,31 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   color: const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Produits'.tr,
-                      style: const TextStyle(color: Color(0xFF1E40AF), fontSize: 12, fontWeight: FontWeight.bold),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Produits'.tr,
+                          style: const TextStyle(color: Color(0xFF1E40AF), fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '${products.length} / 25',
+                          style: const TextStyle(color: Color(0xFF1E40AF), fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '${products.length} / 25',
-                      style: const TextStyle(color: Color(0xFF1E40AF), fontSize: 12, fontWeight: FontWeight.bold),
+                    const SizedBox(height: 5),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: (products.length / 25).clamp(0.04, 1.0),
+                        backgroundColor: const Color(0xFFDBEAFE),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
+                        minHeight: 4,
+                      ),
                     ),
                   ],
                 ),
@@ -510,20 +647,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         separatorBuilder: (_, index) => const SizedBox(height: 10),
                         itemBuilder: (context, idx) {
                           final p = products[idx];
-                          final isOutOfStock = p.stock <= 0;
-                          final isLowStock = p.stock > 0 && p.stock <= 5;
-                          final stockColor = isOutOfStock
-                              ? const Color(0xFFDC2626)
-                              : (isLowStock ? const Color(0xFFD97706) : const Color(0xFF059669));
-                          final stockBg = isOutOfStock
-                              ? const Color(0xFFFEF2F2)
-                              : (isLowStock ? const Color(0xFFFFFBEB) : const Color(0xFFECFDF5));
-                          final stockBorder = isOutOfStock
-                              ? const Color(0xFFFECACA)
-                              : (isLowStock ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0));
-                          final stockText = isOutOfStock
-                              ? 'Épuisé'.tr
-                              : (isLowStock ? '${p.stock} restants' : '${p.stock} ${p.unit}');
 
                           return InkWell(
                             onTap: () {
@@ -531,32 +654,33 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             },
                             borderRadius: BorderRadius.circular(16),
                             child: Container(
-                              padding: const EdgeInsets.all(14),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: const Color(0xFFE2E8F0)),
-                                boxShadow: [
+                                boxShadow: const [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.02),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
+                                    color: Colors.black12,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 1),
                                   ),
                                 ],
                               ),
                               child: Row(
                                 children: [
                                   Container(
-                                    width: 48,
-                                    height: 48,
+                                    width: 56,
+                                    height: 56,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF8FAFC),
+                                      color: const Color(0xFF0D1B2E),
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: const Color(0xFFF1F5F9)),
                                     ),
-                                    child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 24),
+                                    child: const Center(
+                                      child: Icon(Icons.inventory_2_rounded, color: AppTheme.accentGold, size: 28),
+                                    ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 14),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -565,55 +689,40 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                           p.name,
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w800,
-                                            fontSize: 14,
+                                            fontSize: 14.5,
                                             color: Color(0xFF0F172A),
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         const SizedBox(height: 3),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              'Réf: ${p.barcode}',
-                                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: stockBg,
-                                                borderRadius: BorderRadius.circular(8),
-                                                border: Border.all(color: stockBorder),
-                                              ),
-                                              child: Text(
-                                                stockText,
-                                                style: TextStyle(
-                                                  color: stockColor,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+                                        Text(
+                                          AppTheme.formatFCFA(p.sellPrice),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 14.5,
+                                            color: Color(0xFF15803D), // Exact green accent
+                                          ),
+                                        ),
+                                        Text(
+                                          'Coût: ${AppTheme.formatFCFA(p.buyPrice)}',
+                                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        AppTheme.formatFCFA(p.sellPrice),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 14,
-                                          color: AppTheme.primaryNavy,
-                                        ),
+                                        p.category.isNotEmpty ? p.category : 'Général',
+                                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
                                       ),
-                                      const SizedBox(height: 2),
-                                      const Icon(Icons.arrow_forward_ios, size: 10, color: Color(0xFF94A3B8)),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Stock: ${p.stock}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF334155)),
+                                      ),
                                     ],
                                   ),
                                 ],

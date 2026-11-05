@@ -891,6 +891,8 @@ class AppState extends ChangeNotifier {
     return openingCash + cashSales + debtCash - todayExpensesTotal;
   }
 
+  double get currentCashInDrawer => cashInDrawerExpected;
+
   List<Product> get lowStockProducts => products.where((p) => p.isLowStock).toList();
   int get lowStockCount => products.where((p) => p.isLowStock).length;
   int get outOfStockCount => products.where((p) => p.isOutOfStock).length;
@@ -977,7 +979,11 @@ class AppState extends ChangeNotifier {
     String? cashierName,
   }) {
     final now = DateTime.now();
-    final ticketNumber = 'SP-${1000 + sales.length + 1}';
+    final yyyy = now.year.toString();
+    final mm = now.month.toString().padLeft(2, '0');
+    final dd = now.day.toString().padLeft(2, '0');
+    final count = (sales.length + 1).toString().padLeft(4, '0');
+    final ticketNumber = 'VNT-$yyyy$mm$dd-$count';
     final itemsSummary = cart
         .map((item) => SaleItemSummary(
               productName: item.product.name,
@@ -1116,6 +1122,34 @@ class AppState extends ChangeNotifier {
     }
 
     return sale;
+  }
+
+  void cancelSale(Sale sale) {
+    sales.removeWhere((s) => s.id == sale.id || s.ticketNumber == sale.ticketNumber);
+    for (final item in sale.items) {
+      final pIdx = products.indexWhere((p) => p.name.toLowerCase() == item.productName.toLowerCase());
+      if (pIdx != -1) {
+        products[pIdx].stock += item.quantity;
+        stockMovements.insert(
+          0,
+          StockMovement(
+            id: 'sm_cancel_${DateTime.now().millisecondsSinceEpoch}_${products[pIdx].id}',
+            productId: products[pIdx].id,
+            productName: products[pIdx].name,
+            type: 'RETOUR (+)',
+            quantity: item.quantity,
+            newStock: products[pIdx].stock,
+            reason: 'Annulation vente ${sale.ticketNumber}',
+            date: DateTime.now(),
+          ),
+        );
+      }
+    }
+    if (sale.paymentMethod == 'À Crédit') {
+      debts.removeWhere((d) => d.customerName == sale.customerName && d.initialDebt == sale.total);
+    }
+    _saveToPrefs();
+    notifyListeners();
   }
 
   // --- ACTIONS DETTES CLIENTS ---

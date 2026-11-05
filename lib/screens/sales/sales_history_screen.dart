@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/models/models.dart';
+import 'package:stock_prime/screens/sales/sale_detail_screen.dart';
 import 'package:stock_prime/widgets/sale_receipt_dialog.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
@@ -14,6 +15,9 @@ class SalesHistoryScreen extends StatefulWidget {
 class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   final appState = AppState.instance;
   String _selectedPeriod = '30j';
+  String _statusFilter = 'Actives'; // Actives, Tout, Annulées, Remboursées
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
   final _searchCtrl = TextEditingController();
 
   final List<String> _periods = ['Aujourd\'hui', '7j', '30j', '90j'];
@@ -36,15 +40,32 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         if (!matchId && !matchCustomer && !matchItem) return false;
       }
 
-      final diff = now.difference(s.createdAt);
-      if (_selectedPeriod == 'Aujourd\'hui') {
-        return s.createdAt.year == now.year && s.createdAt.month == now.month && s.createdAt.day == now.day;
-      } else if (_selectedPeriod == '7j') {
-        return diff.inDays <= 7;
-      } else if (_selectedPeriod == '30j') {
-        return diff.inDays <= 30;
-      } else if (_selectedPeriod == '90j') {
-        return diff.inDays <= 90;
+      if (_statusFilter == 'Actives') {
+        // Toutes les ventes en cours ou terminées
+      } else if (_statusFilter == 'Annulées') {
+        return false;
+      } else if (_statusFilter == 'Remboursées') {
+        return false;
+      }
+
+      if (_customStartDate != null && s.createdAt.isBefore(_customStartDate!)) {
+        return false;
+      }
+      if (_customEndDate != null && s.createdAt.isAfter(_customEndDate!.add(const Duration(days: 1)))) {
+        return false;
+      }
+
+      if (_customStartDate == null && _customEndDate == null) {
+        final diff = now.difference(s.createdAt);
+        if (_selectedPeriod == 'Aujourd\'hui') {
+          return s.createdAt.year == now.year && s.createdAt.month == now.month && s.createdAt.day == now.day;
+        } else if (_selectedPeriod == '7j') {
+          return diff.inDays <= 7;
+        } else if (_selectedPeriod == '30j') {
+          return diff.inDays <= 30;
+        } else if (_selectedPeriod == '90j') {
+          return diff.inDays <= 90;
+        }
       }
       return true;
     }).toList();
@@ -56,7 +77,200 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     final year = d.year;
     final hour = d.hour.toString().padLeft(2, '0');
     final min = d.minute.toString().padLeft(2, '0');
-    return '$day/$month/$year à $hour:$min';
+    return '$day/$month/$year $hour:$min';
+  }
+
+  String _formatDateOnly(DateTime d) {
+    final day = d.day.toString().padLeft(2, '0');
+    final month = d.month.toString().padLeft(2, '0');
+    final year = d.year;
+    return '$day/$month/$year';
+  }
+
+  void _showFilterBottomSheet() {
+    String tempStatus = _statusFilter;
+    DateTime? tempStart = _customStartDate;
+    DateTime? tempEnd = _customEndDate;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Filtres',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF0F172A)),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Statut',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569)),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: ['Actives', 'Tout', 'Annulees', 'Remboursees'].map((st) {
+                    final isSel = tempStatus == st;
+                    return InkWell(
+                      onTap: () => setModalState(() => tempStatus = st),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSel ? const Color(0xFFFED7AA) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          st,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                            color: isSel ? const Color(0xFF9A3412) : const Color(0xFF334155),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Période personnalisée',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569)),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: tempStart ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2030),
+                          );
+                          if (picked != null) {
+                            setModalState(() => tempStart = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xFFCBD5E1)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                tempStart != null ? _formatDateOnly(tempStart!) : 'Début',
+                                style: TextStyle(
+                                  color: tempStart != null ? Colors.black : const Color(0xFF94A3B8),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF64748B)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: tempEnd ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2030),
+                          );
+                          if (picked != null) {
+                            setModalState(() => tempEnd = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xFFCBD5E1)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                tempEnd != null ? _formatDateOnly(tempEnd!) : 'Fin',
+                                style: TextStyle(
+                                  color: tempEnd != null ? Colors.black : const Color(0xFF94A3B8),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF64748B)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _statusFilter = 'Actives';
+                          _customStartDate = null;
+                          _customEndDate = null;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Réinitialiser', style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold)),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF15803D),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _statusFilter = tempStatus;
+                          _customStartDate = tempStart;
+                          _customEndDate = tempEnd;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Appliquer', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -66,9 +280,10 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       builder: (context, _) {
         final sales = _filteredSales;
         final totalRevenue = sales.fold<double>(0, (sum, s) => sum + s.total);
+        final totalEncaisse = sales.fold<double>(0, (sum, s) => sum + s.amountReceived);
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF8FAFC),
           appBar: AppBar(
             backgroundColor: AppTheme.primaryNavy,
             elevation: 0,
@@ -116,50 +331,65 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // RECHERCHE & FILTRES
+              // 1. RECHERCHE & BOUTON FILTRE
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: TextField(
                   controller: _searchCtrl,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: 'Rechercher par numéro, client ou article...',
+                    hintText: 'Rechercher par numero ou client...',
                     hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
                     prefixIcon: const Icon(Icons.search, color: Color(0xFF4B5563)),
-                    suffixIcon: _searchCtrl.text.isNotEmpty
-                        ? IconButton(
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_searchCtrl.text.isNotEmpty)
+                          IconButton(
                             icon: const Icon(Icons.clear, size: 18),
                             onPressed: () {
                               _searchCtrl.clear();
                               setState(() {});
                             },
-                          )
-                        : const Icon(Icons.filter_list, color: Color(0xFF4B5563)),
+                          ),
+                        IconButton(
+                          icon: const Icon(Icons.tune_rounded, color: Color(0xFF4B5563)),
+                          tooltip: 'Filtres',
+                          onPressed: _showFilterBottomSheet,
+                        ),
+                      ],
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    fillColor: Colors.white,
+                    filled: true,
                   ),
                 ),
               ),
 
-              // SÉLECTEUR DE PÉRIODES + ICÔNE CALENDRIER
+              // 2. SÉLECTEUR DE PÉRIODES
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Row(
                   children: [
                     ..._periods.map((p) {
-                      final isSelected = _selectedPeriod == p;
+                      final isSelected = _selectedPeriod == p && _customStartDate == null;
                       return Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: InkWell(
-                          onTap: () => setState(() => _selectedPeriod = p),
+                          onTap: () => setState(() {
+                            _selectedPeriod = p;
+                            _customStartDate = null;
+                            _customEndDate = null;
+                          }),
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFFFEF3C7) : const Color(0xFFF3F4F6),
+                              color: isSelected ? const Color(0xFFFED7AA) : const Color(0xFFE2E8F0),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -167,7 +397,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                color: isSelected ? const Color(0xFF92400E) : const Color(0xFF374151),
+                                color: isSelected ? const Color(0xFF9A3412) : const Color(0xFF334155),
                               ),
                             ),
                           ),
@@ -175,38 +405,53 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       );
                     }),
                     const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFD1D5DB)),
-                        borderRadius: BorderRadius.circular(8),
+                    InkWell(
+                      onTap: _showFilterBottomSheet,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: _customStartDate != null ? const Color(0xFFFED7AA) : Colors.white,
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF4B5563)),
                       ),
-                      child: const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF4B5563)),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
-              // BANNIÈRE RÉSUMÉ DYNAMIQUE
+              // 3. BANNIÈRE RÉSUMÉ STYLE STOCKPLUS
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: AppTheme.accentGold.withValues(alpha: 0.7),
-                child: Text(
-                  '${sales.length} vente(s) · ${AppTheme.formatFCFA(totalRevenue)}',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                color: const Color(0xFFDCFCE7), // Light green tint
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${sales.length} vente(s) • ${AppTheme.formatFCFA(totalRevenue)}',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF14532D)),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Encaissé ${AppTheme.formatFCFA(totalEncaisse)}',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF166534), fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
               ),
               const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 child: Text(
-                  'Appuyez sur une vente pour afficher ou réimprimer son reçu.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                  'Votre formule affiche les 30 derniers jours.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                 ),
               ),
 
-              // LISTE DYNAMIQUE DES VENTES OU ÉTAT VIDE
+              // 4. LISTE DYNAMIQUE DES VENTES
               Expanded(
                 child: sales.isEmpty
                     ? const Center(
@@ -217,104 +462,133 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                             SizedBox(height: 14),
                             Text(
                               'Aucune vente enregistrée',
-                              style: TextStyle(fontSize: 15, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w400),
+                              style: TextStyle(fontSize: 15, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
                       )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                         itemCount: sales.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final sale = sales[index];
-                          final shortId = sale.ticketNumber.isNotEmpty ? sale.ticketNumber : sale.id;
-                          return InkWell(
-                            onTap: () => SaleReceiptDialog.show(context, sale),
-                            borderRadius: BorderRadius.circular(14),
-                            child: Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                                boxShadow: const [
-                                  BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1)),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primaryNavy.withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Icon(Icons.receipt_long_rounded, color: AppTheme.primaryNavy),
+                          final isToday = sale.createdAt.day == DateTime.now().day &&
+                              sale.createdAt.month == DateTime.now().month &&
+                              sale.createdAt.year == DateTime.now().year;
+
+                          final showHeader = index == 0 ||
+                              (sales[index - 1].createdAt.day != sale.createdAt.day);
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (showHeader) ...[
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 10, bottom: 6),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        isToday ? 'AUJOURD\'HUI' : _formatDateOnly(sale.createdAt).toUpperCase(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 12.5,
+                                          color: Color(0xFF64748B),
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      Text(
+                                        AppTheme.formatFCFA(sale.total),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12.5,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
+                                ),
+                              ],
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => SaleDetailScreen(sale: sale)),
+                                  );
+                                },
+                                onLongPress: () => SaleReceiptDialog.show(context, sale),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    boxShadow: const [
+                                      BoxShadow(color: Colors.black12, blurRadius: 3, offset: Offset(0, 1)),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              'Reçu #$shortId',
-                                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppTheme.primaryNavy),
+                                              sale.ticketNumber,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 14,
+                                                color: Color(0xFF0F172A),
+                                              ),
                                             ),
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: (sale.paymentMethod == 'À Crédit') ? const Color(0xFFFEF3C7) : const Color(0xFFECFDF5),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                              child: Text(
-                                                sale.paymentMethod,
-                                                style: TextStyle(
-                                                  fontSize: 10.5,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: (sale.paymentMethod == 'À Crédit') ? const Color(0xFFD97706) : const Color(0xFF059669),
-                                                ),
-                                              ),
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              _formatDateTime(sale.createdAt),
+                                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          '${sale.customerName} • ${sale.items.length} article(s)',
-                                          style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569), fontWeight: FontWeight.w600),
-                                        ),
-                                        Text(
-                                          _formatDateTime(sale.createdAt),
-                                          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        AppTheme.formatFCFA(sale.total),
-                                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.primaryNavy),
                                       ),
-                                      const SizedBox(height: 4),
-                                      const Row(
-                                        mainAxisSize: MainAxisSize.min,
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
-                                          Icon(Icons.visibility_outlined, size: 13, color: AppTheme.accentGold),
-                                          SizedBox(width: 3),
-                                          Text('Voir reçu', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                                          Text(
+                                            AppTheme.formatFCFA(sale.total),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 14.5,
+                                              color: Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: sale.paymentMethod == 'À Crédit'
+                                                  ? const Color(0xFFFEF3C7)
+                                                  : const Color(0xFFDCFCE7),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              sale.paymentMethod == 'À Crédit' ? 'À Crédit' : 'Terminé',
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: sale.paymentMethod == 'À Crédit'
+                                                    ? const Color(0xFFB45309)
+                                                    : const Color(0xFF15803D),
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           );
                         },
                       ),

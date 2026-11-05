@@ -78,3 +78,6 @@ export 'sales/catalog_share_screen.dart';
 export 'sales/external_order_screen.dart';
 export 'finance/global_stats_screen.dart';
 export 'finance/activity_reports_screen.dart';
+export 'sales/sale_detail_screen.dart';
+export 'pos/checkout_stepper_modal.dart';
+export 'finance/supplier_payment_flow.dart';

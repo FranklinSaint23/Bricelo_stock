@@ -661,111 +661,154 @@ class _PosScreenState extends State<PosScreen> {
                       final inCartQty = appState.cart
                           .where((c) => c.product.id == p.id)
                           .fold<int>(0, (sum, c) => sum + c.quantity);
+                      final inCart = inCartQty > 0;
+                      final cartItem = inCart ? appState.cart.firstWhere((c) => c.product.id == p.id) : null;
 
-                      return InkWell(
-                        onTap: () => appState.addToCart(p),
-                        borderRadius: BorderRadius.circular(18),
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: inCartQty > 0 ? AppTheme.accentGold : const Color(0xFFE2E8F0),
-                              width: inCartQty > 0 ? 2 : 1,
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: inCart ? const Color(0xFFDCFCE7) : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: inCart ? const Color(0xFF15803D) : const Color(0xFFE2E8F0),
+                            width: inCart ? 1.5 : 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.03),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    width: 38,
-                                    height: 38,
-                                    decoration: BoxDecoration(
-                                      color: inCartQty > 0
-                                          ? AppTheme.accentGold
-                                          : AppTheme.primaryNavy.withValues(alpha: 0.06),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Center(
-                                      child: inCartQty > 0
-                                          ? Text(
-                                              'x$inCartQty',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w900,
-                                                color: AppTheme.primaryNavy,
-                                                fontSize: 13,
-                                              ),
-                                            )
-                                          : const Icon(Icons.inventory_2_rounded, color: AppTheme.primaryNavy, size: 20),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: inCart
+                                        ? const Color(0xFF15803D)
+                                        : const Color(0xFF0D1B2E).withValues(alpha: 0.06),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.inventory_2_rounded,
+                                      color: inCart ? Colors.white : AppTheme.primaryNavy,
+                                      size: 18,
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: isLow ? const Color(0xFFFFF8E7) : const Color(0xFFECFDF5),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      '${p.stock} ${p.unit}',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: isLow ? const Color(0xFFD97706) : const Color(0xFF059669),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Spacer(),
-                              Text(
-                                p.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13.5,
-                                  color: AppTheme.primaryNavy,
                                 ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: isLow ? const Color(0xFFFFF8E7) : const Color(0xFFECFDF5),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '${p.stock} ${p.unit}',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: isLow ? const Color(0xFFD97706) : const Color(0xFF059669),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Text(
+                              p.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13.5,
+                                color: Color(0xFF0F172A),
                               ),
-                              const SizedBox(height: 6),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      AppTheme.formatFCFA(p.sellPrice),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 14,
-                                        color: AppTheme.primaryNavy,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    AppTheme.formatFCFA(p.sellPrice),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 13.5,
+                                      color: inCart ? const Color(0xFF15803D) : AppTheme.primaryNavy,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (inCart)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          appState.updateCartQuantity(cartItem!, -1);
+                                        },
+                                        child: Container(
+                                          width: 26,
+                                          height: 26,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: const Color(0xFFCBD5E1)),
+                                          ),
+                                          child: Icon(
+                                            inCartQty == 1 ? Icons.delete_outline : Icons.remove,
+                                            size: 15,
+                                            color: inCartQty == 1 ? Colors.red : const Color(0xFF0F172A),
+                                          ),
+                                        ),
                                       ),
-                                      overflow: TextOverflow.ellipsis,
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                                        child: Text(
+                                          '$inCartQty',
+                                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          appState.updateCartQuantity(cartItem!, 1);
+                                        },
+                                        child: Container(
+                                          width: 26,
+                                          height: 26,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF15803D),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: const Icon(Icons.add, size: 15, color: Colors.white),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  InkWell(
+                                    onTap: () => appState.addToCart(p),
+                                    child: Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF14532D),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
                                     ),
                                   ),
-                                  Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.accentGold,
-                                      borderRadius: BorderRadius.circular(9),
-                                    ),
-                                    child: const Icon(Icons.add_rounded, color: AppTheme.primaryNavy, size: 18),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -844,30 +887,32 @@ class _PosScreenState extends State<PosScreen> {
                 ],
                 SizedBox(
                   height: 48,
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: appState.cart.isEmpty
                           ? const Color(0xFFE2E8F0)
-                          : AppTheme.primaryNavy,
+                          : const Color(0xFF14532D),
                       foregroundColor: appState.cart.isEmpty
                           ? const Color(0xFF94A3B8)
                           : Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    icon: Icon(
-                      Icons.payments_rounded,
-                      size: 18,
-                      color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.accentGold,
-                    ),
-                    label: Text(
-                      'Encaisser'.tr,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5),
                     ),
                     onPressed: appState.cart.isEmpty
                         ? null
-                        : () => _showCheckoutDialog(context),
+                        : () => CheckoutStepperModal.show(context),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Payer • ${AppTheme.formatFCFA(appState.cartTotal)}',
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.white),
+                      ],
+                    ),
                   ),
                 ),
               ],

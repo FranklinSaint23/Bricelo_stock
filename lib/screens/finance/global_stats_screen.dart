@@ -343,3 +343,4 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
     );
   }
 }
+
