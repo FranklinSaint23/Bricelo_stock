@@ -19,26 +19,25 @@ class AboutScreen extends StatelessWidget {
           // 1. LOGO DE L'APPLICATION
           Center(
             child: Container(
-              width: 72,
-              height: 72,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
-                color: AppTheme.primaryNavy,
-                borderRadius: BorderRadius.circular(18),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+                ],
               ),
-              child: Center(
-                child: SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: const [
-                      Icon(Icons.bolt, color: Colors.white, size: 32),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: Icon(Icons.arrow_upward, color: Color(0xFFF97316), size: 14),
-                      ),
-                    ],
+              padding: const EdgeInsets.all(8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.storefront_rounded,
+                    size: 40,
+                    color: AppTheme.primaryNavy,
                   ),
                 ),
               ),
@@ -49,7 +48,7 @@ class AboutScreen extends StatelessWidget {
           // 2. NOM ET VERSION
           const Center(
             child: Text(
-              'StockPlus',
+              'Bricelo Stock',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF111827)),
             ),
           ),

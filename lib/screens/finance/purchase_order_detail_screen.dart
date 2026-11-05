@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/services/invoice_print_service.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 
@@ -508,30 +509,65 @@ class PurchaseOrderDetailScreen extends StatelessWidget {
             const SizedBox(height: 10),
           ],
 
-          // 5. BOUTON PARTAGER PDF
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryNavy,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              icon: const Icon(Icons.share_outlined, color: AppTheme.accentGold, size: 18),
-              label: const Text(
-                'Partager PDF',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    backgroundColor: AppTheme.primaryNavy,
-                    content: Text('Export PDF du bon d\'achat généré avec succès.'),
+          // 5. BOUTONS IMPRIMER ET PARTAGER PDF
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryNavy,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.print_outlined, color: AppTheme.accentGold, size: 18),
+                    label: const Text(
+                      'Imprimer',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    onPressed: () async {
+                      try {
+                        await InvoicePrintService.printPurchaseOrder(order);
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Erreur impression : $e')),
+                        );
+                      }
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accentGold,
+                      foregroundColor: AppTheme.primaryNavy,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.share_outlined, color: AppTheme.primaryNavy, size: 18),
+                    label: const Text(
+                      'Partager PDF',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    onPressed: () async {
+                      try {
+                        await InvoicePrintService.sharePurchaseOrder(order);
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Erreur partage : $e')),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
         ],

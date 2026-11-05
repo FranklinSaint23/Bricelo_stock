@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/services/invoice_print_service.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 
 class SaleReceiptDialog extends StatelessWidget {
@@ -379,14 +380,16 @@ class SaleReceiptDialog extends StatelessWidget {
                             elevation: 0,
                           ),
                           icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
-                          label: const Text('Imprimer le reçu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                backgroundColor: AppTheme.primaryNavy,
-                                content: Text('Impression thermique du reçu ${sale.ticketNumber} en cours...'),
-                              ),
-                            );
+                          label: const Text('Imprimer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          onPressed: () async {
+                            try {
+                              await InvoicePrintService.printSale(sale);
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Erreur impression : $e')),
+                              );
+                            }
                           },
                         ),
                       ),
@@ -394,24 +397,49 @@ class SaleReceiptDialog extends StatelessWidget {
                       Expanded(
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF25D366), // WhatsApp
+                            backgroundColor: AppTheme.primaryNavy,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
-                          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                          label: const Text('WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                          onPressed: () {
-                            final txt = _buildPlainTextReceipt(appState);
-                            Clipboard.setData(ClipboardData(text: txt));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Reçu copié et prêt à être envoyé par WhatsApp !')),
-                            );
+                          icon: const Icon(Icons.share_rounded, size: 18, color: AppTheme.accentGold),
+                          label: const Text('Partager PDF', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          onPressed: () async {
+                            try {
+                              await InvoicePrintService.shareSale(sale);
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Erreur partage : $e')),
+                              );
+                            }
                           },
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 40,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366), // WhatsApp
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.chat_bubble_outline_rounded, size: 17),
+                      label: const Text('Envoyer texte WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                      onPressed: () {
+                        final txt = _buildPlainTextReceipt(appState);
+                        Clipboard.setData(ClipboardData(text: txt));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Reçu copié ! Collez-le dans WhatsApp pour l\'envoyer au client.')),
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(

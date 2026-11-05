@@ -107,6 +107,73 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     );
   }
 
+  void _showChangePasswordDialog(BuildContext context) {
+    final oldCtrl = TextEditingController();
+    final newCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Changer le mot de passe', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryNavy)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: oldCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Ancien mot de passe', border: OutlineInputBorder())),
+            const SizedBox(height: 12),
+            TextField(controller: newCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Nouveau mot de passe', border: OutlineInputBorder())),
+            const SizedBox(height: 12),
+            TextField(controller: confirmCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Confirmer le mot de passe', border: OutlineInputBorder())),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mot de passe mis à jour avec succès !')));
+            },
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRecoveryEmailDialog(BuildContext context) {
+    final emailCtrl = TextEditingController(text: appState.userEmail);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Email de récupération', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryNavy)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Cet email sera utilisé pour récupérer l\'accès à votre compte en cas d\'oubli.', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+            const SizedBox(height: 14),
+            TextField(controller: emailCtrl, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email de récupération', border: OutlineInputBorder())),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email de récupération enregistré !')));
+            },
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showDeleteAccountDialog(BuildContext context) {
     final pwdCtrl = TextEditingController();
     bool obscure = true;
@@ -310,6 +377,124 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // 3. SÉCURITÉ (Image 2)
+                const Text(
+                  'Sécurité',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Gardez votre compte en sécurité en mettant à jour votre mot de passe régulièrement.',
+                        style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF4B5563)),
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                          ),
+                          icon: const Icon(Icons.sync_lock_rounded, size: 18, color: Color(0xFF166534)),
+                          label: const Text(
+                            'Changer le mot de passe',
+                            style: TextStyle(color: Color(0xFF166534), fontWeight: FontWeight.w600, fontSize: 13),
+                          ),
+                          onPressed: () => _showChangePasswordDialog(context),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                          ),
+                          icon: const Icon(Icons.mark_email_read_outlined, size: 18, color: Color(0xFF166534)),
+                          label: const Text(
+                            'Email de récupération',
+                            style: TextStyle(color: Color(0xFF166534), fontWeight: FontWeight.w600, fontSize: 13),
+                          ),
+                          onPressed: () => _showRecoveryEmailDialog(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // 4. ABONNEMENT (Image 2)
+                const Text(
+                  'Abonnement',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.badge_outlined, color: AppTheme.primaryNavy, size: 22),
+                      SizedBox(width: 14),
+                      Text(
+                        'Formule : Gratuit',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // 5. SUR LE WEB (Image 2)
+                const Text(
+                  'Sur le web',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Ouverture du portail web Bricelo (https://bricelo.com)...')),
+                      );
+                    },
+                    child: Row(
+                      children: const [
+                        Icon(Icons.open_in_new_rounded, color: AppTheme.primaryNavy, size: 20),
+                        SizedBox(width: 14),
+                        Text(
+                          'Mon compte sur le web',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
