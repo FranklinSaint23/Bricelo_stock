@@ -448,3 +448,4 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
     );
   }
 }
+
