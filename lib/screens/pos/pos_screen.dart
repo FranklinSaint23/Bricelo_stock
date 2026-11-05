@@ -393,7 +393,18 @@ class _PosScreenState extends State<PosScreen> {
                                     Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                     IconButton(
                                       icon: const Icon(Icons.add_circle_outline, size: 20, color: AppTheme.primaryNavy),
-                                      onPressed: () => appState.updateCartQuantity(item, 1),
+                                      onPressed: () {
+                                        final ok = appState.updateCartQuantity(item, 1);
+                                        if (!ok) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              backgroundColor: const Color(0xFFDC2626),
+                                              content: Text('Stock insuffisant ! Le stock disponible pour "${item.product.name}" est de ${item.product.stockForStore(appState.currentStore)}.'),
+                                              duration: const Duration(seconds: 2),
+                                            ),
+                                          );
+                                        }
+                                      },
                                     ),
                                   ],
                                 ),
@@ -664,13 +675,40 @@ class _PosScreenState extends State<PosScreen> {
                       final inCart = inCartQty > 0;
                       final cartItem = inCart ? appState.cart.firstWhere((c) => c.product.id == p.id) : null;
 
-                      return Container(
-                        padding: const EdgeInsets.all(12),
+                      return InkWell(
+                        onTap: () {
+                          if (inCart) {
+                            final ok = appState.updateCartQuantity(cartItem!, 1);
+                            if (!ok) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: const Color(0xFFDC2626),
+                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de ${p.stockForStore(appState.currentStore)}.'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          } else {
+                            final ok = appState.addToCart(p);
+                            if (!ok) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: const Color(0xFFDC2626),
+                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de ${p.stockForStore(appState.currentStore)}.'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: inCart ? const Color(0xFFDCFCE7) : Colors.white,
+                          color: inCart ? const Color(0xFFFFFBEB) : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: inCart ? const Color(0xFF15803D) : const Color(0xFFE2E8F0),
+                            color: inCart ? AppTheme.accentGold : const Color(0xFFE2E8F0),
                             width: inCart ? 1.5 : 1,
                           ),
                           boxShadow: [
@@ -692,14 +730,14 @@ class _PosScreenState extends State<PosScreen> {
                                   height: 36,
                                   decoration: BoxDecoration(
                                     color: inCart
-                                        ? const Color(0xFF15803D)
+                                        ? AppTheme.accentGold
                                         : const Color(0xFF0D1B2E).withValues(alpha: 0.06),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Center(
                                     child: Icon(
                                       Icons.inventory_2_rounded,
-                                      color: inCart ? Colors.white : AppTheme.primaryNavy,
+                                      color: inCart ? AppTheme.primaryNavy : AppTheme.primaryNavy,
                                       size: 18,
                                     ),
                                   ),
@@ -707,7 +745,7 @@ class _PosScreenState extends State<PosScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                   decoration: BoxDecoration(
-                                    color: isLow ? const Color(0xFFFFF8E7) : const Color(0xFFECFDF5),
+                                    color: isLow ? const Color(0xFFFFF8E7) : const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -715,7 +753,7 @@ class _PosScreenState extends State<PosScreen> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
-                                      color: isLow ? const Color(0xFFD97706) : const Color(0xFF059669),
+                                      color: isLow ? const Color(0xFFD97706) : AppTheme.primaryNavy,
                                     ),
                                   ),
                                 ),
@@ -742,7 +780,7 @@ class _PosScreenState extends State<PosScreen> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w900,
                                       fontSize: 13.5,
-                                      color: inCart ? const Color(0xFF15803D) : AppTheme.primaryNavy,
+                                      color: inCart ? const Color(0xFFD97706) : AppTheme.primaryNavy,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -779,38 +817,59 @@ class _PosScreenState extends State<PosScreen> {
                                       ),
                                       InkWell(
                                         onTap: () {
-                                          appState.updateCartQuantity(cartItem!, 1);
+                                          final ok = appState.updateCartQuantity(cartItem!, 1);
+                                          if (!ok) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                backgroundColor: const Color(0xFFDC2626),
+                                                content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de ${p.stockForStore(appState.currentStore)}.'),
+                                                duration: const Duration(seconds: 2),
+                                              ),
+                                            );
+                                          }
                                         },
                                         child: Container(
                                           width: 26,
                                           height: 26,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF15803D),
+                                            color: AppTheme.accentGold,
                                             borderRadius: BorderRadius.circular(6),
                                           ),
-                                          child: const Icon(Icons.add, size: 15, color: Colors.white),
+                                          child: const Icon(Icons.add, size: 15, color: AppTheme.primaryNavy),
                                         ),
                                       ),
                                     ],
                                   )
                                 else
                                   InkWell(
-                                    onTap: () => appState.addToCart(p),
+                                    onTap: () {
+                                      final ok = appState.addToCart(p);
+                                      if (!ok) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            backgroundColor: const Color(0xFFDC2626),
+                                            content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de ${p.stockForStore(appState.currentStore)}.'),
+                                            duration: const Duration(seconds: 2),
+                                          ),
+                                        );
+                                      }
+                                    },
                                     child: Container(
                                       width: 28,
                                       height: 28,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF14532D),
+                                        color: AppTheme.primaryNavy,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                                      child: const Icon(Icons.add_rounded, color: AppTheme.accentGold, size: 18),
                                     ),
                                   ),
                               ],
                             ),
                           ],
                         ),
-                      );
+                      ),
+                    );
                     },
                   ),
           ),
@@ -891,11 +950,11 @@ class _PosScreenState extends State<PosScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: appState.cart.isEmpty
                           ? const Color(0xFFE2E8F0)
-                          : const Color(0xFF14532D),
+                          : AppTheme.accentGold,
                       foregroundColor: appState.cart.isEmpty
                           ? const Color(0xFF94A3B8)
-                          : Colors.white,
-                      elevation: 0,
+                          : AppTheme.primaryNavy,
+                      elevation: appState.cart.isEmpty ? 0 : 2,
                       padding: const EdgeInsets.symmetric(horizontal: 18),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
@@ -907,10 +966,18 @@ class _PosScreenState extends State<PosScreen> {
                       children: [
                         Text(
                           'Payer • ${AppTheme.formatFCFA(appState.cartTotal)}',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13.5,
+                            color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
+                          ),
                         ),
                         const SizedBox(width: 6),
-                        const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.white),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 12,
+                          color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
+                        ),
                       ],
                     ),
                   ),

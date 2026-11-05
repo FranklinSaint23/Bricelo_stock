@@ -430,24 +430,24 @@ class _MainShellState extends State<MainShell> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildModernNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Accueil'.tr),
+                    _buildModernNavItem(0, Icons.space_dashboard_outlined, Icons.space_dashboard_rounded, 'Accueil'.tr),
                     _buildModernNavItem(
                       1,
-                      Icons.shopping_cart_outlined,
-                      Icons.shopping_cart_rounded,
+                      Icons.point_of_sale_outlined,
+                      Icons.point_of_sale_rounded,
                       'Vente'.tr,
                       badge: appState.cart.isNotEmpty ? '' : null,
                     ),
-                    _buildModernNavItem(2, Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Produits'.tr),
+                    _buildModernNavItem(2, Icons.category_outlined, Icons.category_rounded, 'Produits'.tr),
                     _buildModernNavItem(
                       3,
-                      Icons.warehouse_outlined,
-                      Icons.warehouse_rounded,
+                      Icons.all_inbox_outlined,
+                      Icons.all_inbox_rounded,
                       'Stock'.tr,
                       badge: appState.lowStockProducts.isNotEmpty ? '!' : null,
                       badgeColor: AppTheme.danger,
                     ),
-                    _buildModernNavItem(4, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Plus'.tr),
+                    _buildModernNavItem(4, Icons.widgets_outlined, Icons.widgets_rounded, 'Plus'.tr),
                   ],
                 ),
               ),
@@ -556,15 +556,23 @@ class _MainShellState extends State<MainShell> {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Icon(
-                  isSelected ? activeIcon : icon,
-                  size: 24,
-                  color: isSelected ? AppTheme.primaryNavy : const Color(0xFF94A3B8),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppTheme.accentGold.withValues(alpha: 0.16) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    isSelected ? activeIcon : icon,
+                    size: 23,
+                    color: isSelected ? AppTheme.primaryNavy : const Color(0xFF94A3B8),
+                  ),
                 ),
                 if (badge != null)
                   Positioned(
-                    right: -8,
-                    top: -4,
+                    right: -2,
+                    top: -2,
                     child: Container(
                       padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
@@ -590,20 +598,31 @@ class _MainShellState extends State<MainShell> {
               label,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                 color: isSelected ? AppTheme.primaryNavy : const Color(0xFF94A3B8),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 3),
-            // Indicateur signature dot sous l item actif
-            Container(
-              width: 4,
-              height: 4,
+            // Indicateur signature premium (barre or arrondie avec halo diffus)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              width: isSelected ? 18 : 0,
+              height: 3,
               decoration: BoxDecoration(
                 color: isSelected ? AppTheme.accentGold : Colors.transparent,
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(2),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: AppTheme.accentGold.withValues(alpha: 0.5),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ]
+                    : null,
               ),
             ),
           ],

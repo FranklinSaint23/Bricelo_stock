@@ -372,13 +372,13 @@ class SaleReceiptDialog extends StatelessWidget {
                       Expanded(
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF15803D), // Green
-                            foregroundColor: Colors.white,
+                            backgroundColor: AppTheme.accentGold,
+                            foregroundColor: AppTheme.primaryNavy,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
-                          icon: const Icon(Icons.print_rounded, size: 18),
+                          icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
                           label: const Text('Imprimer le reçu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(

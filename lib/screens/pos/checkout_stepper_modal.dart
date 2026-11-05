@@ -38,7 +38,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   final _clientSearchCtrl = TextEditingController();
 
   // Step 3: Payment data
-  String _selectedPaymentMethod = 'Caisse 1';
+  String _selectedPaymentMethod = 'Caisse';
   bool _isCredit = false;
   String _amountBuffer = '';
   Sale? _completedSale;
@@ -47,9 +47,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   void initState() {
     super.initState();
     _amountBuffer = _calculatedTotal.toInt().toString();
-    if (appState.cashDesks.isNotEmpty) {
-      _selectedPaymentMethod = appState.cashDesks.first.name;
-    }
+    _selectedPaymentMethod = 'Caisse ${appState.currentStore}';
   }
 
   @override
@@ -292,10 +290,20 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                       IconButton(
                         icon: const Icon(Icons.add_circle, color: AppTheme.primaryNavy, size: 22),
                         onPressed: () {
-                          setState(() {
-                            appState.updateCartQuantity(item, 1);
-                            _amountBuffer = _calculatedTotal.toInt().toString();
-                          });
+                          final ok = appState.updateCartQuantity(item, 1);
+                          if (!ok) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: const Color(0xFFDC2626),
+                                content: Text('Stock insuffisant ! Le stock disponible pour "${item.product.name}" est de ${item.product.stockForStore(appState.currentStore)}.'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          } else {
+                            setState(() {
+                              _amountBuffer = _calculatedTotal.toInt().toString();
+                            });
+                          }
                         },
                       ),
                     ],
@@ -944,10 +952,10 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
             Expanded(
               child: _buildPaymentMethodCard(
                 icon: Icons.payments_outlined,
-                title: appState.cashDesks.isNotEmpty ? appState.cashDesks.first.name : 'Caisse 1',
+                title: 'Caisse ${appState.currentStore}',
                 balance: AppTheme.formatFCFA(appState.currentCashInDrawer),
                 selected: _selectedPaymentMethod.startsWith('Caisse'),
-                onTap: () => setState(() => _selectedPaymentMethod = appState.cashDesks.isNotEmpty ? appState.cashDesks.first.name : 'Caisse 1'),
+                onTap: () => setState(() => _selectedPaymentMethod = 'Caisse ${appState.currentStore}'),
               ),
             ),
             const SizedBox(width: 8),

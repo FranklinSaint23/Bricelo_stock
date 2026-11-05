@@ -281,7 +281,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           Container(width: 1, height: 32, color: cardBorder),
                           _buildStockValueCol('Coût'.tr, AppTheme.formatFCFA(totalAchat), isDark, textColor),
                           Container(width: 1, height: 32, color: cardBorder),
-                          _buildStockValueCol('Marge'.tr, '${AppTheme.formatFCFA(marge)} (${margePct.toStringAsFixed(0)}%)', isDark, const Color(0xFF10B981)),
+                          _buildStockValueCol('Marge'.tr, '${AppTheme.formatFCFA(marge)} (${margePct.toStringAsFixed(0)}%)', isDark, const Color(0xFFD97706)),
                         ],
                       ),
                     ],
@@ -567,10 +567,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       children: [
                         Text(
                           '$currentQty',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF15803D)),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFFD97706)),
                         ),
                         Text(
-                          p.unit.isNotEmpty ? p.unit : 'piece',
+                          p.unit.isNotEmpty ? p.unit : 'piece(s)',
                           style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                         ),
                       ],

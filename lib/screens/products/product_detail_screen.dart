@@ -84,7 +84,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         actions: [
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF15803D),
+              foregroundColor: AppTheme.primaryNavy,
               side: const BorderSide(color: Color(0xFFCBD5E1)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -93,8 +93,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF15803D),
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.accentGold,
+              foregroundColor: AppTheme.primaryNavy,
+              elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
@@ -159,8 +160,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     return ChoiceChip(
                       label: Text(fmt),
                       selected: isSel,
-                      selectedColor: const Color(0xFF15803D),
-                      labelStyle: TextStyle(color: isSel ? Colors.white : Colors.black87, fontWeight: FontWeight.bold),
+                      selectedColor: AppTheme.accentGold,
+                      labelStyle: TextStyle(color: isSel ? AppTheme.primaryNavy : Colors.black87, fontWeight: FontWeight.bold),
                       onSelected: (_) => setMState(() => format = fmt),
                     );
                   }).toList(),
@@ -199,11 +200,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF15803D),
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppTheme.accentGold,
+                      foregroundColor: AppTheme.primaryNavy,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    icon: const Icon(Icons.print_rounded, size: 18),
+                    icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
                     label: Text('Imprimer $copies étiquette(s)', style: const TextStyle(fontWeight: FontWeight.bold)),
                     onPressed: () {
                       Navigator.pop(ctx);
@@ -317,8 +318,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF15803D),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppTheme.accentGold,
+                    foregroundColor: AppTheme.primaryNavy,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
@@ -509,7 +511,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       _buildMetricCol(
                         'Marge',
                         '${p.marginPercent.toStringAsFixed(1)}%',
-                        const Color(0xFF15803D),
+                        const Color(0xFFD97706),
                         subtitle: '+${AppTheme.formatFCFA(p.sellPrice - p.buyPrice)}',
                       ),
                     ],
@@ -537,7 +539,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                           Text(
                             '${p.stock} ${p.unit}',
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF15803D)),
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFFD97706)),
                           ),
                         ],
                       ),
@@ -547,7 +549,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         children: [
                           _buildMetricCol('Valeur vente', AppTheme.formatFCFA(totalStockValuation), const Color(0xFF0F172A)),
                           _buildMetricCol('Coût total', AppTheme.formatFCFA(totalCostValuation), const Color(0xFF64748B)),
-                          _buildMetricCol('Marge potentielle', '+${AppTheme.formatFCFA(potentialMargin)}', const Color(0xFF15803D)),
+                          _buildMetricCol('Marge potentielle', '+${AppTheme.formatFCFA(potentialMargin)}', const Color(0xFFD97706)),
                         ],
                       ),
                     ],
@@ -612,7 +614,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   children: [
                                     Text(
                                       'Quantité: ${p.stockForStore(st)}',
-                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF15803D)),
+                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFFD97706)),
                                     ),
                                     const SizedBox(width: 8),
                                     const Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF94A3B8)),
@@ -645,7 +647,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0F172A)),
                           ),
                           TextButton.icon(
-                            style: TextButton.styleFrom(foregroundColor: const Color(0xFF15803D)),
+                            style: TextButton.styleFrom(foregroundColor: AppTheme.primaryNavy),
                             icon: const Icon(Icons.add_circle_outline, size: 16),
                             label: const Text('Ajouter une variante', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
                             onPressed: () => _showAddVariantDialog(context),
@@ -672,7 +674,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(v['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                  Text(AppTheme.formatFCFA(v['price']), style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF15803D))),
+                                  Text(AppTheme.formatFCFA(v['price']), style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFD97706))),
                                 ],
                               ),
                             )),
@@ -721,12 +723,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     height: 48,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF15803D), // Green
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppTheme.accentGold,
+                        foregroundColor: AppTheme.primaryNavy,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primaryNavy),
                       label: const Text('Modifier', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       onPressed: () => _showEditProductSheet(p),
                     ),
@@ -738,8 +740,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     height: 48,
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF15803D),
-                        side: const BorderSide(color: Color(0xFF15803D), width: 1.5),
+                        foregroundColor: AppTheme.primaryNavy,
+                        side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       icon: const Icon(Icons.qr_code_2_rounded, size: 20),

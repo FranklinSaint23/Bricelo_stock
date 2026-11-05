@@ -55,13 +55,13 @@ class SaleDetailScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isCredit ? const Color(0xFFFEF3C7) : const Color(0xFFDCFCE7),
+                  color: isCredit ? const Color(0xFFFEF3C7) : const Color(0xFFFFFBEB),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   isCredit ? 'À Crédit' : 'Terminé',
                   style: TextStyle(
-                    color: isCredit ? const Color(0xFFB45309) : const Color(0xFF15803D),
+                    color: isCredit ? const Color(0xFFB45309) : const Color(0xFFD97706),
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -241,7 +241,7 @@ class SaleDetailScreen extends StatelessWidget {
                   _buildSummaryLine('Payé (${sale.paymentMethod})', AppTheme.formatFCFA(sale.amountReceived)),
                   if (sale.changeReturned > 0) ...[
                     const SizedBox(height: 6),
-                    _buildSummaryLine('Monnaie rendue', AppTheme.formatFCFA(sale.changeReturned), valueColor: const Color(0xFF15803D)),
+                    _buildSummaryLine('Monnaie rendue', AppTheme.formatFCFA(sale.changeReturned), valueColor: AppTheme.primaryNavy),
                   ],
                   if (isCredit && remainingDebt > 0) ...[
                     const SizedBox(height: 6),
@@ -258,12 +258,12 @@ class SaleDetailScreen extends StatelessWidget {
               height: 48,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF15803D),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.accentGold,
+                  foregroundColor: AppTheme.primaryNavy,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                icon: const Icon(Icons.print_rounded, size: 18),
+                icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
                 label: const Text('Imprimer le reçu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 onPressed: () => SaleReceiptDialog.show(context, sale),
               ),

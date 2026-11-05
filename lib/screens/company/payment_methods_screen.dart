@@ -12,7 +12,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   final List<Map<String, dynamic>> _accounts = [
     {
       'id': '1',
-      'title': 'Caisse 1',
+      'title': 'Caisse principale',
       'subtitle': 'Boutique principale',
       'balance': '0 F CFA',
       'icon': Icons.payments_outlined,

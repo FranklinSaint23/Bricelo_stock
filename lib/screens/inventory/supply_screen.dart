@@ -981,7 +981,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(Icons.history, size: 14, color: Color(0xFF15803D)),
+                                          const Icon(Icons.history, size: 14, color: Color(0xFFD97706)),
                                           const SizedBox(width: 4),
                                           Text(
                                             'Dernier prix (${item.lastSupplier}) · ${AppTheme.formatFCFA(item.lastPrice!)}',

@@ -244,12 +244,13 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         });
                         Navigator.pop(ctx);
                       },
-                      child: const Text('Réinitialiser', style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold)),
+                      child: const Text('Réinitialiser', style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold)),
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF15803D),
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppTheme.accentGold,
+                        foregroundColor: AppTheme.primaryNavy,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       ),
@@ -427,18 +428,18 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: const Color(0xFFDCFCE7), // Light green tint
+                color: const Color(0xFFFFFBEB), // Light gold tint
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       '${sales.length} vente(s) • ${AppTheme.formatFCFA(totalRevenue)}',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF14532D)),
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.primaryNavy),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Encaissé ${AppTheme.formatFCFA(totalEncaisse)}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF166534), fontWeight: FontWeight.w600),
+                      style: const TextStyle(fontSize: 12, color: Color(0xFFD97706), fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
@@ -568,7 +569,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                             decoration: BoxDecoration(
                                               color: sale.paymentMethod == 'À Crédit'
                                                   ? const Color(0xFFFEF3C7)
-                                                  : const Color(0xFFDCFCE7),
+                                                  : const Color(0xFFFFFBEB),
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: Text(
@@ -578,7 +579,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                                 fontWeight: FontWeight.bold,
                                                 color: sale.paymentMethod == 'À Crédit'
                                                     ? const Color(0xFFB45309)
-                                                    : const Color(0xFF15803D),
+                                                    : const Color(0xFFD97706),
                                               ),
                                             ),
                                           ),

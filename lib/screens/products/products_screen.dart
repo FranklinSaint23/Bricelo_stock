@@ -429,14 +429,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                           decoration: BoxDecoration(
-                            color: isSel ? const Color(0xFF14532D) : Colors.white,
+                            color: isSel ? AppTheme.accentGold : Colors.white,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: isSel ? const Color(0xFF14532D) : const Color(0xFFE2E8F0)),
+                            border: Border.all(color: isSel ? AppTheme.accentGold : const Color(0xFFE2E8F0)),
                           ),
                           child: Text(
                             tab.tr,
                             style: TextStyle(
-                              color: isSel ? Colors.white : const Color(0xFF374151),
+                              color: isSel ? AppTheme.primaryNavy : const Color(0xFF374151),
                               fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
                               fontSize: 12.5,
                             ),
@@ -461,14 +461,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                         decoration: BoxDecoration(
-                          color: _selectedCategory == 'Toutes' ? const Color(0xFF14532D) : Colors.white,
+                          color: _selectedCategory == 'Toutes' ? AppTheme.accentGold : Colors.white,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: _selectedCategory == 'Toutes' ? const Color(0xFF14532D) : const Color(0xFFE2E8F0)),
+                          border: Border.all(color: _selectedCategory == 'Toutes' ? AppTheme.accentGold : const Color(0xFFE2E8F0)),
                         ),
                         child: Text(
                           'Toutes',
                           style: TextStyle(
-                            color: _selectedCategory == 'Toutes' ? Colors.white : const Color(0xFF374151),
+                            color: _selectedCategory == 'Toutes' ? AppTheme.primaryNavy : const Color(0xFF374151),
                             fontWeight: _selectedCategory == 'Toutes' ? FontWeight.bold : FontWeight.w600,
                             fontSize: 12.5,
                           ),
@@ -486,14 +486,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
-                              color: isSel ? const Color(0xFF14532D) : Colors.white,
+                              color: isSel ? AppTheme.accentGold : Colors.white,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: isSel ? const Color(0xFF14532D) : const Color(0xFFE2E8F0)),
+                              border: Border.all(color: isSel ? AppTheme.accentGold : const Color(0xFFE2E8F0)),
                             ),
                             child: Text(
                               c.name,
                               style: TextStyle(
-                                color: isSel ? Colors.white : const Color(0xFF374151),
+                                color: isSel ? AppTheme.primaryNavy : const Color(0xFF374151),
                                 fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
                                 fontSize: 12.5,
                               ),
@@ -701,7 +701,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w900,
                                             fontSize: 14.5,
-                                            color: Color(0xFF15803D), // Exact green accent
+                                            color: Color(0xFFD97706), // Gold price accent
                                           ),
                                         ),
                                         Text(

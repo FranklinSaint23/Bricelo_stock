@@ -519,9 +519,9 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildKpiBox(
-                        'Bénéfice estimé',
+                        'Bénéfice brut',
                         AppTheme.formatFCFA(estimatedProfit),
-                        const Color(0xFF15803D),
+                        const Color(0xFFD97706),
                         subtitle: totalSales > 0
                             ? '${((estimatedProfit / totalSales) * 100).toStringAsFixed(1)}% de marge'
                             : '0% de marge',

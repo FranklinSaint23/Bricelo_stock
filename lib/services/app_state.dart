@@ -130,6 +130,11 @@ class AppState extends ChangeNotifier {
         }
 
         // Ensure every store has its default Caisse "Caisse [Nom Boutique]"
+        for (final c in cashDesks) {
+          if (c.name == 'Caisse 1' || c.name.startsWith('Caisse 1')) {
+            c.name = 'Caisse ${c.storeName.isNotEmpty ? c.storeName : currentStore}';
+          }
+        }
         for (final o in outlets) {
           final defaultCaisseName = 'Caisse ${o.name}';
           final hasCaisse = cashDesks.any((c) => c.storeName == o.name);
@@ -157,6 +162,26 @@ class AppState extends ChangeNotifier {
             .toList();
         sales = (data['sales'] as List<dynamic>? ?? [])
             .map((e) => Sale.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map((s) {
+              if (s.paymentMethod == 'Caisse 1') {
+                return Sale(
+                  id: s.id,
+                  ticketNumber: s.ticketNumber,
+                  createdAt: s.createdAt,
+                  items: s.items,
+                  total: s.total,
+                  discountTotal: s.discountTotal,
+                  paymentMethod: 'Caisse ${s.storeName}',
+                  amountReceived: s.amountReceived,
+                  changeReturned: s.changeReturned,
+                  customerName: s.customerName,
+                  customerPhone: s.customerPhone,
+                  cashierName: s.cashierName,
+                  storeName: s.storeName,
+                );
+              }
+              return s;
+            })
             .toList();
         debts = (data['debts'] as List<dynamic>? ?? [])
             .map((e) => CustomerDebt.fromJson(Map<String, dynamic>.from(e as Map)))
@@ -898,11 +923,20 @@ class AppState extends ChangeNotifier {
   int get outOfStockCount => products.where((p) => p.isOutOfStock).length;
 
   // --- ACTIONS PANIER ---
-  void addToCart(Product product, {bool wholesale = false}) {
+  bool addToCart(Product product, {bool wholesale = false}) {
+    final isPhysical = product.productType != 'Service';
+    final maxAvailable = product.stockForStore(currentStore);
+
     final index = cart.indexWhere((item) => item.product.id == product.id && item.isWholesale == wholesale);
     if (index >= 0) {
+      if (isPhysical && cart[index].quantity >= maxAvailable) {
+        return false;
+      }
       cart[index].quantity += 1;
     } else {
+      if (isPhysical && maxAvailable <= 0) {
+        return false;
+      }
       cart.add(CartItem(
         product: product,
         quantity: 1,
@@ -911,6 +945,7 @@ class AppState extends ChangeNotifier {
       ));
     }
     notifyListeners();
+    return true;
   }
 
   void removeFromCart(CartItem item) {
@@ -918,14 +953,20 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateCartQuantity(CartItem item, int delta) {
+  bool updateCartQuantity(CartItem item, int delta) {
+    final isPhysical = item.product.productType != 'Service';
+    final maxAvailable = item.product.stockForStore(currentStore);
     final newQty = item.quantity + delta;
     if (newQty <= 0) {
       cart.remove(item);
     } else {
+      if (isPhysical && delta > 0 && newQty > maxAvailable) {
+        return false;
+      }
       item.quantity = newQty;
     }
     notifyListeners();
+    return true;
   }
 
   void toggleCartItemWholesale(CartItem item) {
@@ -1003,6 +1044,10 @@ class AppState extends ChangeNotifier {
     final effectiveTotal = overrideTotal ?? ((cartTotal - (globalDiscount ?? 0.0)).clamp(0.0, double.infinity));
     final effectiveDiscountTotal = cart.fold(0.0, (sum, i) => sum + i.discount) + (globalDiscount ?? 0.0);
 
+    final effectivePayment = (paymentMethod == 'Caisse 1' || paymentMethod.startsWith('Caisse 1') || paymentMethod == 'Caisse')
+        ? 'Caisse $currentStore'
+        : paymentMethod;
+
     final sale = Sale(
       id: 'sale_${now.millisecondsSinceEpoch}',
       ticketNumber: ticketNumber,
@@ -1010,7 +1055,7 @@ class AppState extends ChangeNotifier {
       items: itemsSummary,
       total: effectiveTotal,
       discountTotal: effectiveDiscountTotal,
-      paymentMethod: paymentMethod,
+      paymentMethod: effectivePayment,
       amountReceived: amountReceived,
       changeReturned: changeReturned,
       customerName: customerName.trim().isEmpty ? 'Client Comptoir' : customerName.trim(),

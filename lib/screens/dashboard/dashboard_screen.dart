@@ -652,50 +652,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   ),
-                  // Bouton Assistant Bricelo
-                  InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const BriceloAssistantScreen()),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          const Icon(Icons.smart_toy_outlined, color: AppTheme.primaryNavy, size: 22),
-                          Positioned(
-                            right: 9,
-                            top: 9,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppTheme.accentGold,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -1155,7 +1111,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    '${sale.paymentMethod} • ${sale.items.length} article(s) • Voir reçu',
+                                    '${(sale.paymentMethod.startsWith("Caisse 1") || sale.paymentMethod == "Caisse 1" || sale.paymentMethod == "Caisse") ? "Caisse ${sale.storeName}" : sale.paymentMethod} • ${sale.items.length} article(s) • Voir reçu',
                                     style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
                                   ),
                                 ],
@@ -1178,6 +1134,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_dashboard_assistant',
+        backgroundColor: AppTheme.primaryNavy,
+        foregroundColor: AppTheme.accentGold,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const BriceloAssistantScreen()));
+        },
+        child: const Icon(Icons.smart_toy_rounded, size: 28),
       ),
     );
   }

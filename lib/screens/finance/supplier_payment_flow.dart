@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 
 class SupplierPaymentScreen extends StatefulWidget {
@@ -22,7 +23,7 @@ class SupplierPaymentScreen extends StatefulWidget {
 class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
   final appState = AppState.instance;
   String _amountBuffer = '';
-  String _selectedPaymentMethod = 'Caisse 1';
+  String _selectedPaymentMethod = 'Caisse';
   DateTime _paymentDate = DateTime.now();
   final _noteCtrl = TextEditingController();
 
@@ -30,9 +31,7 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
   void initState() {
     super.initState();
     _amountBuffer = widget.remainingDebt > 0 ? widget.remainingDebt.toInt().toString() : '0';
-    if (appState.cashDesks.isNotEmpty) {
-      _selectedPaymentMethod = appState.cashDesks.first.name;
-    }
+    _selectedPaymentMethod = 'Caisse ${appState.currentStore}';
   }
 
   @override
@@ -156,7 +155,7 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
                       const Text('Reste à payer', style: TextStyle(fontSize: 13, color: Color(0xFF475569))),
                       Text(
                         '${widget.remainingDebt.toInt()} F CFA',
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF15803D)),
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFFD97706)),
                       ),
                     ],
                   ),
@@ -184,12 +183,12 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF14532D),
+                      color: AppTheme.accentGold,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       'Exact • ${widget.remainingDebt.toInt()}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                      style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 12.5),
                     ),
                   ),
                 ),
@@ -241,10 +240,10 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
                 Expanded(
                   child: _buildPaymentMethodCard(
                     icon: Icons.payments_outlined,
-                    title: appState.cashDesks.isNotEmpty ? appState.cashDesks.first.name : 'Caisse 1',
+                    title: 'Caisse ${appState.currentStore}',
                     balance: '${cashBalance.toInt()} F CFA',
                     selected: _selectedPaymentMethod.startsWith('Caisse'),
-                    onTap: () => setState(() => _selectedPaymentMethod = appState.cashDesks.isNotEmpty ? appState.cashDesks.first.name : 'Caisse 1'),
+                    onTap: () => setState(() => _selectedPaymentMethod = 'Caisse ${appState.currentStore}'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -350,12 +349,12 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
               height: 48,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF14532D),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.accentGold,
+                  foregroundColor: AppTheme.primaryNavy,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   elevation: 0,
                 ),
-                icon: const Icon(Icons.payments_rounded, size: 18),
+                icon: const Icon(Icons.payments_rounded, size: 18, color: AppTheme.primaryNavy),
                 label: Text(
                   'Confirmer le paiement • ${amount.toInt()} F CFA',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
@@ -430,15 +429,15 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFDCFCE7) : Colors.white,
+          color: selected ? const Color(0xFFFFFBEB) : Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: selected ? const Color(0xFF15803D) : const Color(0xFFE2E8F0), width: selected ? 1.5 : 1),
+          border: Border.all(color: selected ? AppTheme.accentGold : const Color(0xFFE2E8F0), width: selected ? 1.5 : 1),
         ),
         child: Column(
           children: [
-            Icon(icon, color: selected ? const Color(0xFF15803D) : const Color(0xFF64748B), size: 18),
+            Icon(icon, color: selected ? const Color(0xFFD97706) : const Color(0xFF64748B), size: 18),
             const SizedBox(height: 4),
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: selected ? const Color(0xFF15803D) : const Color(0xFF0F172A))),
+            Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: selected ? AppTheme.primaryNavy : const Color(0xFF0F172A))),
             Text(balance, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
           ],
         ),
@@ -498,11 +497,11 @@ class SupplierPaymentSuccessScreen extends StatelessWidget {
               width: 76,
               height: 76,
               decoration: const BoxDecoration(
-                color: Color(0xFFDCFCE7),
+                color: Color(0xFFFEF3C7),
                 shape: BoxShape.circle,
               ),
               child: const Center(
-                child: Icon(Icons.check_circle_rounded, color: Color(0xFF15803D), size: 54),
+                child: Icon(Icons.check_circle_rounded, color: AppTheme.accentGold, size: 54),
               ),
             ),
             const SizedBox(height: 20),
@@ -529,12 +528,12 @@ class SupplierPaymentSuccessScreen extends StatelessWidget {
               height: 48,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF14532D),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.accentGold,
+                  foregroundColor: AppTheme.primaryNavy,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   elevation: 0,
                 ),
-                icon: const Icon(Icons.print_rounded, size: 18),
+                icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
                 label: const Text('Imprimer la décharge', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -551,8 +550,8 @@ class SupplierPaymentSuccessScreen extends StatelessWidget {
               height: 48,
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF14532D),
-                  side: const BorderSide(color: Color(0xFF14532D)),
+                  foregroundColor: AppTheme.primaryNavy,
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
                 icon: const Icon(Icons.camera_alt_outlined, size: 18),
@@ -569,7 +568,7 @@ class SupplierPaymentSuccessScreen extends StatelessWidget {
             // 3. Terminé
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Terminé', style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontSize: 15)),
+              child: const Text('Terminé', style: TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.bold, fontSize: 15)),
             ),
           ],
         ),
