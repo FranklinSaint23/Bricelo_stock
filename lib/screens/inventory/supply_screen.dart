@@ -20,14 +20,28 @@ class SupplyItem {
   final Product product;
   int quantity;
   double buyPrice;
+  final TextEditingController quantityController;
+  final TextEditingController priceController;
+  final bool hasPreviousSupply;
+  final String? lastSupplier;
+  final double? lastPrice;
 
   SupplyItem({
     required this.product,
     this.quantity = 1,
     required this.buyPrice,
-  });
+    this.hasPreviousSupply = false,
+    this.lastSupplier,
+    this.lastPrice,
+  })  : quantityController = TextEditingController(text: quantity.toString()),
+        priceController = TextEditingController(text: buyPrice > 0 ? buyPrice.toInt().toString() : '');
 
   double get total => quantity * buyPrice;
+
+  void dispose() {
+    quantityController.dispose();
+    priceController.dispose();
+  }
 }
 
 class SupplyScreen extends StatefulWidget {
@@ -50,11 +64,9 @@ class _SupplyScreenState extends State<SupplyScreen> {
   // Liste des articles ajoutés
   final List<SupplyItem> _items = [];
 
-  // Liste des frais (Images 1 & 2)
-  bool _isFeesExpanded = true;
-  final List<SupplyFee> _fees = [
-    SupplyFee(type: 'Transport', initialAmount: '0'),
-  ];
+  // Liste des frais
+  bool _isFeesExpanded = false;
+  final List<SupplyFee> _fees = [];
 
   final List<String> _feeTypes = const [
     'Transport',
@@ -81,15 +93,58 @@ class _SupplyScreenState extends State<SupplyScreen> {
   @override
   void dispose() {
     _notesCtrl.dispose();
+    for (final i in _items) {
+      i.dispose();
+    }
     for (final f in _fees) {
       f.amountController.dispose();
     }
     super.dispose();
   }
 
+  SupplyItem _createSupplyItem(Product product) {
+    // Vérifier les approvisionnements précédents dans les mouvements de stock
+    final pastMovements = appState.stockMovements.where(
+      (sm) => sm.productId == product.id && (sm.type.contains('RÉASSORT') || sm.type.contains('ACHAT')),
+    ).toList();
+
+    // S'il y a eu au moins un approvisionnement passé ou un buyPrice enregistré
+    final bool isRepeatSupply = pastMovements.isNotEmpty || product.buyPrice > 0;
+    
+    double lastCost = 0.0;
+    String supplierName = product.supplierName?.isNotEmpty == true ? product.supplierName! : 'Jean';
+
+    if (pastMovements.isNotEmpty) {
+      final latest = pastMovements.first;
+      if (latest.reason.contains('Fournisseur:')) {
+        final match = RegExp(r'Fournisseur:\s*([^\(]+)').firstMatch(latest.reason);
+        if (match != null && match.group(1) != null) {
+          supplierName = match.group(1)!.trim();
+        }
+      }
+      lastCost = product.buyPrice > 0 ? product.buyPrice : 0.0;
+    } else if (product.buyPrice > 0) {
+      lastCost = product.buyPrice;
+    }
+
+    // Le prix ne doit être pré-écrit que si c'est le 2ème+ approvisionnement
+    final initialBuyPrice = isRepeatSupply && lastCost > 0 ? lastCost : 0.0;
+
+    return SupplyItem(
+      product: product,
+      quantity: 1,
+      buyPrice: initialBuyPrice,
+      hasPreviousSupply: isRepeatSupply && lastCost > 0,
+      lastSupplier: supplierName.isNotEmpty ? supplierName : (_selectedSupplier ?? 'Jean'),
+      lastPrice: lastCost > 0 ? lastCost : null,
+    );
+  }
+
   double get _itemsTotal => _items.fold(0.0, (sum, i) => sum + i.total);
   double get _feesTotal => _fees.fold(0.0, (sum, f) => sum + f.amount);
   double get _grandTotal => _itemsTotal + _feesTotal;
+
+  int get _itemsWithoutCostCount => _items.where((i) => i.buyPrice <= 0).length;
 
   void _showAddProductsModal() {
     final isDark = appState.isDarkMode;
@@ -225,7 +280,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                         onPressed: () {
                                           setState(() {
                                             if (!alreadyAdded) {
-                                              _items.add(SupplyItem(product: p, quantity: 1, buyPrice: p.buyPrice));
+                                              _items.add(_createSupplyItem(p));
                                             }
                                           });
                                           setModalState(() {});
@@ -252,7 +307,10 @@ class _SupplyScreenState extends State<SupplyScreen> {
     int added = 0;
     for (final p in appState.products) {
       if (p.stock <= 5 && !_items.any((i) => i.product.id == p.id)) {
-        _items.add(SupplyItem(product: p, quantity: 5, buyPrice: p.buyPrice));
+        final item = _createSupplyItem(p);
+        item.quantity = 5;
+        item.quantityController.text = '5';
+        _items.add(item);
         added++;
       }
     }
@@ -275,6 +333,16 @@ class _SupplyScreenState extends State<SupplyScreen> {
         const SnackBar(
           backgroundColor: Color(0xFFDC2626),
           content: Text('Veuillez ajouter au moins un article ou un frais.'),
+        ),
+      );
+      return;
+    }
+
+    if (_itemsWithoutCostCount > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFFDC2626),
+          content: Text('Veuillez renseigner le coût unitaire de tous les articles ($_itemsWithoutCostCount manquant(s)).'),
         ),
       );
       return;
@@ -333,8 +401,8 @@ class _SupplyScreenState extends State<SupplyScreen> {
       animation: appState,
       builder: (context, _) {
         final isDark = appState.isDarkMode;
-
         final supplierList = appState.suppliers.map((s) => s.name).toList();
+        final canSave = _items.isNotEmpty && _itemsWithoutCostCount == 0 && _grandTotal > 0;
 
         return Scaffold(
           backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
@@ -358,7 +426,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // 2. SEGMENTED TABS: Achat fournisseur | Stock existant (Image 1)
+                    // 2. SEGMENTED TABS: Achat fournisseur | Stock existant (Exacte reproduction screenshot)
                     Container(
                       height: 44,
                       decoration: BoxDecoration(
@@ -377,7 +445,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: _selectedMode == 'Achat fournisseur'
-                                      ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFFDFBA))
+                                      ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFED7AA))
                                       : Colors.transparent,
                                   borderRadius: const BorderRadius.horizontal(left: Radius.circular(22)),
                                 ),
@@ -420,7 +488,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: _selectedMode == 'Stock existant'
-                                      ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFFDFBA))
+                                      ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFED7AA))
                                       : Colors.transparent,
                                   borderRadius: const BorderRadius.horizontal(right: Radius.circular(22)),
                                 ),
@@ -528,7 +596,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                     ),
                     const SizedBox(height: 18),
 
-                    // 3. FOURNISSEUR DROPDOWN DYNAMIQUE (+ AJOUT RAPIDE)
+                    // 3. FOURNISSEUR DROPDOWN
                     if (_selectedMode == 'Achat fournisseur') ...[
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -645,7 +713,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                       const SizedBox(height: 18),
                     ],
 
-                    // 4. SECTION ARTICLES (Image 1)
+                    // 4. SECTION ARTICLES (Exactement comme dans la capture)
                     Text(
                       'Articles (${_items.length})',
                       style: TextStyle(
@@ -700,7 +768,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Liste des articles ajoutés ou État vide (Image 1)
+                    // Liste des articles ajoutés (Reproduction fidèle de la capture)
                     if (_items.isEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -717,66 +785,238 @@ class _SupplyScreenState extends State<SupplyScreen> {
                     else
                       ..._items.map((item) {
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF9FAFB),
-                            borderRadius: BorderRadius.circular(10),
+                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                             ),
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1)),
+                            ],
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
+                              // Ligne 1 : Nom du produit + Icône poubelle
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
                                       item.product.name,
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                        fontSize: 15,
                                         color: isDark ? Colors.white : const Color(0xFF111827),
                                       ),
                                     ),
-                                    Text(
-                                      'Prix unitaire: ${AppTheme.formatFCFA(item.buyPrice)}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: isDark ? Colors.white60 : const Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Row(
-                                children: [
+                                  ),
                                   IconButton(
-                                    icon: const Icon(Icons.remove_circle_outline, size: 20),
-                                    color: const Color(0xFFEF4444),
+                                    icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFF64748B)),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
                                     onPressed: () {
                                       setState(() {
-                                        if (item.quantity > 1) {
-                                          item.quantity--;
-                                        } else {
-                                          _items.remove(item);
-                                        }
+                                        item.dispose();
+                                        _items.remove(item);
                                       });
                                     },
                                   ),
-                                  Text(
-                                    '${item.quantity}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: isDark ? Colors.white : const Color(0xFF111827),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Ligne 2 : Quantité (- Qte +) et Coût unitaire côte à côte
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Champ Quantité avec boutons [-] et [+] + saisie manuelle
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Quantité',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Container(
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(Icons.remove, size: 16),
+                                                padding: EdgeInsets.zero,
+                                                color: const Color(0xFF64748B),
+                                                onPressed: () {
+                                                  if (item.quantity > 1) {
+                                                    setState(() {
+                                                      item.quantity--;
+                                                      item.quantityController.text = item.quantity.toString();
+                                                    });
+                                                  }
+                                                },
+                                              ),
+                                              Expanded(
+                                                child: TextField(
+                                                  controller: item.quantityController,
+                                                  keyboardType: TextInputType.number,
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                  ),
+                                                  decoration: const InputDecoration(
+                                                    border: InputBorder.none,
+                                                    isDense: true,
+                                                    contentPadding: EdgeInsets.zero,
+                                                  ),
+                                                  onChanged: (val) {
+                                                    final q = int.tryParse(val.trim());
+                                                    if (q != null && q >= 1) {
+                                                      setState(() => item.quantity = q);
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.add, size: 16),
+                                                padding: EdgeInsets.zero,
+                                                color: AppTheme.primaryNavy,
+                                                onPressed: () {
+                                                  setState(() {
+                                                    item.quantity++;
+                                                    item.quantityController.text = item.quantity.toString();
+                                                  });
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  IconButton(
-                                    icon: const Icon(Icons.add_circle_outline, size: 20),
-                                    color: AppTheme.accentGold,
-                                    onPressed: () => setState(() => item.quantity++),
+                                  const SizedBox(width: 12),
+
+                                  // Champ Coût unitaire (Prérempli si 2ème+ approvisionnement)
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Coût unitaire',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Container(
+                                          height: 44,
+                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: item.buyPrice <= 0
+                                                  ? const Color(0xFFFCA5A5)
+                                                  : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: TextField(
+                                              controller: item.priceController,
+                                              keyboardType: TextInputType.number,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                              ),
+                                              decoration: const InputDecoration(
+                                                hintText: 'Coût unitaire',
+                                                hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                                                border: InputBorder.none,
+                                                isDense: true,
+                                                contentPadding: EdgeInsets.zero,
+                                              ),
+                                              onChanged: (val) {
+                                                final p = double.tryParse(val.trim());
+                                                setState(() => item.buyPrice = p ?? 0.0);
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+
+                              // Ligne 3 : Pastille "Dernier prix (Fournisseur) · XXX F CFA" + Total ligne
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  if (item.hasPreviousSupply && item.lastPrice != null)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.history, size: 14, color: Color(0xFF15803D)),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Dernier prix (${item.lastSupplier}) · ${AppTheme.formatFCFA(item.lastPrice!)}',
+                                            style: TextStyle(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  else
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEFF6FF),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: const Text(
+                                        '1er approvisionnement',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF1D4ED8),
+                                        ),
+                                      ),
+                                    ),
+                                  Text(
+                                    '= ${AppTheme.formatFCFA(item.total)}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: Color(0xFF64748B),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -785,12 +1025,10 @@ class _SupplyScreenState extends State<SupplyScreen> {
                         );
                       }),
 
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10),
                     Divider(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
 
-                    // =========================================================
-                    // 5. GESTION DES FRAIS CONFORME AUX IMAGES 1 & 2
-                    // =========================================================
+                    // 5. GESTION DES FRAIS
                     InkWell(
                       onTap: () => setState(() => _isFeesExpanded = !_isFeesExpanded),
                       borderRadius: BorderRadius.circular(8),
@@ -826,7 +1064,6 @@ class _SupplyScreenState extends State<SupplyScreen> {
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             children: [
-                              // Sélecteur de type de frais (Popup menu conforme Image 2)
                               PopupMenuButton<String>(
                                 initialValue: fee.type,
                                 tooltip: 'Choisir le type de frais',
@@ -861,7 +1098,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                   }).toList();
                                 },
                                 child: Container(
-                                  height: 48,
+                                  height: 44,
                                   padding: const EdgeInsets.symmetric(horizontal: 14),
                                   decoration: BoxDecoration(
                                     color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFAFAFA),
@@ -876,7 +1113,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                       Text(
                                         fee.type,
                                         style: TextStyle(
-                                          fontSize: 14,
+                                          fontSize: 13.5,
                                           fontWeight: FontWeight.w500,
                                           color: isDark ? Colors.white : const Color(0xFF111827),
                                         ),
@@ -889,10 +1126,9 @@ class _SupplyScreenState extends State<SupplyScreen> {
                               ),
                               const SizedBox(width: 8),
 
-                              // Champ montant du frais (Image 1 & 2)
                               Expanded(
                                 child: Container(
-                                  height: 48,
+                                  height: 44,
                                   decoration: BoxDecoration(
                                     color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF9FAFB),
                                     borderRadius: BorderRadius.circular(8),
@@ -905,11 +1141,12 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                     keyboardType: TextInputType.number,
                                     onChanged: (_) => setState(() {}),
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                       color: isDark ? Colors.white : const Color(0xFF111827),
                                     ),
                                     decoration: const InputDecoration(
+                                      hintText: 'Montant',
                                       border: InputBorder.none,
                                       contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                     ),
@@ -917,7 +1154,6 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                 ),
                               ),
 
-                              // Bouton suppression corbeille (Image 1 & 2)
                               IconButton(
                                 icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFF6B7280)),
                                 onPressed: () {
@@ -932,7 +1168,6 @@ class _SupplyScreenState extends State<SupplyScreen> {
                         );
                       }),
 
-                      // Bouton + Ajouter des frais (Image 1 & 2)
                       Align(
                         alignment: Alignment.center,
                         child: TextButton.icon(
@@ -945,7 +1180,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                             'Ajouter des frais',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 13,
                               color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                             ),
                           ),
@@ -1071,7 +1306,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                 ),
               ),
 
-              // 8. BARRE FIXE INFÉRIEURE : TOTAL & ENREGISTRER (Images 1 & 2)
+              // 8. BARRE FIXE INFÉRIEURE : TOTAL & ENREGISTRER (Conforme Image)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 decoration: BoxDecoration(
@@ -1097,31 +1332,47 @@ class _SupplyScreenState extends State<SupplyScreen> {
                         Text(
                           AppTheme.formatFCFA(_grandTotal),
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w900,
                             fontSize: 20,
                             color: isDark ? Colors.white : const Color(0xFF111827),
                           ),
                         ),
+                        if (_itemsWithoutCostCount > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              '$_itemsWithoutCostCount article(s) sans coût unitaire',
+                              style: const TextStyle(
+                                color: Color(0xFFEF4444),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _grandTotal > 0 ? AppTheme.primaryNavy : const Color(0xFFCBD5E1),
-                        foregroundColor: _grandTotal > 0 ? Colors.white : const Color(0xFF475569),
-                        elevation: 0,
+                        backgroundColor: canSave ? AppTheme.primaryNavy : const Color(0xFFCBD5E1),
+                        foregroundColor: canSave ? AppTheme.accentGold : const Color(0xFF64748B),
+                        elevation: canSave ? 2 : 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                       ),
                       icon: Icon(
                         Icons.add_box_outlined,
                         size: 18,
-                        color: _grandTotal > 0 ? AppTheme.accentGold : const Color(0xFF94A3B8),
+                        color: canSave ? AppTheme.accentGold : const Color(0xFF94A3B8),
                       ),
-                      label: const Text(
+                      label: Text(
                         'Enregistrer',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: canSave ? Colors.white : const Color(0xFF64748B),
+                        ),
                       ),
-                      onPressed: _saveSupply,
+                      onPressed: canSave ? _saveSupply : null,
                     ),
                   ],
                 ),

@@ -372,9 +372,69 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
           ),
 
-          // BOUTONS FLOTTANTS (FAB) D'ACTIONS RAPIDES
-          _buildFloatingActions(context),
+          // OVERLAY SPEED DIAL QUAND LE FAB EST DÉPLIÉ
+          if (_isFabExpanded)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => setState(() => _isFabExpanded = false),
+                child: Container(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  padding: const EdgeInsets.only(bottom: 90, right: 16),
+                  alignment: Alignment.bottomRight,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildSpeedDialItem(
+                        label: 'Approvisionner'.tr,
+                        icon: Icons.add_shopping_cart,
+                        onTap: () {
+                          setState(() => _isFabExpanded = false);
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      _buildSpeedDialItem(
+                        label: 'Ajuster'.tr,
+                        icon: Icons.tune,
+                        onTap: () {
+                          setState(() => _isFabExpanded = false);
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const StockAdjustmentScreen()));
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      _buildSpeedDialItem(
+                        label: 'Transférer'.tr,
+                        icon: Icons.swap_horiz,
+                        onTap: () {
+                          setState(() => _isFabExpanded = false);
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const StockTransfersScreen()));
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      _buildSpeedDialItem(
+                        label: 'Dépréciation'.tr,
+                        icon: Icons.trending_down,
+                        onTap: () {
+                          setState(() => _isFabExpanded = false);
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_inventory_main',
+        backgroundColor: AppTheme.primaryNavy,
+        foregroundColor: AppTheme.accentGold,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
+        child: Icon(_isFabExpanded ? Icons.close : Icons.add, size: 28),
       ),
     );
   }
@@ -646,61 +706,35 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  Widget _buildFloatingActions(BuildContext context) {
-    return Positioned(
-      bottom: 16,
-      right: 16,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+  Widget _buildSpeedDialItem({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (_isFabExpanded) ...[
-            _buildFabMini(Icons.add_shopping_cart, 'Approvisionner'.tr, () {
-              setState(() => _isFabExpanded = false);
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
-            }),
-            const SizedBox(height: 10),
-            _buildFabMini(Icons.tune, 'Ajuster'.tr, () {
-              setState(() => _isFabExpanded = false);
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const StockAdjustmentScreen()));
-            }),
-            const SizedBox(height: 10),
-            _buildFabMini(Icons.swap_horiz, 'Transférer'.tr, () {
-              setState(() => _isFabExpanded = false);
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const StockTransfersScreen()));
-            }),
-            const SizedBox(height: 10),
-            _buildFabMini(Icons.trending_down, 'Dépréciation'.tr, () {
-              setState(() => _isFabExpanded = false);
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
-            }),
-            const SizedBox(height: 10),
-          ],
-          FloatingActionButton.extended(
-            heroTag: 'fab_inventory_main',
-            backgroundColor: AppTheme.primaryNavy,
-            foregroundColor: AppTheme.accentGold,
-            elevation: 4,
-            onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
-            icon: Icon(_isFabExpanded ? Icons.close : Icons.add_rounded),
-            label: Text(
-              _isFabExpanded ? 'Fermer'.tr : 'Actions Stock'.tr,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF111827)),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
+            child: Icon(icon, color: AppTheme.primaryNavy, size: 22),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFabMini(IconData icon, String label, VoidCallback onTap) {
-    return FloatingActionButton.extended(
-      heroTag: 'fab_mini_$label',
-      onPressed: onTap,
-      backgroundColor: Colors.white,
-      foregroundColor: AppTheme.primaryNavy,
-      elevation: 3,
-      icon: Icon(icon, size: 18, color: AppTheme.primaryNavy),
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
     );
   }
 }

@@ -103,6 +103,9 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
       changeReturned: change,
       customerName: _selectedCustomer != null ? _selectedCustomer!.name : 'Client Comptoir',
       customerPhone: _selectedCustomer?.phone ?? '',
+      overrideTotal: total,
+      globalDiscount: _globalDiscount,
+      saleDate: _saleDate,
     );
 
     setState(() {
@@ -123,11 +126,11 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
       ),
       child: Column(
         children: [
-          // 1. TOP HEADER GREEN / NAVY AVEC STEPPER
+          // 1. TOP HEADER NAVY AVEC STEPPER GOLD
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
             decoration: const BoxDecoration(
-              color: Color(0xFF14532D), // Green theme from screenshot
+              color: AppTheme.primaryNavy,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
@@ -159,7 +162,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                 ),
                 const SizedBox(height: 8),
 
-                // BARRE D'INDICATEURS DU STEPPER (Recapitulatif | Client | Paiement | Succes)
+                // BARRE D'INDICATEURS DU STEPPER
                 Row(
                   children: [
                     _buildStepIndicator(0, 'Recapitulatif'),
@@ -197,7 +200,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
           Container(
             height: 4,
             decoration: BoxDecoration(
-              color: isActive || isDone ? const Color(0xFF86EFAC) : Colors.white24,
+              color: isActive || isDone ? AppTheme.accentGold : Colors.white24,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -207,7 +210,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
             style: TextStyle(
               fontSize: 10,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              color: isActive ? Colors.white : Colors.white60,
+              color: isActive ? AppTheme.accentGold : Colors.white60,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -236,10 +239,12 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   }
 
   // ==========================================
-  // ÉTAPE 1 : RÉCAPITULATIF (media_1793841691097_efc9e29c.jpg)
+  // ÉTAPE 1 : RÉCAPITULATIF (Remise par produit + Remise globale)
   // ==========================================
   Widget _buildStep1Recap(BuildContext context) {
     final total = _calculatedTotal;
+    final rawSubtotal = appState.cart.fold(0.0, (sum, i) => sum + i.subtotal);
+    final itemsDiscountTotal = appState.cart.fold(0.0, (sum, i) => sum + i.discount);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,39 +258,96 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.product.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.product.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${item.quantity} x ${AppTheme.formatFCFA(item.unitPrice)} = ${AppTheme.formatFCFA(item.subtotal)}',
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            ),
+                          ],
                         ),
-                        Text(
-                          '${item.quantity} x ${AppTheme.formatFCFA(item.unitPrice)} = ${AppTheme.formatFCFA(item.total)}',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF64748B), size: 22),
+                        onPressed: () {
+                          setState(() {
+                            appState.updateCartQuantity(item, -1);
+                            _amountBuffer = _calculatedTotal.toInt().toString();
+                          });
+                        },
+                      ),
+                      Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: AppTheme.primaryNavy, size: 22),
+                        onPressed: () {
+                          setState(() {
+                            appState.updateCartQuantity(item, 1);
+                            _amountBuffer = _calculatedTotal.toInt().toString();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      InkWell(
+                        onTap: () => _showProductDiscountDialog(context, item),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: item.discount > 0 ? const Color(0xFFFEF3C7) : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: item.discount > 0 ? AppTheme.accentGold : const Color(0xFFCBD5E1),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.discount_outlined,
+                                size: 14,
+                                color: item.discount > 0 ? const Color(0xFFB45309) : AppTheme.primaryNavy,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                item.discount > 0
+                                    ? 'Remise: -${AppTheme.formatFCFA(item.discount)}'
+                                    : '+ Remise sur ce produit',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: item.discount > 0 ? const Color(0xFFB45309) : AppTheme.primaryNavy,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF64748B)),
-                    onPressed: () {
-                      setState(() {
-                        appState.updateCartQuantity(item, -1);
-                      });
-                    },
-                  ),
-                  Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle_outline, color: Color(0xFF15803D)),
-                    onPressed: () {
-                      setState(() {
-                        appState.updateCartQuantity(item, 1);
-                      });
-                    },
+                      ),
+                      Text(
+                        'Ligne: ${AppTheme.formatFCFA(item.total)}',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.primaryNavy,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -298,28 +360,51 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
             Expanded(
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF15803D),
+                  foregroundColor: AppTheme.primaryNavy,
                   side: const BorderSide(color: Color(0xFFCBD5E1)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
                 ),
-                icon: const Icon(Icons.discount_outlined, size: 16),
-                label: Text(_globalDiscount > 0 ? 'Remise: -${_globalDiscount.toInt()}' : 'Remise globale', style: const TextStyle(fontSize: 12.5)),
+                icon: const Icon(Icons.discount, size: 16, color: AppTheme.accentGold),
+                label: Text(
+                  _globalDiscount > 0 ? 'Remise globale: -${_globalDiscount.toInt()} F' : 'Remise globale',
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                ),
                 onPressed: () {
                   final discountCtrl = TextEditingController(text: _globalDiscount > 0 ? _globalDiscount.toInt().toString() : '');
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text('Remise globale (F CFA)'),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      title: const Text('Remise globale (F CFA)', style: TextStyle(fontWeight: FontWeight.bold)),
                       content: TextField(
                         controller: discountCtrl,
                         keyboardType: TextInputType.number,
                         autofocus: true,
-                        decoration: const InputDecoration(hintText: 'Montant de remise'),
+                        decoration: const InputDecoration(
+                          hintText: 'Montant de remise',
+                          suffixText: 'F CFA',
+                          border: OutlineInputBorder(),
+                        ),
                       ),
                       actions: [
+                        if (_globalDiscount > 0)
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _globalDiscount = 0.0;
+                                _amountBuffer = _calculatedTotal.toInt().toString();
+                              });
+                              Navigator.pop(ctx);
+                            },
+                            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                          ),
                         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF15803D)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryNavy,
+                            foregroundColor: AppTheme.accentGold,
+                          ),
                           onPressed: () {
                             setState(() {
                               _globalDiscount = double.tryParse(discountCtrl.text.trim()) ?? 0.0;
@@ -327,7 +412,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                             });
                             Navigator.pop(ctx);
                           },
-                          child: const Text('Appliquer', style: TextStyle(color: Colors.white)),
+                          child: const Text('Appliquer', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -349,7 +434,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                     const Text('Arrondir', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                     Switch(
                       value: _roundTotal,
-                      activeThumbColor: const Color(0xFF15803D),
+                      activeThumbColor: AppTheme.accentGold,
                       onChanged: (v) {
                         setState(() {
                           _roundTotal = v;
@@ -395,7 +480,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                     ),
                   ],
                 ),
-                const Icon(Icons.edit_calendar_outlined, size: 16, color: Color(0xFF15803D)),
+                const Icon(Icons.edit_calendar_outlined, size: 16, color: AppTheme.accentGold),
               ],
             ),
           ),
@@ -415,16 +500,26 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Sous-total', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-                  Text(AppTheme.formatFCFA(appState.cartTotal), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const Text('Sous-total brut', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+                  Text(AppTheme.formatFCFA(rawSubtotal), style: const TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
+              if (itemsDiscountTotal > 0) ...[
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Remises sur produits', style: TextStyle(color: Color(0xFFD97706), fontSize: 13)),
+                    Text('-${AppTheme.formatFCFA(itemsDiscountTotal)}', style: const TextStyle(color: Color(0xFFD97706), fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ],
               if (_globalDiscount > 0) ...[
                 const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Remise', style: TextStyle(color: Colors.red, fontSize: 13)),
+                    const Text('Remise globale', style: TextStyle(color: Colors.red, fontSize: 13)),
                     Text('-${AppTheme.formatFCFA(_globalDiscount)}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -433,8 +528,8 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('TOTAL', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                  Text(AppTheme.formatFCFA(total), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF15803D))),
+                  const Text('TOTAL', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.primaryNavy)),
+                  Text(AppTheme.formatFCFA(total), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 19, color: AppTheme.accentGold)),
                 ],
               ),
             ],
@@ -454,23 +549,24 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         ),
         const SizedBox(height: 20),
 
-        // Bouton Suivant
+        // Bouton Suivant (Gold background avec texte Navy)
         SizedBox(
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF14532D),
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.accentGold,
+              foregroundColor: AppTheme.primaryNavy,
+              elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () => setState(() => _currentStep = 1),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Suivant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text('Suivant', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
                 SizedBox(width: 8),
-                Icon(Icons.arrow_forward_rounded, size: 18),
+                Icon(Icons.arrow_forward_rounded, size: 18, color: AppTheme.primaryNavy),
               ],
             ),
           ),
@@ -479,8 +575,118 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
     );
   }
 
+  void _showProductDiscountDialog(BuildContext context, CartItem item) {
+    bool isPercent = false;
+    final discountCtrl = TextEditingController(
+      text: item.discount > 0 ? item.discount.toInt().toString() : '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                const Icon(Icons.discount, color: AppTheme.accentGold, size: 22),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Remise : ${item.product.name}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Sous-total ligne : ${AppTheme.formatFCFA(item.subtotal)} (${item.quantity} x ${AppTheme.formatFCFA(item.unitPrice)})',
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Montant (F CFA)'),
+                      selected: !isPercent,
+                      selectedColor: AppTheme.accentGold.withValues(alpha: 0.25),
+                      onSelected: (val) {
+                        if (val) setDlgState(() => isPercent = false);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('Pourcentage (%)'),
+                      selected: isPercent,
+                      selectedColor: AppTheme.accentGold.withValues(alpha: 0.25),
+                      onSelected: (val) {
+                        if (val) setDlgState(() => isPercent = true);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: discountCtrl,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: isPercent ? 'Remise en %' : 'Montant de remise (F CFA)',
+                    suffixText: isPercent ? '%' : 'F CFA',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              if (item.discount > 0)
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      item.discount = 0.0;
+                      _amountBuffer = _calculatedTotal.toInt().toString();
+                    });
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                ),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryNavy,
+                  foregroundColor: AppTheme.accentGold,
+                ),
+                onPressed: () {
+                  final inputVal = double.tryParse(discountCtrl.text.trim()) ?? 0.0;
+                  double calculatedItemDiscount = 0.0;
+                  if (isPercent) {
+                    calculatedItemDiscount = (item.subtotal * (inputVal / 100)).clamp(0.0, item.subtotal);
+                  } else {
+                    calculatedItemDiscount = inputVal.clamp(0.0, item.subtotal);
+                  }
+                  setState(() {
+                    item.discount = calculatedItemDiscount;
+                    _amountBuffer = _calculatedTotal.toInt().toString();
+                  });
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Appliquer', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   // ==========================================
-  // ÉTAPE 2 : CLIENT (media_1793841778054_221be706.jpg)
+  // ÉTAPE 2 : CLIENT
   // ==========================================
   Widget _buildStep2Client(BuildContext context) {
     final search = _clientSearchCtrl.text.trim().toLowerCase();
@@ -498,13 +704,13 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         ),
         const SizedBox(height: 14),
 
-        // Bouton "+ Nouveau client" (Beige/Gold)
+        // Bouton "+ Nouveau client" (Gold light)
         SizedBox(
           width: double.infinity,
           height: 46,
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFED7AA), // Beige tint from screenshot
+              backgroundColor: const Color(0xFFFED7AA),
               foregroundColor: const Color(0xFF9A3412),
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -530,7 +736,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
           height: 46,
           child: OutlinedButton(
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF14532D),
+              foregroundColor: AppTheme.primaryNavy,
               side: const BorderSide(color: Color(0xFFCBD5E1)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             ),
@@ -573,21 +779,21 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: isSel ? const Color(0xFFDCFCE7) : Colors.white,
+                color: isSel ? const Color(0xFFFFFBEB) : Colors.white,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: isSel ? const Color(0xFF15803D) : const Color(0xFFE2E8F0)),
+                border: Border.all(color: isSel ? AppTheme.accentGold : const Color(0xFFE2E8F0)),
               ),
               child: ListTile(
                 dense: true,
                 onTap: () => setState(() => _selectedCustomer = c),
                 leading: CircleAvatar(
-                  backgroundColor: isSel ? const Color(0xFF15803D) : const Color(0xFFF1F5F9),
-                  foregroundColor: isSel ? Colors.white : const Color(0xFF0F172A),
-                  child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : 'C'),
+                  backgroundColor: isSel ? AppTheme.accentGold : const Color(0xFFF1F5F9),
+                  foregroundColor: isSel ? AppTheme.primaryNavy : const Color(0xFF0F172A),
+                  child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : 'C', style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 title: Text(c.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(c.phone.isNotEmpty ? c.phone : 'Sans téléphone'),
-                trailing: isSel ? const Icon(Icons.check_circle, color: Color(0xFF15803D)) : null,
+                trailing: isSel ? const Icon(Icons.check_circle, color: AppTheme.accentGold) : null,
               ),
             );
           }),
@@ -599,7 +805,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
             Expanded(
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF14532D),
+                  foregroundColor: AppTheme.primaryNavy,
                   side: const BorderSide(color: Color(0xFFCBD5E1)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -612,8 +818,8 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
             Expanded(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF14532D),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.accentGold,
+                  foregroundColor: AppTheme.primaryNavy,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -621,9 +827,9 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Suivant', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('Suivant', style: TextStyle(fontWeight: FontWeight.w900)),
                     SizedBox(width: 6),
-                    Icon(Icons.arrow_forward_rounded, size: 16),
+                    Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.primaryNavy),
                   ],
                 ),
               ),
@@ -635,7 +841,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   }
 
   // ==========================================
-  // ÉTAPE 3 : PAIEMENT (media_1793841783754_a6a48d9d.jpg & media_1793841789096_89788e60.jpg)
+  // ÉTAPE 3 : PAIEMENT
   // ==========================================
   Widget _buildStep3Payment(BuildContext context) {
     final total = _calculatedTotal;
@@ -652,7 +858,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         // Montant affiché
         Text(
           '${_amountBuffer.isEmpty ? "0" : _amountBuffer} F CFA',
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: Color(0xFF0F172A)),
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: AppTheme.primaryNavy),
         ),
         const SizedBox(height: 10),
 
@@ -677,7 +883,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         ),
         const SizedBox(height: 12),
 
-        // Raccourcis monnaie exacte / +500 / +1000
+        // Raccourcis monnaie exacte / +500 / +1000 (Gold theme)
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -686,12 +892,12 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF14532D),
+                  color: AppTheme.accentGold,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   'Exact • ${total.toInt()}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.w900, fontSize: 12),
                 ),
               ),
             ),
@@ -768,20 +974,21 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         ),
         const SizedBox(height: 18),
 
-        // Bouton Confirmer la vente
+        // Bouton Confirmer la vente (Gold background avec texte Navy)
         SizedBox(
           width: double.infinity,
           height: 48,
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF14532D),
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.accentGold,
+              foregroundColor: AppTheme.primaryNavy,
+              elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+            icon: const Icon(Icons.check_circle_rounded, size: 18, color: AppTheme.primaryNavy),
             label: Text(
               'Confirmer la vente • ${AppTheme.formatFCFA(total)}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppTheme.primaryNavy),
             ),
             onPressed: _confirmSale,
           ),
@@ -850,15 +1057,22 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFDCFCE7) : Colors.white,
+          color: selected ? const Color(0xFFFFFBEB) : Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: selected ? const Color(0xFF15803D) : const Color(0xFFE2E8F0), width: selected ? 1.5 : 1),
+          border: Border.all(color: selected ? AppTheme.accentGold : const Color(0xFFE2E8F0), width: selected ? 1.5 : 1),
         ),
         child: Column(
           children: [
-            Icon(icon, color: selected ? const Color(0xFF15803D) : const Color(0xFF64748B), size: 20),
+            Icon(icon, color: selected ? AppTheme.accentGold : const Color(0xFF64748B), size: 20),
             const SizedBox(height: 4),
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: selected ? const Color(0xFF15803D) : const Color(0xFF0F172A))),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+                color: selected ? const Color(0xFFB45309) : const Color(0xFF0F172A),
+              ),
+            ),
             Text(balance, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
           ],
         ),
@@ -867,7 +1081,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   }
 
   // ==========================================
-  // ÉTAPE 4 : SUCCÈS (media_1793841789096_89788e60.jpg)
+  // ÉTAPE 4 : SUCCÈS (Gold Theme)
   // ==========================================
   Widget _buildStep4Success(BuildContext context) {
     final sale = _completedSale;
@@ -880,11 +1094,11 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
           width: 76,
           height: 76,
           decoration: const BoxDecoration(
-            color: Color(0xFFDCFCE7),
+            color: Color(0xFFFEF3C7),
             shape: BoxShape.circle,
           ),
           child: const Center(
-            child: Icon(Icons.check_circle_rounded, color: Color(0xFF15803D), size: 54),
+            child: Icon(Icons.check_circle_rounded, color: AppTheme.accentGold, size: 54),
           ),
         ),
         const SizedBox(height: 16),
@@ -900,7 +1114,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         const SizedBox(height: 8),
         Text(
           '${AppTheme.formatFCFA(sale.total)} • ${sale.paymentMethod}',
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF15803D)),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.primaryNavy),
         ),
         const SizedBox(height: 28),
 
@@ -910,12 +1124,13 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
           height: 48,
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF14532D),
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.accentGold,
+              foregroundColor: AppTheme.primaryNavy,
+              elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            icon: const Icon(Icons.print_rounded, size: 18),
-            label: const Text('Imprimer le reçu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
+            label: const Text('Imprimer le reçu', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
             onPressed: () => SaleReceiptDialog.show(context, sale),
           ),
         ),
@@ -968,7 +1183,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: const Text('Nouvelle vente', style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontSize: 15)),
+          child: const Text('Nouvelle vente', style: TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.w900, fontSize: 15)),
         ),
       ],
     );

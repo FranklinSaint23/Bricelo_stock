@@ -977,8 +977,11 @@ class AppState extends ChangeNotifier {
     String customerName = 'Client Comptoir',
     String customerPhone = '',
     String? cashierName,
+    double? overrideTotal,
+    double? globalDiscount,
+    DateTime? saleDate,
   }) {
-    final now = DateTime.now();
+    final now = saleDate ?? DateTime.now();
     final yyyy = now.year.toString();
     final mm = now.month.toString().padLeft(2, '0');
     final dd = now.day.toString().padLeft(2, '0');
@@ -997,13 +1000,16 @@ class AppState extends ChangeNotifier {
         ? cashierName.trim()
         : displayUserName;
 
+    final effectiveTotal = overrideTotal ?? ((cartTotal - (globalDiscount ?? 0.0)).clamp(0.0, double.infinity));
+    final effectiveDiscountTotal = cart.fold(0.0, (sum, i) => sum + i.discount) + (globalDiscount ?? 0.0);
+
     final sale = Sale(
       id: 'sale_${now.millisecondsSinceEpoch}',
       ticketNumber: ticketNumber,
       createdAt: now,
       items: itemsSummary,
-      total: cartTotal,
-      discountTotal: cart.fold(0.0, (sum, i) => sum + i.discount),
+      total: effectiveTotal,
+      discountTotal: effectiveDiscountTotal,
       paymentMethod: paymentMethod,
       amountReceived: amountReceived,
       changeReturned: changeReturned,
