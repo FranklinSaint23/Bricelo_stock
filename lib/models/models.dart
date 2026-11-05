@@ -71,7 +71,13 @@ class Product {
 
   int stockForStore(String storeName) {
     if (storeName == 'Tous' || storeName.trim().isEmpty) return stock;
-    return stockByStore[storeName.trim()] ?? stock;
+    final normalized = storeName.trim().toLowerCase();
+    for (final entry in stockByStore.entries) {
+      if (entry.key.trim().toLowerCase() == normalized) {
+        return entry.value;
+      }
+    }
+    return stock;
   }
 
   void setStockForStore(String storeName, int qty) {
@@ -377,6 +383,9 @@ class SupplierDebt {
   double paidAmount;
   final DateTime createdAt;
   final DateTime dueDate;
+  final List<DebtPayment> payments;
+  final String? orderRef;
+  final String? storeName;
 
   SupplierDebt({
     required this.id,
@@ -387,9 +396,12 @@ class SupplierDebt {
     this.paidAmount = 0,
     required this.createdAt,
     required this.dueDate,
-  });
+    List<DebtPayment>? payments,
+    this.orderRef,
+    this.storeName,
+  }) : payments = payments ?? [];
 
-  double get remainingDebt => totalAmount - paidAmount;
+  double get remainingDebt => (totalAmount - paidAmount).clamp(0.0, double.infinity);
   bool get isSettled => remainingDebt <= 0;
 
   Map<String, dynamic> toJson() => {
@@ -401,6 +413,9 @@ class SupplierDebt {
         'paidAmount': paidAmount,
         'createdAt': createdAt.toIso8601String(),
         'dueDate': dueDate.toIso8601String(),
+        'payments': payments.map((e) => e.toJson()).toList(),
+        'orderRef': orderRef,
+        'storeName': storeName,
       };
 
   factory SupplierDebt.fromJson(Map<String, dynamic> j) => SupplierDebt(
@@ -412,6 +427,11 @@ class SupplierDebt {
         paidAmount: (j['paidAmount'] as num?)?.toDouble() ?? 0,
         createdAt: DateTime.tryParse((j['createdAt'] ?? '').toString()) ?? DateTime.now(),
         dueDate: DateTime.tryParse((j['dueDate'] ?? '').toString()) ?? DateTime.now(),
+        payments: (j['payments'] as List<dynamic>? ?? [])
+            .map((e) => DebtPayment.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+        orderRef: j['orderRef']?.toString(),
+        storeName: j['storeName']?.toString(),
       );
 }
 
@@ -608,6 +628,144 @@ class Supplier {
         notes: (j['notes'] ?? '').toString(),
         isArchived: j['isArchived'] as bool? ?? false,
         createdAt: DateTime.tryParse((j['createdAt'] ?? j['created_at'] ?? '').toString()) ?? DateTime.now(),
+      );
+}
+
+// ==========================================
+// MODÈLES BONS D'ACHAT & COMMANDES FOURNISSEUR
+// ==========================================
+class PurchaseOrderItem {
+  final String productId;
+  final String productName;
+  final int quantityRequested;
+  int quantityReceived;
+  final double unitPrice;
+
+  PurchaseOrderItem({
+    required this.productId,
+    required this.productName,
+    required this.quantityRequested,
+    this.quantityReceived = 0,
+    required this.unitPrice,
+  });
+
+  double get totalPrice => quantityRequested * unitPrice;
+
+  Map<String, dynamic> toJson() => {
+        'productId': productId,
+        'productName': productName,
+        'quantityRequested': quantityRequested,
+        'quantityReceived': quantityReceived,
+        'unitPrice': unitPrice,
+      };
+
+  factory PurchaseOrderItem.fromJson(Map<String, dynamic> j) => PurchaseOrderItem(
+        productId: (j['productId'] ?? '').toString(),
+        productName: (j['productName'] ?? '').toString(),
+        quantityRequested: (j['quantityRequested'] as num?)?.toInt() ?? 0,
+        quantityReceived: (j['quantityReceived'] as num?)?.toInt() ?? 0,
+        unitPrice: (j['unitPrice'] as num?)?.toDouble() ?? 0.0,
+      );
+}
+
+class PurchaseOrderReception {
+  final String reference; // ex: BS-REC-20261105-0001
+  final DateTime date;
+  final String storeName;
+  final int articlesCount;
+  final double supplierPrice;
+  final double costPrice;
+
+  PurchaseOrderReception({
+    required this.reference,
+    required this.date,
+    required this.storeName,
+    required this.articlesCount,
+    required this.supplierPrice,
+    required this.costPrice,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'reference': reference,
+        'date': date.toIso8601String(),
+        'storeName': storeName,
+        'articlesCount': articlesCount,
+        'supplierPrice': supplierPrice,
+        'costPrice': costPrice,
+      };
+
+  factory PurchaseOrderReception.fromJson(Map<String, dynamic> j) => PurchaseOrderReception(
+        reference: (j['reference'] ?? '').toString(),
+        date: DateTime.tryParse((j['date'] ?? '').toString()) ?? DateTime.now(),
+        storeName: (j['storeName'] ?? 'Boutique principale').toString(),
+        articlesCount: (j['articlesCount'] as num?)?.toInt() ?? 0,
+        supplierPrice: (j['supplierPrice'] as num?)?.toDouble() ?? 0.0,
+        costPrice: (j['costPrice'] as num?)?.toDouble() ?? 0.0,
+      );
+}
+
+class PurchaseOrder {
+  final String id;
+  final String reference; // ex: BS-ACH-20261105-0001
+  final String supplierId;
+  final String supplierName;
+  final String destinationStore;
+  final DateTime createdAt;
+  final DateTime? deliveryDate;
+  String status; // 'En attente', 'Reçu', 'Partiel'
+  final List<PurchaseOrderItem> items;
+  final List<PurchaseOrderReception> receptions;
+  final String notes;
+
+  PurchaseOrder({
+    required this.id,
+    required this.reference,
+    required this.supplierId,
+    required this.supplierName,
+    required this.destinationStore,
+    required this.createdAt,
+    this.deliveryDate,
+    this.status = 'En attente',
+    List<PurchaseOrderItem>? items,
+    List<PurchaseOrderReception>? receptions,
+    this.notes = '',
+  })  : items = items ?? [],
+        receptions = receptions ?? [];
+
+  double get totalAmount => items.fold(0.0, (sum, i) => sum + i.totalPrice);
+  int get totalQuantity => items.fold(0, (sum, i) => sum + i.quantityRequested);
+  int get totalReceived => items.fold(0, (sum, i) => sum + i.quantityReceived);
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'reference': reference,
+        'supplierId': supplierId,
+        'supplierName': supplierName,
+        'destinationStore': destinationStore,
+        'createdAt': createdAt.toIso8601String(),
+        'deliveryDate': deliveryDate?.toIso8601String(),
+        'status': status,
+        'items': items.map((e) => e.toJson()).toList(),
+        'receptions': receptions.map((e) => e.toJson()).toList(),
+        'notes': notes,
+      };
+
+  factory PurchaseOrder.fromJson(Map<String, dynamic> j) => PurchaseOrder(
+        id: (j['id'] ?? '').toString(),
+        reference: (j['reference'] ?? '').toString(),
+        supplierId: (j['supplierId'] ?? '').toString(),
+        supplierName: (j['supplierName'] ?? '').toString(),
+        destinationStore: (j['destinationStore'] ?? 'Boutique Principale').toString(),
+        createdAt: DateTime.tryParse((j['createdAt'] ?? '').toString()) ?? DateTime.now(),
+        deliveryDate: j['deliveryDate'] != null ? DateTime.tryParse(j['deliveryDate'].toString()) : null,
+        status: (j['status'] ?? 'En attente').toString(),
+        items: (j['items'] as List<dynamic>? ?? [])
+            .map((e) => PurchaseOrderItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+        receptions: (j['receptions'] as List<dynamic>? ?? [])
+            .map((e) => PurchaseOrderReception.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+        notes: (j['notes'] ?? '').toString(),
       );
 }
 

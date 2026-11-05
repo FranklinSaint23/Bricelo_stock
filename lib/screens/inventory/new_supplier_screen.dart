@@ -5,7 +5,12 @@ import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 
 class NewSupplierScreen extends StatefulWidget {
-  const NewSupplierScreen({super.key});
+  final Supplier? supplierToEdit;
+
+  const NewSupplierScreen({
+    super.key,
+    this.supplierToEdit,
+  });
 
   @override
   State<NewSupplierScreen> createState() => _NewSupplierScreenState();
@@ -22,6 +27,20 @@ class _NewSupplierScreenState extends State<NewSupplierScreen> {
   final _notesController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.supplierToEdit != null) {
+      final s = widget.supplierToEdit!;
+      _nameController.text = s.name;
+      _contactController.text = s.contactName;
+      _phoneController.text = s.phone;
+      _emailController.text = s.email;
+      _addressController.text = s.address;
+      _notesController.text = s.notes;
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _contactController.dispose();
@@ -35,37 +54,73 @@ class _NewSupplierScreenState extends State<NewSupplierScreen> {
   void _saveSupplier() {
     final name = _nameController.text.trim();
     if (name.isNotEmpty) {
-      final supplier = Supplier(
-        id: 'sup_${DateTime.now().millisecondsSinceEpoch}',
-        name: name,
-        contactName: _contactController.text.trim(),
-        phone: _phoneController.text.trim(),
-        email: _emailController.text.trim(),
-        address: _addressController.text.trim(),
-        notes: _notesController.text.trim(),
-      );
+      if (widget.supplierToEdit != null) {
+        final updated = Supplier(
+          id: widget.supplierToEdit!.id,
+          name: name,
+          contactName: _contactController.text.trim(),
+          phone: _phoneController.text.trim(),
+          email: _emailController.text.trim(),
+          address: _addressController.text.trim(),
+          notes: _notesController.text.trim(),
+          isArchived: widget.supplierToEdit!.isArchived,
+          createdAt: widget.supplierToEdit!.createdAt,
+        );
 
-      AppState.instance.addSupplier(supplier);
+        AppState.instance.updateSupplier(updated);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppTheme.primaryNavy,
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: AppTheme.accentGold, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Fournisseur "$name" créé avec succès !',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppTheme.primaryNavy,
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: AppTheme.accentGold, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Fournisseur "$name" mis à jour avec succès !',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
+        );
 
-      Navigator.pop(context, supplier);
+        Navigator.pop(context, updated);
+      } else {
+        final supplier = Supplier(
+          id: 'sup_${DateTime.now().millisecondsSinceEpoch}',
+          name: name,
+          contactName: _contactController.text.trim(),
+          phone: _phoneController.text.trim(),
+          email: _emailController.text.trim(),
+          address: _addressController.text.trim(),
+          notes: _notesController.text.trim(),
+        );
+
+        AppState.instance.addSupplier(supplier);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppTheme.primaryNavy,
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: AppTheme.accentGold, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Fournisseur "$name" créé avec succès !',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
+        Navigator.pop(context, supplier);
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -83,7 +138,7 @@ class _NewSupplierScreenState extends State<NewSupplierScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
       appBar: StockAppBar(
-        title: 'Nouveau fournisseur',
+        title: widget.supplierToEdit != null ? 'Modifier le fournisseur' : 'Nouveau fournisseur',
         backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         titleColor: isDark ? Colors.white : const Color(0xFF111827),
         backButtonColor: isDark ? const Color(0xFF334155) : const Color(0xFFF3F4F6),

@@ -121,19 +121,59 @@ class _NewPurchaseOrderScreenState extends State<NewPurchaseOrderScreen> {
   }
 
   void _finalizeOrder() {
-    final ref = 'BA-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-    
-    // Si une dette fournisseur doit être générée ou un log
+    final now = DateTime.now();
+    final dateStr = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final seq = (appState.purchaseOrders.length + 1).toString().padLeft(4, '0');
+    final ref = 'BS-ACH-$dateStr-$seq';
+
+    final items = <PurchaseOrderItem>[];
+    for (final entry in _selectedQuantities.entries) {
+      final pid = entry.key;
+      final qty = entry.value;
+      if (qty <= 0) continue;
+      final product = appState.products.firstWhere(
+        (p) => p.id == pid,
+        orElse: () => Product(id: pid, name: 'Article', barcode: '', buyPrice: 0, sellPrice: 0, stock: 0, category: ''),
+      );
+      final price = _customPurchasePrices[pid] ?? product.buyPrice;
+      items.add(
+        PurchaseOrderItem(
+          productId: pid,
+          productName: product.name,
+          quantityRequested: qty,
+          quantityReceived: 0,
+          unitPrice: price,
+        ),
+      );
+    }
+
+    final po = PurchaseOrder(
+      id: 'po_${DateTime.now().millisecondsSinceEpoch}',
+      reference: ref,
+      supplierId: _selectedSupplier?.id ?? '',
+      supplierName: _selectedSupplier?.name ?? 'Fournisseur',
+      destinationStore: _selectedDestination,
+      createdAt: now,
+      deliveryDate: _deliveryDate,
+      status: 'En attente',
+      items: items,
+      notes: _notesCtrl.text.trim(),
+    );
+    appState.addPurchaseOrder(po);
+
     if (_selectedSupplier != null && _totalEstimatedCost > 0) {
+      final invRef = 'BS-FAF-$dateStr-$seq';
       appState.addSupplierDebt(
         SupplierDebt(
           id: 'sdebt_${DateTime.now().millisecondsSinceEpoch}',
           supplierName: _selectedSupplier!.name,
           supplierPhone: _selectedSupplier!.phone,
-          invoiceRef: ref,
+          invoiceRef: invRef,
           totalAmount: _totalEstimatedCost,
-          createdAt: DateTime.now(),
+          createdAt: now,
           dueDate: _deliveryDate,
+          orderRef: ref,
+          storeName: _selectedDestination,
         ),
       );
     }

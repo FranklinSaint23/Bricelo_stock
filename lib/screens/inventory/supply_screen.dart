@@ -364,26 +364,95 @@ class _SupplyScreenState extends State<SupplyScreen> {
 
     final now = DateTime.now();
     final dateStr = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
-    final seq = (appState.supplierDebts.length + 1).toString().padLeft(4, '0');
-    final orderRef = 'CMD-$dateStr-$seq';
-    final receptionRef = 'REC-$dateStr-$seq';
-    final invoiceRef = 'FAF-$dateStr-$seq';
+    final seq = (appState.purchaseOrders.length + 1).toString().padLeft(4, '0');
+    final orderRef = 'BS-ACH-$dateStr-$seq';
+    final receptionRef = 'BS-REC-$dateStr-$seq';
+    final invoiceRef = 'BS-FAF-$dateStr-$seq';
+
+    final sup = _selectedSupplier != null
+        ? appState.suppliers.firstWhere(
+            (s) => s.name.trim().toLowerCase() == _selectedSupplier!.trim().toLowerCase(),
+            orElse: () => Supplier(id: 'sup_${DateTime.now().millisecondsSinceEpoch}', name: _selectedSupplier!),
+          )
+        : null;
+
+    // Enregistrer le bon d'achat dans l'historique
+    if (sup != null) {
+      final po = PurchaseOrder(
+        id: 'po_${DateTime.now().millisecondsSinceEpoch}',
+        reference: orderRef,
+        supplierId: sup.id,
+        supplierName: sup.name,
+        destinationStore: _selectedStore,
+        createdAt: now,
+        status: 'Reçu',
+        items: _items
+            .map((i) => PurchaseOrderItem(
+                  productId: i.product.id,
+                  productName: i.product.name,
+                  quantityRequested: i.quantity,
+                  quantityReceived: i.quantity,
+                  unitPrice: i.buyPrice,
+                ))
+            .toList(),
+        receptions: [
+          PurchaseOrderReception(
+            reference: receptionRef,
+            date: now,
+            storeName: _selectedStore,
+            articlesCount: _items.fold(0, (sum, i) => sum + i.quantity),
+            supplierPrice: _grandTotal,
+            costPrice: _grandTotal,
+          ),
+        ],
+      );
+      appState.addPurchaseOrder(po);
+    }
 
     String? debtId;
-    // Si dette fournisseur
-    if (_selectedMode == 'Achat fournisseur' && !_alreadyPaid && _grandTotal > 0 && _selectedSupplier != null) {
-      debtId = 'sdebt_${DateTime.now().millisecondsSinceEpoch}';
-      appState.addSupplierDebt(
-        SupplierDebt(
-          id: debtId,
-          supplierName: _selectedSupplier!,
-          supplierPhone: '',
-          invoiceRef: invoiceRef,
-          totalAmount: _grandTotal,
-          createdAt: DateTime.now(),
-          dueDate: DateTime.now().add(const Duration(days: 15)),
-        ),
-      );
+    if (_selectedMode == 'Achat fournisseur' && _grandTotal > 0 && sup != null) {
+      if (!_alreadyPaid) {
+        debtId = 'sdebt_${DateTime.now().millisecondsSinceEpoch}';
+        appState.addSupplierDebt(
+          SupplierDebt(
+            id: debtId,
+            supplierName: sup.name,
+            supplierPhone: sup.phone,
+            invoiceRef: invoiceRef,
+            totalAmount: _grandTotal,
+            createdAt: now,
+            dueDate: now.add(const Duration(days: 15)),
+            orderRef: orderRef,
+            storeName: _selectedStore,
+          ),
+        );
+      } else {
+        // Enregistrer la facture réglée avec son règlement récent
+        final regRef = 'BS-REG-$dateStr-$seq';
+        appState.addSupplierDebt(
+          SupplierDebt(
+            id: 'sdebt_${DateTime.now().millisecondsSinceEpoch}',
+            supplierName: sup.name,
+            supplierPhone: sup.phone,
+            invoiceRef: invoiceRef,
+            totalAmount: _grandTotal,
+            paidAmount: _grandTotal,
+            createdAt: now,
+            dueDate: now,
+            orderRef: orderRef,
+            storeName: _selectedStore,
+            payments: [
+              DebtPayment(
+                id: regRef,
+                amount: _grandTotal,
+                date: _supplyPaymentDate,
+                paymentMethod: _supplyPaymentMethod,
+                note: 'Règlement comptant approvisionnement',
+              ),
+            ],
+          ),
+        );
+      }
     }
 
     final itemsSummary = _items.map((i) => {

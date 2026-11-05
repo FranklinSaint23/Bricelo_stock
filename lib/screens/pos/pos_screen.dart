@@ -209,7 +209,18 @@ class _PosScreenState extends State<PosScreen> {
                             itemBuilder: (context, idx) {
                               final p = products[idx];
                               return InkWell(
-                                onTap: () => appState.addToCart(p),
+                                onTap: () {
+                                  final ok = appState.addToCart(p);
+                                  if (!ok) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: const Color(0xFFDC2626),
+                                        content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de ${p.stockForStore(appState.currentStore)}.'),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                },
                                 borderRadius: BorderRadius.circular(14),
                                 child: Container(
                                   padding: const EdgeInsets.all(14),

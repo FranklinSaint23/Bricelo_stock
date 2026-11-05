@@ -46,6 +46,7 @@ class AppState extends ChangeNotifier {
   List<Sale> sales = [];
   List<CustomerDebt> debts = [];
   List<SupplierDebt> supplierDebts = [];
+  List<PurchaseOrder> purchaseOrders = [];
   List<Expense> expenses = [];
   List<StockMovement> stockMovements = [];
 
@@ -189,6 +190,9 @@ class AppState extends ChangeNotifier {
         supplierDebts = (data['supplierDebts'] as List<dynamic>? ?? [])
             .map((e) => SupplierDebt.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
+        purchaseOrders = (data['purchaseOrders'] as List<dynamic>? ?? [])
+            .map((e) => PurchaseOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
         expenses = (data['expenses'] as List<dynamic>? ?? [])
             .map((e) => Expense.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
@@ -232,6 +236,7 @@ class AppState extends ChangeNotifier {
         'sales': sales.map((e) => e.toJson()).toList(),
         'debts': debts.map((e) => e.toJson()).toList(),
         'supplierDebts': supplierDebts.map((e) => e.toJson()).toList(),
+        'purchaseOrders': purchaseOrders.map((e) => e.toJson()).toList(),
         'expenses': expenses.map((e) => e.toJson()).toList(),
         'stockMovements': stockMovements.map((e) => e.toJson()).toList(),
       };
@@ -859,6 +864,7 @@ class AppState extends ChangeNotifier {
     sales.clear();
     debts.clear();
     supplierDebts.clear();
+    purchaseOrders.clear();
     expenses.clear();
     stockMovements.clear();
     cart.clear();
@@ -1027,7 +1033,7 @@ class AppState extends ChangeNotifier {
     final mm = now.month.toString().padLeft(2, '0');
     final dd = now.day.toString().padLeft(2, '0');
     final count = (sales.length + 1).toString().padLeft(4, '0');
-    final ticketNumber = 'VNT-$yyyy$mm$dd-$count';
+    final ticketNumber = 'BS-VTE-$yyyy$mm$dd-$count';
     final itemsSummary = cart
         .map((item) => SaleItemSummary(
               productName: item.product.name,
@@ -1269,13 +1275,61 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void recordSupplierPayment(String debtId, double amount) {
+  void recordSupplierPayment(
+    String debtId,
+    double amount, {
+    String? paymentMethod,
+    DateTime? paymentDate,
+    String note = '',
+  }) {
     final idx = supplierDebts.indexWhere((d) => d.id == debtId);
     if (idx != -1) {
       supplierDebts[idx].paidAmount += amount;
+      final now = paymentDate ?? DateTime.now();
+      final yyyy = now.year.toString();
+      final mm = now.month.toString().padLeft(2, '0');
+      final dd = now.day.toString().padLeft(2, '0');
+      final seq = (supplierDebts[idx].payments.length + 1).toString().padLeft(4, '0');
+      final ref = 'BS-REG-$yyyy$mm$dd-$seq';
+      final pm = (paymentMethod != null && paymentMethod.isNotEmpty)
+          ? (paymentMethod.startsWith('Caisse') ? paymentMethod : paymentMethod)
+          : 'Caisse $currentStore';
+
+      supplierDebts[idx].payments.insert(
+        0,
+        DebtPayment(
+          id: ref,
+          amount: amount,
+          date: now,
+          paymentMethod: pm,
+          note: note.isNotEmpty ? note : 'Règlement facture ${supplierDebts[idx].invoiceRef}',
+        ),
+      );
       _saveToPrefs();
       notifyListeners();
     }
+  }
+
+  // --- ACTIONS BONS D'ACHAT & COMMANDES FOURNISSEUR ---
+  void addPurchaseOrder(PurchaseOrder po) {
+    purchaseOrders.insert(0, po);
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void updatePurchaseOrder(PurchaseOrder po) {
+    final idx = purchaseOrders.indexWhere((p) => p.id == po.id);
+    if (idx != -1) {
+      purchaseOrders[idx] = po;
+      _saveToPrefs();
+      notifyListeners();
+    }
+  }
+
+  void deletePurchaseOrder(String id) {
+    purchaseOrders.removeWhere((p) => p.id == id);
+    _saveToPrefs();
+    notifyListeners();
   }
 
   // --- ACTIONS DÉPENSES ---

@@ -153,83 +153,94 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                               ? s.name.substring(0, s.name.length >= 2 ? 2 : 1).toUpperCase()
                               : 'FS';
 
-                          return Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => SupplierDetailScreen(supplier: s),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+                                ),
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 22,
-                                  backgroundColor: isDark
-                                      ? AppTheme.accentGold.withValues(alpha: 0.2)
-                                      : const Color(0xFFFEF3C7),
-                                  child: Text(
-                                    initials,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF92400E),
-                                      fontSize: 14,
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: isDark
+                                        ? AppTheme.accentGold.withValues(alpha: 0.2)
+                                        : const Color(0xFFFEF3C7),
+                                    child: Text(
+                                      initials,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF92400E),
+                                        fontSize: 14,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        s.name,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                          color: isDark ? Colors.white : const Color(0xFF111827),
-                                        ),
-                                      ),
-                                      if (s.contactName.isNotEmpty) ...[
-                                        const SizedBox(height: 2),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
                                         Text(
-                                          'Contact : ${s.contactName}',
+                                          s.name,
                                           style: TextStyle(
-                                            fontSize: 13,
-                                            color: isDark ? Colors.white70 : const Color(0xFF4B5563),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: isDark ? Colors.white : const Color(0xFF111827),
                                           ),
                                         ),
-                                      ],
-                                      if (s.phone.isNotEmpty) ...[
-                                        const SizedBox(height: 2),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.phone_outlined, size: 13, color: AppTheme.accentGold),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              s.phone,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: isDark ? Colors.white60 : const Color(0xFF6B7280),
-                                              ),
+                                        if (s.contactName.isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Contact : ${s.contactName}',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: isDark ? Colors.white70 : const Color(0xFF4B5563),
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
+                                        if (s.phone.isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.phone_outlined, size: 13, color: AppTheme.accentGold),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                s.phone,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: isDark ? Colors.white60 : const Color(0xFF6B7280),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ],
-                                    ],
+                                    ),
                                   ),
-                                ),
-                                if (s.phone.isNotEmpty)
-                                  IconButton(
-                                    icon: const Icon(Icons.call, color: AppTheme.accentGold, size: 20),
-                                    onPressed: () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Appel de ${s.phone}...')),
-                                      );
-                                    },
-                                  ),
-                              ],
+                                  if (s.phone.isNotEmpty)
+                                    IconButton(
+                                      icon: const Icon(Icons.call, color: AppTheme.accentGold, size: 20),
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Appel de ${s.phone}...')),
+                                        );
+                                      },
+                                    ),
+                                ],
+                              ),
                             ),
                           );
                         },

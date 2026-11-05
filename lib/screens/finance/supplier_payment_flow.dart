@@ -77,7 +77,13 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
     if (amount <= 0) return;
 
     if (widget.debtId != null) {
-      appState.recordSupplierPayment(widget.debtId!, amount);
+      appState.recordSupplierPayment(
+        widget.debtId!,
+        amount,
+        paymentMethod: _selectedPaymentMethod,
+        paymentDate: _paymentDate,
+        note: _noteCtrl.text.trim(),
+      );
     }
 
     Navigator.pushReplacement(
