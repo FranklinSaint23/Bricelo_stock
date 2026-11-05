@@ -255,49 +255,49 @@ class PurchasesAndExpensesScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _buildRow(Icons.people_outline, 'Fournisseurs'.tr, isLocked: false, onTap: () {
+                _buildRow(Icons.domain_rounded, 'Fournisseurs'.tr, isLocked: false, onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const SuppliersScreen()));
                 }),
                 _buildDivider(),
-                _buildRow(Icons.assignment_outlined, 'Bons d\'achat'.tr, isLocked: false, onTap: () {
+                _buildRow(Icons.receipt_long_rounded, 'Bons d\'achat'.tr, isLocked: false, onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchaseOrdersScreen()));
                 }),
                 _buildDivider(),
-                _buildRow(Icons.payments_outlined, 'Dépenses'.tr, isLocked: false, onTap: () {
-                  _showAddExpenseModal(context, category: 'Dépense générale', icon: Icons.payments_outlined);
+                _buildRow(Icons.price_change_rounded, 'Dépenses'.tr, isLocked: false, onTap: () {
+                  _showAddExpenseModal(context, category: 'Dépense générale', icon: Icons.price_change_rounded);
                 }),
                 _buildDivider(),
                 // 🎯 1. NOUVEAU : Loyer (charges fixes d'exploitation)
                 _buildRow(
-                  Icons.storefront_outlined,
+                  Icons.apartment_rounded,
                   'Loyer'.tr,
                   isLocked: false,
                   badgeText: 'Charges',
                   onTap: () {
-                    _showAddExpenseModal(context, category: 'Loyer', icon: Icons.storefront_outlined);
+                    _showAddExpenseModal(context, category: 'Loyer', icon: Icons.apartment_rounded);
                   },
                 ),
                 _buildDivider(),
                 // 🎯 2. NOUVEAU : Frais de livraison (logistique)
                 _buildRow(
-                  Icons.local_shipping_outlined,
+                  Icons.delivery_dining_rounded,
                   'Frais de livraison'.tr,
                   isLocked: false,
                   badgeText: 'Transport',
                   onTap: () {
-                    _showAddExpenseModal(context, category: 'Frais de livraison'.tr, icon: Icons.local_shipping_outlined);
+                    _showAddExpenseModal(context, category: 'Frais de livraison'.tr, icon: Icons.delivery_dining_rounded);
                   },
                 ),
                 _buildDivider(),
-                _buildRow(Icons.analytics_outlined, 'Analyse des sorties'.tr, isLocked: false, onTap: () {
+                _buildRow(Icons.insights_rounded, 'Analyse des sorties'.tr, isLocked: false, onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesAnalyticsScreen()));
                 }),
                 _buildDivider(),
-                _buildRow(Icons.balance_outlined, 'Coût d\'achat'.tr, isLocked: false, onTap: () {
+                _buildRow(Icons.request_quote_rounded, 'Coût d\'achat'.tr, isLocked: false, onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchaseCostsScreen()));
                 }),
                 _buildDivider(),
-                _buildRow(Icons.description_outlined, 'Dettes fournisseurs'.tr, isLocked: false, onTap: () {
+                _buildRow(Icons.credit_card_off_rounded, 'Dettes fournisseurs'.tr, isLocked: false, onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplierDebtsScreen()));
                 }),
               ],

@@ -1,5 +1,6 @@
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/screens/screens.dart';
+import 'package:stock_prime/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
@@ -15,7 +16,7 @@ class _PosScreenState extends State<PosScreen> {
   final appState = AppState.instance;
   final _searchCtrl = TextEditingController();
   String _searchQuery = '';
-  String _selectedCategory = 'Tous';
+  String _selectedStore = 'Toutes';
 
   @override
   void dispose() {
@@ -23,18 +24,7 @@ class _PosScreenState extends State<PosScreen> {
     super.dispose();
   }
 
-  List<String> get _dynamicCategories {
-    final cats = <String>{'Tous'};
-    for (final c in appState.categories) {
-      if (c.name.trim().isNotEmpty) cats.add(c.name.trim());
-    }
-    for (final p in appState.products) {
-      if (p.category.trim().isNotEmpty && p.category != 'Non catégorisé') {
-        cats.add(p.category.trim());
-      }
-    }
-    return cats.toList();
-  }
+  List<String> get _storeOptions => ['Toutes', ...appState.availableStores];
 
   @override
   Widget build(BuildContext context) {
@@ -42,23 +32,23 @@ class _PosScreenState extends State<PosScreen> {
       animation: appState,
       builder: (context, _) {
         final isDesktop = MediaQuery.of(context).size.width >= 800;
-        final categories = _dynamicCategories;
-        if (!categories.contains(_selectedCategory)) {
-          _selectedCategory = 'Tous';
+        final stores = _storeOptions;
+        if (!stores.contains(_selectedStore)) {
+          _selectedStore = 'Toutes';
         }
 
         final products = appState.products.where((p) {
           final matchesSearch = p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
               p.barcode.contains(_searchQuery);
-          final matchesCat = _selectedCategory == 'Tous' || p.category == _selectedCategory;
-          return matchesSearch && matchesCat;
+          final matchesStore = _selectedStore == 'Toutes' || (p.stockForStore(_selectedStore) >= 0);
+          return matchesSearch && matchesStore;
         }).toList();
 
         if (isDesktop) {
-          return _buildDesktopLayout(context, products, categories);
+          return _buildDesktopLayout(context, products, stores);
         }
 
-        return _buildMobileLayout(context, products, categories);
+        return _buildMobileLayout(context, products, stores);
       },
     );
   }
@@ -66,7 +56,7 @@ class _PosScreenState extends State<PosScreen> {
   // ==========================================
   // VERSION GRAND ÉCRAN WEB / DESKTOP (2 COLONNES)
   // ==========================================
-  Widget _buildDesktopLayout(BuildContext context, List<Product> products, List<String> categories) {
+  Widget _buildDesktopLayout(BuildContext context, List<Product> products, List<String> stores) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: Row(
@@ -127,13 +117,13 @@ class _PosScreenState extends State<PosScreen> {
                     height: 38,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      itemCount: categories.length,
+                      itemCount: stores.length,
                       separatorBuilder: (context, index) => const SizedBox(width: 8),
                       itemBuilder: (context, idx) {
-                        final cat = categories[idx];
-                        final isSelected = _selectedCategory == cat;
+                        final store = stores[idx];
+                        final isSelected = _selectedStore == store;
                         return ChoiceChip(
-                          label: Text(cat.tr),
+                          label: Text(store),
                           selected: isSelected,
                           selectedColor: AppTheme.primaryNavy,
                           backgroundColor: Colors.white,
@@ -148,7 +138,12 @@ class _PosScreenState extends State<PosScreen> {
                               color: isSelected ? AppTheme.primaryNavy : const Color(0xFFE2E8F0),
                             ),
                           ),
-                          onSelected: (_) => setState(() => _selectedCategory = cat),
+                          onSelected: (_) => setState(() {
+                            _selectedStore = store;
+                            if (store != 'Toutes') {
+                              appState.setCurrentStore(store);
+                            }
+                          }),
                         );
                       },
                     ),
@@ -483,7 +478,7 @@ class _PosScreenState extends State<PosScreen> {
   // ==========================================
   // VERSION MOBILE — STYLE BRICELO (100% DYNAMIQUE)
   // ==========================================
-  Widget _buildMobileLayout(BuildContext context, List<Product> products, List<String> categories) {
+  Widget _buildMobileLayout(BuildContext context, List<Product> products, List<String> stores) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -544,74 +539,120 @@ class _PosScreenState extends State<PosScreen> {
       ),
       body: Column(
         children: [
-          // 1. BARRE DE RECHERCHE + CATÉGORIES DYNAMIQUES
-          Container(
-            color: AppTheme.primaryNavy,
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-            child: Column(
-              children: [
-                Container(
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: TextField(
-                    controller: _searchCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'Rechercher un produit ou scanner...'.tr,
-                      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13.5),
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryNavy, size: 20),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.add_box_rounded, color: AppTheme.primaryNavy, size: 20),
-                        tooltip: 'Nouveau produit',
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
-                        },
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                  ),
-                ),
-                if (categories.length > 1) ...[
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 32,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: categories.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (context, idx) {
-                        final cat = categories[idx];
-                        final isSelected = _selectedCategory == cat;
-                        return InkWell(
-                          onTap: () => setState(() => _selectedCategory = cat),
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.accentGold : Colors.white.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(
-                              cat,
-                              style: TextStyle(
-                                color: isSelected ? AppTheme.primaryNavy : Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+          // 1. RECHERCHE PRODUIT + BOUTON + AU COIN DROIT (HORS DU HEADER)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
                 ],
-              ],
+              ),
+              child: TextField(
+                controller: _searchCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Rechercher un produit ou scanner...'.tr,
+                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF64748B), size: 20),
+                  suffixIcon: Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryNavy,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.add_rounded, color: AppTheme.accentGold, size: 20),
+                      ),
+                    ),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v),
+              ),
             ),
           ),
+
+          // 2. SÉLECTION DES BOUTIQUES COMMENÇANT PAR TOUTES
+          SizedBox(
+            height: 38,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: stores.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, idx) {
+                final store = stores[idx];
+                final isSelected = _selectedStore == store;
+                return InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedStore = store;
+                      if (store != 'Toutes') {
+                        appState.setCurrentStore(store);
+                      }
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppTheme.accentGold : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+                        width: 1.2,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppTheme.accentGold.withOpacity(0.25),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          store == 'Toutes' ? Icons.storefront_rounded : Icons.store_rounded,
+                          size: 15,
+                          color: isSelected ? AppTheme.primaryNavy : const Color(0xFF64748B),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          store,
+                          style: TextStyle(
+                            color: isSelected ? AppTheme.primaryNavy : const Color(0xFF334155),
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
 
           // 2. ZONE CENTRALE : GRILLE DE PRODUITS OU ÉTAT VIDE
           Expanded(
@@ -679,22 +720,36 @@ class _PosScreenState extends State<PosScreen> {
                     itemCount: products.length,
                     itemBuilder: (context, idx) {
                       final p = products[idx];
-                      final isLow = p.stock <= 5;
+                      final availStock = _selectedStore == 'Toutes' ? p.stock : p.stockForStore(_selectedStore);
+                      final isLow = availStock <= 5;
                       final inCartQty = appState.cart
                           .where((c) => c.product.id == p.id)
                           .fold<int>(0, (sum, c) => sum + c.quantity);
                       final inCart = inCartQty > 0;
                       final cartItem = inCart ? appState.cart.firstWhere((c) => c.product.id == p.id) : null;
+                      final unitLabel = p.unit.toLowerCase().contains('pièce') || p.unit.toLowerCase().contains('piece')
+                          ? 'pièce(s)'
+                          : p.unit;
 
                       return InkWell(
                         onTap: () {
+                          if (p.productType != 'Service' && inCartQty >= availStock) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: const Color(0xFFDC2626),
+                                content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                            return;
+                          }
                           if (inCart) {
                             final ok = appState.updateCartQuantity(cartItem!, 1);
                             if (!ok) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   backgroundColor: const Color(0xFFDC2626),
-                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de ${p.stockForStore(appState.currentStore)}.'),
+                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
                                   duration: const Duration(seconds: 2),
                                 ),
                               );
@@ -705,7 +760,7 @@ class _PosScreenState extends State<PosScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   backgroundColor: const Color(0xFFDC2626),
-                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de ${p.stockForStore(appState.currentStore)}.'),
+                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
                                   duration: const Duration(seconds: 2),
                                 ),
                               );
@@ -715,130 +770,128 @@ class _PosScreenState extends State<PosScreen> {
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
                           padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: inCart ? const Color(0xFFFFFBEB) : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: inCart ? AppTheme.accentGold : const Color(0xFFE2E8F0),
-                            width: inCart ? 1.5 : 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                          decoration: BoxDecoration(
+                            color: inCart ? const Color(0xFFFFFBEB) : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: inCart ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+                              width: inCart ? 1.5 : 1,
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: inCart
-                                        ? AppTheme.accentGold
-                                        : const Color(0xFF0D1B2E).withValues(alpha: 0.06),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.inventory_2_rounded,
-                                      color: inCart ? AppTheme.primaryNavy : AppTheme.primaryNavy,
-                                      size: 18,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                  decoration: BoxDecoration(
-                                    color: isLow ? const Color(0xFFFFF8E7) : const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    '${p.stock} ${p.unit}',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: isLow ? const Color(0xFFD97706) : AppTheme.primaryNavy,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            Text(
-                              p.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13.5,
-                                color: Color(0xFF0F172A),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    AppTheme.formatFCFA(p.sellPrice),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 13.5,
-                                      color: inCart ? const Color(0xFFD97706) : AppTheme.primaryNavy,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  ProductImageWidget(
+                                    imageUrl: p.imageUrl,
+                                    size: 38,
+                                    borderRadius: 10,
                                   ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: isLow ? const Color(0xFFFFF8E7) : const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '$availStock $unitLabel',
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFFD97706),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Spacer(),
+                              Text(
+                                p.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13.5,
+                                  color: Color(0xFF0F172A),
                                 ),
-                                if (inCart)
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          appState.updateCartQuantity(cartItem!, -1);
-                                        },
-                                        child: Container(
-                                          width: 26,
-                                          height: 26,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(6),
-                                            border: Border.all(color: const Color(0xFFCBD5E1)),
-                                          ),
-                                          child: Icon(
-                                            inCartQty == 1 ? Icons.delete_outline : Icons.remove,
-                                            size: 15,
-                                            color: inCartQty == 1 ? Colors.red : const Color(0xFF0F172A),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      AppTheme.formatFCFA(p.sellPrice),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13.5,
+                                        color: Color(0xFFD97706),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (inCart)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            appState.updateCartQuantity(cartItem!, -1);
+                                          },
+                                          child: Container(
+                                            width: 26,
+                                            height: 26,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                                            ),
+                                            child: Icon(
+                                              inCartQty == 1 ? Icons.delete_outline : Icons.remove,
+                                              size: 15,
+                                              color: inCartQty == 1 ? Colors.red : const Color(0xFF0F172A),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                                        child: Text(
-                                          '$inCartQty',
-                                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                                          child: Text(
+                                            '$inCartQty',
+                                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                                          ),
                                         ),
-                                      ),
-                                      InkWell(
-                                        onTap: () {
-                                          final ok = appState.updateCartQuantity(cartItem!, 1);
-                                          if (!ok) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                backgroundColor: const Color(0xFFDC2626),
-                                                content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de ${p.stockForStore(appState.currentStore)}.'),
-                                                duration: const Duration(seconds: 2),
-                                              ),
-                                            );
-                                          }
-                                        },
+                                        InkWell(
+                                          onTap: () {
+                                            if (p.productType != 'Service' && inCartQty >= availStock) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  backgroundColor: const Color(0xFFDC2626),
+                                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                                  duration: const Duration(seconds: 2),
+                                                ),
+                                              );
+                                              return;
+                                            }
+                                            final ok = appState.updateCartQuantity(cartItem!, 1);
+                                            if (!ok) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  backgroundColor: const Color(0xFFDC2626),
+                                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                                  duration: const Duration(seconds: 2),
+                                                ),
+                                              );
+                                            }
+                                          },
                                         child: Container(
                                           width: 26,
                                           height: 26,

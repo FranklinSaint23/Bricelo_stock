@@ -10,52 +10,52 @@ class AccountingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       {
-        'icon': Icons.book_outlined,
+        'icon': Icons.auto_stories_rounded,
         'title': 'Journal & activation',
         'builder': (BuildContext ctx) => const AccountingJournalScreen(),
       },
       {
-        'icon': Icons.balance_outlined,
+        'icon': Icons.scale_rounded,
         'title': 'Balance',
         'builder': (BuildContext ctx) => const TrialBalanceScreen(),
       },
       {
-        'icon': Icons.people_outline,
+        'icon': Icons.person_pin_circle_rounded,
         'title': 'Clients à crédit',
         'builder': (BuildContext ctx) => const DebtsScreen(),
       },
       {
-        'icon': Icons.bar_chart_outlined,
+        'icon': Icons.query_stats_rounded,
         'title': 'Compte de résultat',
         'builder': (BuildContext ctx) => const IncomeStatementScreen(),
       },
       {
-        'icon': Icons.description_outlined,
+        'icon': Icons.account_balance_rounded,
         'title': 'Bilan',
         'builder': (BuildContext ctx) => const BalanceSheetScreen(),
       },
       {
-        'icon': Icons.receipt_outlined,
+        'icon': Icons.percent_rounded,
         'title': 'TVA',
         'builder': (BuildContext ctx) => const VatReportScreen(),
       },
       {
-        'icon': Icons.badge_outlined,
+        'icon': Icons.badge_rounded,
         'title': 'Paie',
         'builder': (BuildContext ctx) => const PayrollScreen(),
       },
       {
-        'icon': Icons.apartment_outlined,
+        'icon': Icons.domain_rounded,
         'title': 'Immobilisations',
         'builder': (BuildContext ctx) => const FixedAssetsScreen(),
       },
       {
-        'icon': Icons.event_available_outlined,
+        'icon': Icons.lock_clock_rounded,
         'title': 'Clôture',
         'builder': (BuildContext ctx) => const DailyClosingScreen(),
       },
       {
-        'icon': Icons.photo_library_outlined,
+        'icon': Icons.folder_shared_rounded,
         'title': 'Médiathèque',
         'builder': (BuildContext ctx) => const AccountingMediaScreen(),
       },

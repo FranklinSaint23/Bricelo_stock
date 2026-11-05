@@ -57,63 +57,63 @@ class _MoreScreenState extends State<MoreScreen> {
     return [
       // 1. Ventes & clients
       _OriginalMenuItem(
-        icon: Icons.receipt_long_outlined,
+        icon: Icons.point_of_sale_rounded,
         title: 'Ventes & clients'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const SalesAndCustomersScreen())),
         keywords: ['vente', 'ventes', 'client', 'clients', 'devis', 'facture', 'pos', 'commande'],
       ),
       // 2. Promotion & boutique
       _OriginalMenuItem(
-        icon: Icons.campaign_outlined,
+        icon: Icons.local_offer_rounded,
         title: 'Promotion & boutique'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const PromotionAndShopScreen())),
         keywords: ['promotion', 'boutique', 'shop', 'remise', 'catalogue', 'promo', 'commande', 'commandes en ligne', 'boutique en ligne', 'studio video', 'studio vidéo', 'video', 'vidéo'],
       ),
       // 3. Stock
       _OriginalMenuItem(
-        icon: Icons.warehouse_outlined,
+        icon: Icons.inventory_2_rounded,
         title: 'Stock'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const StockSubMenuScreen())),
         keywords: ['stock', 'stocks', 'article', 'articles', 'produit', 'produits', 'inventaire'],
       ),
       // 4. Achats & dépenses
       _OriginalMenuItem(
-        icon: Icons.shopping_cart_outlined,
+        icon: Icons.account_balance_wallet_rounded,
         title: 'Achats & dépenses'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const PurchasesAndExpensesScreen())),
         keywords: ['achat', 'achats', 'dépense', 'depense', 'dépenses', 'fournisseur', 'fournisseurs', 'charge', 'bon d\'achat', 'bons d\'achat', 'dette fournisseur', 'dettes fournisseurs'],
       ),
       // 5. Pertes & dépréciations
       _OriginalMenuItem(
-        icon: Icons.trending_down_outlined,
+        icon: Icons.remove_shopping_cart_rounded,
         title: 'Pertes & dépréciations'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const DepreciationReportScreen())),
         keywords: ['perte', 'pertes', 'dépréciation', 'depreciation', 'casse', 'avarie', 'rapport'],
       ),
       // 6. Comptabilité & trésorerie
       _OriginalMenuItem(
-        icon: Icons.menu_book_outlined,
+        icon: Icons.calculate_rounded,
         title: 'Comptabilité & trésorerie'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const AccountingScreen())),
         keywords: ['comptabilité', 'comptabilite', 'trésorerie', 'tresorerie', 'banque', 'caisse', 'finance', 'bilan'],
       ),
       // 7. Statistiques (globales)
       _OriginalMenuItem(
-        icon: Icons.insights_rounded,
+        icon: Icons.bar_chart_rounded,
         title: 'Statistiques (globales)'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const GlobalStatsScreen())),
         keywords: ['statistique', 'statistiques', 'stat', 'stats', 'globale', 'globales', 'analyse', 'graphique', 'chiffre'],
       ),
       // 8. Rapports
       _OriginalMenuItem(
-        icon: Icons.summarize_outlined,
+        icon: Icons.assessment_rounded,
         title: 'Rapports'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const ActivityReportsScreen())),
         keywords: ['rapport', 'rapports', 'activité', 'activite', 'période', 'periode', 'bilan', 'export', 'pdf'],
       ),
       // 7. Entreprise & équipe (avec badge À compléter)
       _OriginalMenuItem(
-        icon: Icons.badge_outlined,
+        icon: Icons.corporate_fare_rounded,
         title: 'Entreprise & équipe'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const CompanyAndTeamScreen())),
         badge: Container(
@@ -131,28 +131,28 @@ class _MoreScreenState extends State<MoreScreen> {
       ),
       // 8. Préférences
       _OriginalMenuItem(
-        icon: Icons.settings_outlined,
+        icon: Icons.tune_rounded,
         title: 'Préférences'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const PreferencesScreen())),
         keywords: ['préférence', 'preference', 'préférences', 'preferences', 'paramètre', 'parametre', 'configuration'],
       ),
       // 9. Langue de l'application
       _OriginalMenuItem(
-        icon: Icons.language_outlined,
+        icon: Icons.translate_rounded,
         title: "Langue de l'application".tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const LanguageScreen())),
         keywords: ['langue', 'langues', 'application', 'français', 'francais', 'anglais', 'english', 'swahili'],
       ),
       // 10. Assistant Bricelo
       _OriginalMenuItem(
-        icon: Icons.smart_toy_outlined,
+        icon: Icons.auto_awesome_rounded,
         title: 'Assistant Bricelo'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const BriceloAssistantScreen())),
         keywords: ['assistant', 'bricelo', 'ia', 'ai', 'robot', 'aide', 'conseil'],
       ),
       // 11. Centre d'aide
       _OriginalMenuItem(
-        icon: Icons.help_outline,
+        icon: Icons.support_agent_rounded,
         title: "Centre d'aide".tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
         keywords: ['centre', 'aide', 'support', 'contact', 'faq', 'guide', 'tutoriel'],

@@ -51,7 +51,7 @@ class SalesAndCustomersScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildRow(
-                  icon: Icons.receipt_long,
+                  icon: Icons.shopping_bag_rounded,
                   title: 'Historique des ventes',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesHistoryScreen()));
@@ -59,7 +59,7 @@ class SalesAndCustomersScreen extends StatelessWidget {
                 ),
                 const Divider(height: 1, indent: 52, color: Color(0xFFF3F4F6)),
                 _buildRow(
-                  icon: Icons.description_outlined,
+                  icon: Icons.request_quote_rounded,
                   title: 'Devis',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const QuotesScreen()));
@@ -67,7 +67,7 @@ class SalesAndCustomersScreen extends StatelessWidget {
                 ),
                 const Divider(height: 1, indent: 52, color: Color(0xFFF3F4F6)),
                 _buildRow(
-                  icon: Icons.bar_chart_outlined,
+                  icon: Icons.analytics_rounded,
                   title: 'Analyse des ventes',
                   trailingIcon: Icons.chevron_right,
                   onTap: () {
@@ -94,7 +94,7 @@ class SalesAndCustomersScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildRow(
-                  icon: Icons.people_outline,
+                  icon: Icons.groups_rounded,
                   title: 'Clients',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomersScreen()));
@@ -102,7 +102,7 @@ class SalesAndCustomersScreen extends StatelessWidget {
                 ),
                 const Divider(height: 1, indent: 52, color: Color(0xFFF3F4F6)),
                 _buildRow(
-                  icon: Icons.payments_outlined,
+                  icon: Icons.price_check_rounded,
                   title: 'Recouvrement des dettes',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const DebtsScreen()));

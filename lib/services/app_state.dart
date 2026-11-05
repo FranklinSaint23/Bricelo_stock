@@ -1503,6 +1503,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCurrentStore(String store) => switchStore(store);
+
   void toggleBossMode() {
     isBossMode = !isBossMode;
     notifyListeners();

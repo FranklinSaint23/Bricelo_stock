@@ -51,10 +51,10 @@ class CompanyAndTeamScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _buildRow(icon: Icons.rocket_launch_outlined, title: 'Configuration rapide'),
+                _buildRow(icon: Icons.speed_rounded, title: 'Configuration rapide'),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.storefront_outlined,
+                  icon: Icons.business_center_rounded,
                   title: 'Profil de l\'entreprise',
                   badge: 'À compléter',
                   onTap: () {
@@ -63,7 +63,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.palette_outlined,
+                  icon: Icons.auto_awesome_motion_rounded,
                   title: 'Ma marque',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const BrandScreen()));
@@ -71,7 +71,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.account_balance_wallet_outlined,
+                  icon: Icons.credit_card_rounded,
                   title: 'Moyens de paiement',
                   badge: 'À compléter',
                   onTap: () {
@@ -80,7 +80,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.description_outlined,
+                  icon: Icons.receipt_long_rounded,
                   title: 'Personnalisation des factures',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoiceCustomizationScreen()));
@@ -88,7 +88,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.delete_sweep_outlined,
+                  icon: Icons.restart_alt_rounded,
                   title: 'Repartir à zéro',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const ResetDataScreen()));
@@ -116,7 +116,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildRow(
-                  icon: Icons.fact_check_outlined,
+                  icon: Icons.verified_user_rounded,
                   title: 'Approbations',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const ApprovalsScreen()));
@@ -124,7 +124,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.people_outline,
+                  icon: Icons.group_rounded,
                   title: 'Équipe',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamScreen()));
@@ -132,7 +132,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.shield_outlined,
+                  icon: Icons.admin_panel_settings_rounded,
                   title: 'Groupes d\'accès',
                   isLocked: false,
                   onTap: () {
@@ -141,7 +141,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.store_mall_directory_outlined,
+                  icon: Icons.storefront_rounded,
                   title: 'Boutiques & Entrepots',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const OutletsScreen()));
@@ -149,7 +149,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.sell_outlined,
+                  icon: Icons.category_rounded,
                   title: 'Categories',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriesScreen()));
@@ -157,7 +157,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.history,
+                  icon: Icons.history_toggle_off_rounded,
                   title: 'Historique d\'activité',
                   isLocked: false,
                   onTap: () {
@@ -186,7 +186,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildRow(
-                  icon: Icons.payments_outlined,
+                  icon: Icons.point_of_sale_rounded,
                   title: 'Caisses',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const CashDesksScreen()));
@@ -194,7 +194,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.point_of_sale_outlined,
+                  icon: Icons.punch_clock_rounded,
                   title: 'Suivi des shifts (caisse)',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const ShiftsTrackingScreen()));

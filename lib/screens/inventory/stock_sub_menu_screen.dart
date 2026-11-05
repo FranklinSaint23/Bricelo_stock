@@ -25,7 +25,7 @@ class StockSubMenuScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildRow(
-                  icon: Icons.archive_outlined,
+                  icon: Icons.move_to_inbox_rounded,
                   title: 'Approvisionnement',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
@@ -33,7 +33,7 @@ class StockSubMenuScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.delete_sweep_outlined,
+                  icon: Icons.remove_circle_outline_rounded,
                   title: 'Dépréciation de stock',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const StockDepreciationScreen()));
@@ -41,7 +41,7 @@ class StockSubMenuScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.bar_chart_outlined,
+                  icon: Icons.insert_chart_outlined_rounded,
                   title: 'Rapport de dépréciations',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
@@ -49,7 +49,7 @@ class StockSubMenuScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.assignment_outlined,
+                  icon: Icons.fact_check_rounded,
                   title: 'Inventaires'.tr,
                   isLocked: false,
                   onTap: () {
@@ -58,7 +58,7 @@ class StockSubMenuScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.tune_outlined,
+                  icon: Icons.tune_rounded,
                   title: 'Ajustement de stock',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const StockAdjustmentScreen()));
@@ -66,7 +66,7 @@ class StockSubMenuScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.sync_alt,
+                  icon: Icons.swap_horiz_rounded,
                   title: 'Transferts de stock',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const StockTransfersScreen()));
@@ -74,7 +74,7 @@ class StockSubMenuScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.qr_code_scanner,
+                  icon: Icons.document_scanner_rounded,
                   title: 'Trouver une unité',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const FindUnitScreen()));
@@ -82,7 +82,7 @@ class StockSubMenuScreen extends StatelessWidget {
                 ),
                 _buildDivider(),
                 _buildRow(
-                  icon: Icons.event_note_outlined,
+                  icon: Icons.event_busy_rounded,
                   title: 'Suivi de péremption',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpiryTrackingScreen()));

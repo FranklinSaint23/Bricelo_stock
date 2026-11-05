@@ -30,6 +30,7 @@ class _NewProductScreenState extends State<NewProductScreen> {
   bool _serialImeiTracking = false;
   String? _selectedCategory;
   bool _showAdvancedOptions = false;
+  String? _pickedImagePath;
 
   final List<String> _units = ['Pièce', 'Kg', 'Litre', 'Carton', 'Paquet', 'Sac', 'Mètre'];
 
@@ -64,6 +65,93 @@ class _NewProductScreenState extends State<NewProductScreen> {
       if (p.category.trim().isNotEmpty) cats.add(p.category.trim());
     }
     return cats.toList();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 85, maxWidth: 1200);
+      if (picked != null) {
+        setState(() {
+          _pickedImagePath = picked.path;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur sélection image: $e')),
+        );
+      }
+    }
+  }
+
+  void _showPhotoPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Text(
+                'Photo du produit',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: AppTheme.goldLight,
+                  child: Icon(Icons.camera_alt, color: AppTheme.primaryNavy),
+                ),
+                title: const Text('Prendre une photo'),
+                subtitle: const Text('Utiliser l\'appareil photo'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: AppTheme.goldLight,
+                  child: Icon(Icons.photo_library, color: AppTheme.primaryNavy),
+                ),
+                title: const Text('Choisir dans la galerie'),
+                subtitle: const Text('Importer une image existante'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              if (_pickedImagePath != null)
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFFEE2E2),
+                    child: Icon(Icons.delete_outline, color: Colors.red),
+                  ),
+                  title: const Text('Supprimer la photo', style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    setState(() => _pickedImagePath = null);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showQuickAddCategoryDialog() {
@@ -152,23 +240,59 @@ class _NewProductScreenState extends State<NewProductScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 1. ZONE PHOTO
-                Container(
-                  width: double.infinity,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.image_outlined, size: 32, color: Color(0xFF9CA3AF)),
-                        SizedBox(height: 4),
-                        Text('Aucune photo', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)),
-                      ],
+                GestureDetector(
+                  onTap: () => _showPhotoPicker(context),
+                  child: Container(
+                    width: double.infinity,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
+                    clipBehavior: Clip.antiAlias,
+                    child: _pickedImagePath != null && File(_pickedImagePath!).existsSync()
+                        ? Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.file(
+                                File(_pickedImagePath!),
+                                fit: BoxFit.cover,
+                              ),
+                              Positioned(
+                                bottom: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.65),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.edit, size: 14, color: Colors.white),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Changer',
+                                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.image_outlined, size: 36, color: Color(0xFF9CA3AF)),
+                                SizedBox(height: 6),
+                                Text('Aucune photo', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)),
+                              ],
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -180,13 +304,16 @@ class _NewProductScreenState extends State<NewProductScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                     ),
-                    icon: const Icon(Icons.camera_alt_outlined, size: 18, color: AppTheme.primaryNavy),
-                    label: const Text('Ajouter une photo', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sélecteur de photo / Caméra activé !')),
-                      );
-                    },
+                    icon: Icon(
+                      _pickedImagePath != null ? Icons.edit_outlined : Icons.camera_alt_outlined,
+                      size: 18,
+                      color: AppTheme.primaryNavy,
+                    ),
+                    label: Text(
+                      _pickedImagePath != null ? 'Modifier la photo' : 'Ajouter une photo',
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    onPressed: () => _showPhotoPicker(context),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -453,6 +580,7 @@ class _NewProductScreenState extends State<NewProductScreen> {
                         minStockAlert: minStock,
                         unit: _selectedUnit,
                         productType: _selectedType,
+                        imageUrl: _pickedImagePath,
                       );
 
                       appState.addProduct(created);
