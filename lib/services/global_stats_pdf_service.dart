@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 class GlobalStatsPdfService {
   static String _formatFCFA(double amount) {
     final formatter = NumberFormat('#,###', 'fr_FR');
-    return 'Fr.${formatter.format(amount.round()).replaceAll(' ', ' ')}';
+    return '${formatter.format(amount.round()).replaceAll(' ', ' ')} F CFA';
   }
 
   static String _formatDateTimeWithSeconds(DateTime d) {
@@ -57,27 +57,37 @@ class GlobalStatsPdfService {
     final fontBold = await PdfGoogleFonts.openSansBold();
     final fontRegular = await PdfGoogleFonts.openSansRegular();
 
-    final dateRangeStr = '${startDate.day.toString().padLeft(2, '0')}/${startDate.month.toString().padLeft(2, '0')}/${startDate.year} - ${endDate.day.toString().padLeft(2, '0')}/${endDate.month.toString().padLeft(2, '0')}/${endDate.year}';
+    final dateRangeStr = '${startDate.day.toString().padLeft(2, '0')}/${startDate.month.toString().padLeft(2, '0')}/${startDate.year} au ${endDate.day.toString().padLeft(2, '0')}/${endDate.month.toString().padLeft(2, '0')}/${endDate.year}';
     final generatedAtStr = _formatDateTimeWithSeconds(now);
 
-    // Couleurs officielles conformes au screenshot
-    final primaryBlue = PdfColor.fromInt(0xFF2563EB); // Bleu royal header
-    final darkNavy = PdfColor.fromInt(0xFF1E3A8A); // Bleu chiffres
-    final grayLabel = PdfColor.fromInt(0xFF6B7280); // Gris labels
-    final graySub = PdfColor.fromInt(0xFF9CA3AF); // Gris sous-titres
-    final chevronColor = PdfColor.fromInt(0xFF93C5FD); // Bleu chevron
-    final redAlert = PdfColor.fromInt(0xFFDC2626); // Rouge stock faible
+    // Charte graphique Bricelo officielle
+    final primaryNavy = PdfColor.fromInt(0xFF0D1B2E); // Bleu Marine Bricelo
+    final accentGold = PdfColor.fromInt(0xFFD97706); // Gold Bricelo
+    final darkText = PdfColor.fromInt(0xFF0F172A); // Texte foncé
+    final grayMuted = PdfColor.fromInt(0xFF64748B); // Gris labels
+    final graySub = PdfColor.fromInt(0xFF94A3B8); // Gris sous-titres
+    final chevronColor = PdfColor.fromInt(0xFFFBBF24); // Gold chevron
+    final greenSuccess = PdfColor.fromInt(0xFF059669); // Vert succès
+    final redAlert = PdfColor.fromInt(0xFFDC2626); // Rouge alerte
+    final cardBg = PdfColor.fromInt(0xFFF8FAFC); // Fond carte clair
+    final cardBorder = PdfColor.fromInt(0xFFE2E8F0); // Bordure carte
 
-    pw.Widget buildItemRow({
+    // Widget pour une carte métrique principale
+    pw.Widget buildMetricCard({
       required String label,
       required String value,
       String? subtitle,
+      String? badge,
       PdfColor? valueColor,
-      bool isValueBold = true,
-      double valueSize = 16,
+      double valueSize = 15,
     }) {
-      return pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(vertical: 8),
+      return pw.Container(
+        padding: const pw.EdgeInsets.all(10),
+        decoration: pw.BoxDecoration(
+          color: cardBg,
+          borderRadius: pw.BorderRadius.circular(8),
+          border: pw.Border.all(color: cardBorder, width: 0.8),
+        ),
         child: pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -86,22 +96,40 @@ class GlobalStatsPdfService {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text(
-                    label.toUpperCase(),
-                    style: pw.TextStyle(
-                      font: fontBold,
-                      fontSize: 9,
-                      color: grayLabel,
-                      letterSpacing: 0.5,
-                    ),
+                  pw.Row(
+                    children: [
+                      pw.Text(
+                        label.toUpperCase(),
+                        style: pw.TextStyle(
+                          font: fontBold,
+                          fontSize: 8.5,
+                          color: grayMuted,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      if (badge != null && badge.isNotEmpty) ...[
+                        pw.SizedBox(width: 6),
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          decoration: pw.BoxDecoration(
+                            color: PdfColor.fromInt(0xFFFEF3C7),
+                            borderRadius: pw.BorderRadius.circular(4),
+                          ),
+                          child: pw.Text(
+                            badge,
+                            style: pw.TextStyle(font: fontBold, fontSize: 8, color: accentGold),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   pw.SizedBox(height: 3),
                   pw.Text(
                     value,
                     style: pw.TextStyle(
-                      font: isValueBold ? fontBold : fontRegular,
+                      font: fontBold,
                       fontSize: valueSize,
-                      color: valueColor ?? darkNavy,
+                      color: valueColor ?? primaryNavy,
                     ),
                   ),
                   if (subtitle != null && subtitle.trim().isNotEmpty) ...[
@@ -110,8 +138,8 @@ class GlobalStatsPdfService {
                       subtitle,
                       style: pw.TextStyle(
                         font: fontRegular,
-                        fontSize: 8.5,
-                        color: graySub,
+                        fontSize: 8,
+                        color: grayMuted,
                       ),
                     ),
                   ],
@@ -122,7 +150,7 @@ class GlobalStatsPdfService {
               '>',
               style: pw.TextStyle(
                 font: fontBold,
-                fontSize: 16,
+                fontSize: 14,
                 color: chevronColor,
               ),
             ),
@@ -131,246 +159,442 @@ class GlobalStatsPdfService {
       );
     }
 
+    // Widget pour une section détaillée
+    pw.Widget buildSectionBlock({
+      required String title,
+      required String subtitle,
+      required List<pw.Widget> children,
+    }) {
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 12),
+        padding: const pw.EdgeInsets.all(11),
+        decoration: pw.BoxDecoration(
+          color: PdfColors.white,
+          borderRadius: pw.BorderRadius.circular(8),
+          border: pw.Border.all(color: cardBorder, width: 0.8),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  title,
+                  style: pw.TextStyle(font: fontBold, fontSize: 10.5, color: primaryNavy),
+                ),
+                pw.Text(
+                  subtitle,
+                  style: pw.TextStyle(font: fontRegular, fontSize: 8.5, color: grayMuted),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 6),
+            pw.Divider(thickness: 0.5, color: cardBorder),
+            pw.SizedBox(height: 4),
+            ...children,
+          ],
+        ),
+      );
+    }
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+        margin: const pw.EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         build: (pw.Context ctx) {
-          // Top product string
-          final bestProductStr = topProducts.isNotEmpty
-              ? '${topProducts.first.name} : ${topProducts.first.quantity}'
-              : 'Aucune vente enregistrée';
-          final otherProductsStr = topProducts.length > 1
-              ? topProducts.skip(1).take(3).map((p) => '${p.name} (${p.quantity})').join(' • ')
-              : null;
-
-          // Top client string
-          final bestClientStr = topCustomers.isNotEmpty
-              ? '${topCustomers.first.name} : ${_formatFCFA(topCustomers.first.totalSpent)}'
-              : 'Aucun lien de vente vers aucun client !';
-          final clientSub = topCustomers.isNotEmpty
-              ? '${topCustomers.first.ordersCount} visite(s) • Préféré : ${topCustomers.first.favProduct}'
-              : null;
-
-          // Modes de paiement
-          final paymentsStr = paymentMethods.isNotEmpty
-              ? paymentMethods.take(3).map((pm) => '${pm.method} : ${_formatFCFA(pm.amount)} (${pm.percent.toStringAsFixed(0)}%)').join(' • ')
-              : 'Aucun paiement enregistré';
-
-          // Vendeurs
-          final bestCashierStr = teamMembers.isNotEmpty ? teamMembers.first.name : userName;
-          final cashierSubStr = teamMembers.length > 1
-              ? '${teamMembers.length - 1} plus de caissier !'
-              : '1 caissier actif';
-
-          // Stock faible
-          final lowestStr = lowestStocks.isNotEmpty
-              ? '${lowestStocks.first.name} = ${lowestStocks.first.stock}.0'
-              : 'Aucun stock critique';
-          final lowestSubStr = lowestStocks.length > 1
-              ? '${lowestStocks.length} plus d\'articles sont faibles'
-              : 'Stocks sous contrôle';
-
-          // Fournisseur
-          final bestSupStr = topSuppliers.isNotEmpty
-              ? '${topSuppliers.first.name} : ${_formatFCFA(topSuppliers.first.totalSpent)}'
-              : 'Direct / Aucun fournisseur';
-          final bestSupSub = topSuppliers.isNotEmpty
-              ? 'Fournit principalement : ${topSuppliers.first.mainProduct}'
-              : null;
-
-          // Stock élevé
-          final highestStr = highestStocks.isNotEmpty
-              ? '${highestStocks.first.name} = ${highestStocks.first.stock} ${highestStocks.first.unit}(s)'
-              : 'Aucun produit en stock';
-
-          // Boutique productive
-          final topStoreStr = storeProductivity.isNotEmpty
-              ? '${storeProductivity.first.storeName} : ${_formatFCFA(storeProductivity.first.revenue)}'
-              : storeName;
-          final topStoreSub = storeProductivity.isNotEmpty
-              ? '${storeProductivity.first.count} vente(s) • ${storeProductivity.first.percent.toStringAsFixed(0)}% du total'
-              : null;
-
-          // Inventaire
-          final invStr = totalInventoriesCount > 0
-              ? '$totalInventoriesCount session(s) d\'inventaire'
-              : 'Aucun inventaire réalisé';
-          final invSub = totalInventoriesCount > 0
-              ? 'Écart total : ${_formatFCFA(totalDiscrepancyValue)} ($totalCountedUnits/$totalTheoreticalUnits unités)'
-              : null;
-
           return [
-            // 1. BANNIÈRE EN-TÊTE BLEUE
+            // 1. BANNIÈRE EN-TÊTE BLEU MARINE BRICELO & GOLD
             pw.Container(
               width: double.infinity,
               padding: const pw.EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: pw.BoxDecoration(
-                color: primaryBlue,
-                borderRadius: pw.BorderRadius.circular(6),
+                color: primaryNavy,
+                borderRadius: pw.BorderRadius.circular(8),
               ),
-              child: pw.Center(
-                child: pw.Text(
-                  companyName.isNotEmpty ? companyName : (storeName != 'Tous' ? storeName : 'Bricelo Confort'),
-                  style: pw.TextStyle(
-                    font: fontBold,
-                    fontSize: 16,
-                    color: PdfColors.white,
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Text(
+                    companyName.isNotEmpty ? companyName : (storeName != 'Tous' ? storeName : 'Bricelo Confort'),
+                    style: pw.TextStyle(
+                      font: fontBold,
+                      fontSize: 16,
+                      color: PdfColors.white,
+                    ),
                   ),
-                ),
+                  pw.SizedBox(height: 3),
+                  pw.Text(
+                    'RAPPORT DES STATISTIQUES GLOBALES DU SYSTÈME',
+                    style: pw.TextStyle(
+                      font: fontBold,
+                      fontSize: 8.5,
+                      color: accentGold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
               ),
             ),
-            pw.SizedBox(height: 14),
+            pw.SizedBox(height: 12),
 
-            // 2. SOUS-EN-TÊTE MÉTADONNÉES (Généré par + Date avec secondes)
+            // 2. MÉTADONNÉES DU RAPPORT AVEC SECONDES & BOUTIQUE
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: pw.BoxDecoration(
+                color: cardBg,
+                borderRadius: pw.BorderRadius.circular(6),
+                border: pw.Border.all(color: cardBorder, width: 0.6),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('GÉNÉRÉ PAR', style: pw.TextStyle(font: fontBold, fontSize: 7.5, color: grayMuted)),
+                      pw.SizedBox(height: 2),
+                      pw.Text(userName.toUpperCase(), style: pw.TextStyle(font: fontBold, fontSize: 10, color: darkText)),
+                      if (userEmail.isNotEmpty)
+                        pw.Text(userEmail, style: pw.TextStyle(font: fontRegular, fontSize: 8, color: grayMuted)),
+                      pw.SizedBox(height: 3),
+                      pw.Text('Édité le : $generatedAtStr', style: pw.TextStyle(font: fontBold, fontSize: 8, color: primaryNavy)),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text('PÉRIODE', style: pw.TextStyle(font: fontBold, fontSize: 7.5, color: grayMuted)),
+                      pw.SizedBox(height: 2),
+                      pw.Text(periodName, style: pw.TextStyle(font: fontBold, fontSize: 10, color: accentGold)),
+                      pw.Text(dateRangeStr, style: pw.TextStyle(font: fontRegular, fontSize: 8, color: grayMuted)),
+                      pw.SizedBox(height: 3),
+                      pw.Text('Boutique : ${storeName == "Tous" ? "Toutes les boutiques" : storeName}', style: pw.TextStyle(font: fontBold, fontSize: 8, color: primaryNavy)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 12),
+
+            // 3. CARTES FINANCIÈRES MAJEURES (Ventes totales, Bénéfice brut, Bénéfice net)
+            buildMetricCard(
+              label: 'Ventes totales',
+              value: _formatFCFA(totalRevenue),
+              subtitle: peakRevenueText.isNotEmpty ? peakRevenueText : 'Aucun pic de vente sur la période',
+              valueColor: primaryNavy,
+              valueSize: 16,
+            ),
+            pw.SizedBox(height: 6),
+
             pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                pw.Expanded(
+                  child: buildMetricCard(
+                    label: 'Bénéfice brut',
+                    value: _formatFCFA(grossMargin),
+                    badge: '${marginRate.toStringAsFixed(1)}% marge',
+                    subtitle: peakGrossText.isNotEmpty ? peakGrossText : null,
+                    valueColor: accentGold,
+                    valueSize: 13,
+                  ),
+                ),
+                pw.SizedBox(width: 8),
+                pw.Expanded(
+                  child: buildMetricCard(
+                    label: 'Bénéfice net',
+                    value: _formatFCFA(netProfit),
+                    badge: 'Net',
+                    subtitle: peakNetText.isNotEmpty ? peakNetText : (totalExpenses > 0 ? 'Dépenses : ${_formatFCFA(totalExpenses)}' : 'Aucune dépense'),
+                    valueColor: netProfit >= 0 ? greenSuccess : redAlert,
+                    valueSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 6),
+
+            // INDICATEURS SECONDAIRES
+            pw.Row(
+              children: [
+                pw.Expanded(
+                  child: buildMetricCard(
+                    label: 'Nombre de ventes',
+                    value: '$totalSalesCount transaction(s)',
+                    valueSize: 11,
+                  ),
+                ),
+                pw.SizedBox(width: 8),
+                pw.Expanded(
+                  child: buildMetricCard(
+                    label: 'Remises accordées',
+                    value: _formatFCFA(totalDiscounts),
+                    valueColor: redAlert,
+                    valueSize: 11,
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 6),
+
+            pw.Row(
+              children: [
+                pw.Expanded(
+                  child: buildMetricCard(
+                    label: 'Panier moyen',
+                    value: _formatFCFA(averageBasket),
+                    valueSize: 11,
+                  ),
+                ),
+                pw.SizedBox(width: 8),
+                pw.Expanded(
+                  child: buildMetricCard(
+                    label: 'Charges & Dépenses',
+                    value: _formatFCFA(totalExpenses),
+                    valueColor: redAlert,
+                    valueSize: 11,
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 12),
+
+            // 4. BOUTIQUE LA PLUS PRODUCTIVE (Si Toutes sélectionné)
+            if (storeName == 'Tous' && storeProductivity.isNotEmpty)
+              buildSectionBlock(
+                title: 'Boutique la plus productive',
+                subtitle: 'Classement par chiffre d\'affaires',
+                children: storeProductivity.map((sp) {
+                  return pw.Padding(
+                    padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                    child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(
+                          sp.storeName,
+                          style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: darkText),
+                        ),
+                        pw.Text(
+                          '${_formatFCFA(sp.revenue)} (${sp.count} ventes • ${sp.percent.toStringAsFixed(1)}%)',
+                          style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: primaryNavy),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+
+            // 5. MEILLEURS PRODUITS LES PLUS VENDUS (Top actions)
+            buildSectionBlock(
+              title: 'Meilleurs produits vendus',
+              subtitle: '${topProducts.length} référence(s) vendue(s)',
+              children: topProducts.isEmpty
+                  ? [pw.Text('Aucune vente enregistrée sur la période', style: pw.TextStyle(font: fontRegular, fontSize: 8.5, color: grayMuted))]
+                  : topProducts.take(8).map((p) {
+                      return pw.Padding(
+                        padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                        child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Expanded(
+                              child: pw.Text(
+                                p.name,
+                                style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: darkText),
+                                maxLines: 1,
+                              ),
+                            ),
+                            pw.Text(
+                              '${p.quantity} unité(s) vendue(s) • ${_formatFCFA(p.revenue)}',
+                              style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: primaryNavy),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+            ),
+
+            // 6. MEILLEURS CLIENTS
+            buildSectionBlock(
+              title: 'Meilleurs clients',
+              subtitle: '${topCustomers.length} client(s) actif(s)',
+              children: topCustomers.isEmpty
+                  ? [pw.Text('Aucun client enregistré sur la période', style: pw.TextStyle(font: fontRegular, fontSize: 8.5, color: grayMuted))]
+                  : topCustomers.take(5).map((c) {
+                      return pw.Padding(
+                        padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                        child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Expanded(
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text(c.name, style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: darkText)),
+                                  pw.Text('${c.ordersCount} visite(s) • Préféré : ${c.favProduct}', style: pw.TextStyle(font: fontRegular, fontSize: 7.5, color: grayMuted)),
+                                ],
+                              ),
+                            ),
+                            pw.Text(_formatFCFA(c.totalSpent), style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: greenSuccess)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+            ),
+
+            // 7. MEILLEURS FOURNISSEURS
+            buildSectionBlock(
+              title: 'Meilleurs fournisseurs',
+              subtitle: '${topSuppliers.length} fournisseur(s) répertorié(s)',
+              children: topSuppliers.isEmpty
+                  ? [pw.Text('Aucun approvisionnement enregistré', style: pw.TextStyle(font: fontRegular, fontSize: 8.5, color: grayMuted))]
+                  : topSuppliers.take(5).map((s) {
+                      return pw.Padding(
+                        padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                        child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Expanded(
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text(s.name, style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: darkText)),
+                                  pw.Text('Fournit principalement : ${s.mainProduct} (${s.supplyCount} comm.)', style: pw.TextStyle(font: fontRegular, fontSize: 7.5, color: grayMuted)),
+                                ],
+                              ),
+                            ),
+                            pw.Text(_formatFCFA(s.totalSpent), style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: primaryNavy)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+            ),
+
+            // 8. MODES DE PAIEMENT
+            buildSectionBlock(
+              title: 'Modes de paiement',
+              subtitle: 'Classés du plus utilisé au moins utilisé',
+              children: paymentMethods.isEmpty
+                  ? [pw.Text('Aucun paiement enregistré', style: pw.TextStyle(font: fontRegular, fontSize: 8.5, color: grayMuted))]
+                  : paymentMethods.map((pm) {
+                      return pw.Padding(
+                        padding: const pw.EdgeInsets.symmetric(vertical: 2.5),
+                        child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text('${pm.method} (${pm.count} ventes)', style: pw.TextStyle(font: fontRegular, fontSize: 8.5, color: darkText)),
+                            pw.Text('${_formatFCFA(pm.amount)} (${pm.percent.toStringAsFixed(1)}%)', style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: primaryNavy)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+            ),
+
+            // 9. ÉQUIPE & PERFORMANCE DES CAISSIERS
+            buildSectionBlock(
+              title: 'Équipe & Caissiers de la boutique',
+              subtitle: 'Performance des ventes par équipier',
+              children: teamMembers.isEmpty
+                  ? [pw.Text('$userName ($companyName) • Propriétaire', style: pw.TextStyle(font: fontBold, fontSize: 8.5))]
+                  : teamMembers.map((tm) {
+                      return pw.Padding(
+                        padding: const pw.EdgeInsets.symmetric(vertical: 2.5),
+                        child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text('${tm.name} (${tm.role})', style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: darkText)),
+                            pw.Text('${_formatFCFA(tm.revenue)} (${tm.count} ventes)', style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: primaryNavy)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+            ),
+
+            // 10. GESTION DES STOCKS (FAIBLES & ÉLEVÉS)
+            buildSectionBlock(
+              title: 'Niveaux de stock critiques & Tops stocks',
+              subtitle: 'Surveillance des ruptures et des surstocks',
+              children: [
+                pw.Text('STOCKS LES PLUS FAIBLES (URGENCES)', style: pw.TextStyle(font: fontBold, fontSize: 8, color: redAlert)),
+                pw.SizedBox(height: 3),
+                ...lowestStocks.take(5).map((p) {
+                  return pw.Padding(
+                    padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                    child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(p.name, style: pw.TextStyle(font: fontRegular, fontSize: 8, color: darkText)),
+                        pw.Text(
+                          p.stock <= 0 ? 'Épuisé (0)' : '${p.stock} ${p.unit}(s)',
+                          style: pw.TextStyle(font: fontBold, fontSize: 8, color: p.stock <= 0 ? redAlert : accentGold),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                pw.SizedBox(height: 5),
+                pw.Divider(thickness: 0.4, color: cardBorder),
+                pw.SizedBox(height: 3),
+                pw.Text('STOCKS LES PLUS ÉLEVÉS', style: pw.TextStyle(font: fontBold, fontSize: 8, color: greenSuccess)),
+                pw.SizedBox(height: 3),
+                ...highestStocks.take(5).map((p) {
+                  return pw.Padding(
+                    padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                    child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(p.name, style: pw.TextStyle(font: fontRegular, fontSize: 8, color: darkText)),
+                        pw.Text('${p.stock} ${p.unit}(s)', style: pw.TextStyle(font: fontBold, fontSize: 8, color: greenSuccess)),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+
+            // 11. RÉSULTATS DES INVENTAIRES PHYSIQUES
+            buildSectionBlock(
+              title: 'Résultats des inventaires physiques',
+              subtitle: 'Audits de stock clôturés sur la période',
+              children: [
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('Généré par', style: pw.TextStyle(font: fontRegular, fontSize: 8.5, color: grayLabel)),
-                    pw.SizedBox(height: 2),
-                    pw.Text(userName.toUpperCase(), style: pw.TextStyle(font: fontBold, fontSize: 11, color: darkNavy)),
-                    if (userEmail.isNotEmpty)
-                      pw.Text(userEmail, style: pw.TextStyle(font: fontRegular, fontSize: 8.5, color: graySub)),
-                    pw.SizedBox(height: 3),
-                    pw.Text('Généré le : $generatedAtStr', style: pw.TextStyle(font: fontRegular, fontSize: 8, color: grayLabel)),
+                    pw.Text('Inventaires clôturés :', style: pw.TextStyle(font: fontRegular, fontSize: 8.5)),
+                    pw.Text('$totalInventoriesCount session(s)', style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: darkText)),
                   ],
                 ),
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                pw.SizedBox(height: 2),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('Date', style: pw.TextStyle(font: fontRegular, fontSize: 8.5, color: grayLabel)),
-                    pw.SizedBox(height: 2),
-                    pw.Text(dateRangeStr, style: pw.TextStyle(font: fontBold, fontSize: 10, color: darkNavy)),
-                    pw.SizedBox(height: 2),
-                    pw.Text('Période : $periodName', style: pw.TextStyle(font: fontRegular, fontSize: 8.5, color: grayLabel)),
-                    pw.Text('Boutique : ${storeName == "Tous" ? "Toutes les boutiques" : storeName}', style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: primaryBlue)),
+                    pw.Text('Unités comptées / théoriques :', style: pw.TextStyle(font: fontRegular, fontSize: 8.5)),
+                    pw.Text('$totalCountedUnits / $totalTheoreticalUnits unités', style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: darkText)),
+                  ],
+                ),
+                pw.SizedBox(height: 2),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Écart total constaté :', style: pw.TextStyle(font: fontRegular, fontSize: 8.5)),
+                    pw.Text(
+                      _formatFCFA(totalDiscrepancyValue),
+                      style: pw.TextStyle(
+                        font: fontBold,
+                        fontSize: 8.5,
+                        color: totalDiscrepancyValue == 0 ? greenSuccess : redAlert,
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
+
             pw.SizedBox(height: 10),
-            pw.Divider(thickness: 0.8, color: PdfColors.grey300),
-            pw.SizedBox(height: 4),
-
-            // 3. SECTIONS OFFICIELLES DU FORMALISME DEMANDÉ
-            buildItemRow(
-              label: 'Ventes totales',
-              value: _formatFCFA(totalRevenue),
-              subtitle: peakRevenueText.isNotEmpty ? peakRevenueText : null,
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Bénéfices',
-              value: _formatFCFA(grossMargin),
-              subtitle: peakGrossText.isNotEmpty ? '$peakGrossText • ${marginRate.toStringAsFixed(1)}% de marge' : '${marginRate.toStringAsFixed(1)}% de marge',
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Bénéfices (Ventes - Dépenses)',
-              value: totalExpenses > 0 ? _formatFCFA(netProfit) : 'Aucune dépense',
-              subtitle: totalExpenses > 0 ? '$peakNetText • Total dépenses: ${_formatFCFA(totalExpenses)}' : 'Bénéfice net égal au bénéfice brut',
-              valueColor: netProfit >= 0 ? darkNavy : redAlert,
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Meilleures actions',
-              value: bestProductStr,
-              subtitle: otherProductsStr,
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Ventes',
-              value: '$totalSalesCount',
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Impôt',
-              value: 'Fr.0',
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Remise',
-              value: _formatFCFA(totalDiscounts),
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Valeur moyenne des ventes',
-              value: _formatFCFA(averageBasket),
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Meilleur client',
-              value: bestClientStr,
-              subtitle: clientSub,
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Modes de paiement',
-              value: paymentsStr,
-              valueSize: 13,
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Vendu par',
-              value: bestCashierStr,
-              subtitle: cashierSubStr,
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Stock faible',
-              value: lowestStr,
-              subtitle: lowestSubStr,
-              valueColor: redAlert,
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Stocks les plus élevés',
-              value: highestStr,
-            ),
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-
-            buildItemRow(
-              label: 'Meilleur fournisseur',
-              value: bestSupStr,
-              subtitle: bestSupSub,
-            ),
-
-            if (storeName == 'Tous' && storeProductivity.isNotEmpty) ...[
-              pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-              buildItemRow(
-                label: 'Boutique la plus productive',
-                value: topStoreStr,
-                subtitle: topStoreSub,
-              ),
-            ],
-
-            pw.Divider(thickness: 0.5, color: PdfColors.grey200),
-            buildItemRow(
-              label: 'Résultats des inventaires',
-              value: invStr,
-              subtitle: invSub,
-            ),
-            pw.SizedBox(height: 16),
             pw.Center(
               child: pw.Text(
-                'Rapport certifié conforme • Bricelo Stock',
-                style: pw.TextStyle(font: fontRegular, fontSize: 8, color: graySub),
+                'Rapport officiel certifié conforme • Bricelo Stock Pro',
+                style: pw.TextStyle(font: fontRegular, fontSize: 7.5, color: graySub),
               ),
             ),
           ];
