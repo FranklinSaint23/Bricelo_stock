@@ -311,17 +311,31 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
         final salesCount = filteredSales.length;
         final averageBasket = salesCount > 0 ? (totalSales / salesCount) : 0.0;
 
-        // Bénéfice brut estimé
-        double estimatedProfit = 0.0;
+        // Bénéfice brut réel (Chiffre d'affaires net encaissé - Coût total d'achat)
+        double totalCostOfGoodsSold = 0.0;
         for (final sale in filteredSales) {
           for (final it in sale.items) {
-            final pIdx = appState.products.indexWhere((prod) => prod.name.toLowerCase() == it.productName.toLowerCase());
-            final buyPrice = pIdx != -1 ? appState.products[pIdx].buyPrice : (it.unitPrice * 0.7);
-            final lineMargin = (it.unitPrice - buyPrice) * it.quantity;
-            estimatedProfit += lineMargin;
+            // Déterminer le coût d'achat unitaire réel de l'article :
+            // 1. Snapshot enregistré lors de la vente (it.buyPrice)
+            // 2. Coût actuel configuré dans le catalogue (prod.buyPrice)
+            // 3. Sinon estimation de secours à 70%
+            double unitCost = 0.0;
+            if (it.buyPrice > 0) {
+              unitCost = it.buyPrice;
+            } else {
+              final pIdx = appState.products.indexWhere((prod) => prod.name.toLowerCase() == it.productName.toLowerCase());
+              if (pIdx != -1 && appState.products[pIdx].buyPrice > 0) {
+                unitCost = appState.products[pIdx].buyPrice;
+              } else {
+                unitCost = it.unitPrice * 0.7;
+              }
+            }
+            totalCostOfGoodsSold += (unitCost * it.quantity);
           }
         }
-        if (estimatedProfit < 0) estimatedProfit = 0;
+
+        // Le Bénéfice brut réel = Chiffre d'affaires encaissé (déjà déduit des remises) - Coût d'achat total
+        final double estimatedProfit = totalSales - totalCostOfGoodsSold;
 
         // Charges / Dépenses sur la période pour calculer le Bénéfice net
         final periodExpenses = appState.expenses.where((e) {

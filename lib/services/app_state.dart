@@ -1077,6 +1077,7 @@ class AppState extends ChangeNotifier {
               unitPrice: item.unitPrice,
               total: item.total,
               isGift: item.isGift,
+              buyPrice: item.product.buyPrice,
             ))
         .toList();
 

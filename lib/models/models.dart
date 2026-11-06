@@ -188,6 +188,7 @@ class SaleItemSummary {
   final double unitPrice;
   final double total;
   final bool isGift;
+  final double buyPrice;
 
   SaleItemSummary({
     required this.productName,
@@ -195,6 +196,7 @@ class SaleItemSummary {
     required this.unitPrice,
     required this.total,
     this.isGift = false,
+    this.buyPrice = 0.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -203,6 +205,7 @@ class SaleItemSummary {
         'unitPrice': unitPrice,
         'total': total,
         'isGift': isGift,
+        'buyPrice': buyPrice,
       };
 
   factory SaleItemSummary.fromJson(Map<String, dynamic> j) {
@@ -214,6 +217,7 @@ class SaleItemSummary {
       unitPrice: up,
       total: (j['total'] as num?)?.toDouble() ?? (qty * up).toDouble(),
       isGift: (j['isGift'] as bool?) ?? false,
+      buyPrice: ((j['buyPrice'] ?? j['buy_price'] ?? 0) as num).toDouble(),
     );
   }
 }
