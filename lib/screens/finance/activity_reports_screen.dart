@@ -285,7 +285,7 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   icon: const Icon(Icons.picture_as_pdf, color: AppTheme.accentGold, size: 20),
-                  label: const Text('Générer & Télécharger le rapport (PDF)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  label: const Text('Télécharger le rapport (PDF)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
