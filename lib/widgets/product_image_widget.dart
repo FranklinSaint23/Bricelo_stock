@@ -1,8 +1,7 @@
 import 'dart:convert';
-import 'dart:io' if (dart.library.html) 'dart:html' as io_or_html;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
+import 'package:stock_prime/widgets/product_image_loader.dart';
 
 class ProductImageWidget extends StatelessWidget {
   final String? imageUrl;
@@ -71,22 +70,15 @@ class ProductImageWidget extends StatelessWidget {
         );
       }
 
-      // 4. FICHIER LOCAL (Appareil physique hors-Web uniquement)
-      if (!kIsWeb) {
-        try {
-          // ignore: avoid_slow_async_io
-          final file = io_or_html.File(path);
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(borderRadius),
-            child: Image.file(
-              file,
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildPlaceholder(),
-            ),
-          );
-        } catch (_) {}
+      // 4. FICHIER LOCAL (Résolu proprement selon la plateforme : IO sur mobile/desktop, Stub sur web)
+      final platformFileWidget = buildPlatformFileImage(
+        path: path,
+        size: size,
+        borderRadius: borderRadius,
+        placeholderBuilder: _buildPlaceholder,
+      );
+      if (platformFileWidget != null) {
+        return platformFileWidget;
       }
     }
     return _buildPlaceholder();
@@ -106,4 +98,3 @@ class ProductImageWidget extends StatelessWidget {
     );
   }
 }
-
