@@ -134,6 +134,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const StockTransfersScreen()));
                   }),
                   const SizedBox(width: 10),
+                  _buildWebActionButton(Icons.fact_check_rounded, 'Inventaires'.tr, () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const PhysicalInventoryScreen()));
+                  }),
+                  const SizedBox(width: 10),
                   _buildWebActionButton(Icons.trending_down, 'Dépréciation'.tr, () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
                   }),
@@ -413,6 +417,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       ),
                       const SizedBox(height: 14),
                       _buildSpeedDialItem(
+                        label: 'Inventaires'.tr,
+                        icon: Icons.fact_check_rounded,
+                        onTap: () {
+                          setState(() => _isFabExpanded = false);
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const PhysicalInventoryScreen()));
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      _buildSpeedDialItem(
                         label: 'Dépréciation'.tr,
                         icon: Icons.trending_down,
                         onTap: () {
@@ -539,8 +552,19 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         color: const Color(0xFF0D1B2E),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Center(
-                        child: Icon(Icons.inventory_2_rounded, color: AppTheme.accentGold, size: 24),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: (p.imageUrl != null && p.imageUrl!.isNotEmpty)
+                            ? Image.network(
+                                p.imageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Center(
+                                  child: Icon(Icons.inventory_2_rounded, color: AppTheme.accentGold, size: 24),
+                                ),
+                              )
+                            : const Center(
+                                child: Icon(Icons.inventory_2_rounded, color: AppTheme.accentGold, size: 24),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -567,10 +591,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       children: [
                         Text(
                           '$currentQty',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF15803D)),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            color: isDark ? AppTheme.accentGold : const Color(0xFFD97706),
+                          ),
                         ),
                         Text(
-                          p.unit.isNotEmpty ? p.unit : 'piece(s)',
+                          p.unit.trim().isNotEmpty
+                              ? (p.unit.trim().toLowerCase().startsWith('pièce') || p.unit.trim().toLowerCase().startsWith('piece')
+                                  ? 'pièce(s)'
+                                  : (p.unit.contains('(s)') ? p.unit : '${p.unit}(s)'))
+                              : 'pièce(s)',
                           style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                         ),
                       ],
