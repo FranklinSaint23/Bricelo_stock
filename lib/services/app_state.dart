@@ -50,6 +50,8 @@ class AppState extends ChangeNotifier {
   List<PurchaseOrder> purchaseOrders = [];
   List<Expense> expenses = [];
   List<StockMovement> stockMovements = [];
+  List<StockTransfer> stockTransfers = [];
+  List<InventorySession> inventorySessions = [];
 
   // --- Getters d'affichage sécurisés ---
   String get language => currentLanguage;
@@ -200,6 +202,12 @@ class AppState extends ChangeNotifier {
         stockMovements = (data['stockMovements'] as List<dynamic>? ?? [])
             .map((e) => StockMovement.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
+        stockTransfers = (data['stockTransfers'] as List<dynamic>? ?? [])
+            .map((e) => StockTransfer.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        inventorySessions = (data['inventorySessions'] as List<dynamic>? ?? [])
+            .map((e) => InventorySession.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
         notifyListeners();
       }
     } catch (e) {
@@ -240,6 +248,8 @@ class AppState extends ChangeNotifier {
         'purchaseOrders': purchaseOrders.map((e) => e.toJson()).toList(),
         'expenses': expenses.map((e) => e.toJson()).toList(),
         'stockMovements': stockMovements.map((e) => e.toJson()).toList(),
+        'stockTransfers': stockTransfers.map((e) => e.toJson()).toList(),
+        'inventorySessions': inventorySessions.map((e) => e.toJson()).toList(),
       };
       await prefs.setString(_storageKey, jsonEncode(payload));
     } catch (e) {
@@ -939,7 +949,15 @@ class AppState extends ChangeNotifier {
     return openingCash + cashSales + debtCash - todayExpensesTotal;
   }
 
-  double get currentCashInDrawer => cashInDrawerExpected;
+  double get currentCashInDrawer {
+    final currentDesk = cashDesks.firstWhereOrNull((c) =>
+        c.storeName.trim().toLowerCase() == currentStore.trim().toLowerCase() ||
+        c.name.trim().toLowerCase() == 'caisse ${currentStore.trim().toLowerCase()}' ||
+        c.name.trim().toLowerCase() == currentStore.trim().toLowerCase());
+    if (currentDesk != null) return currentDesk.balance;
+    if (cashDesks.isNotEmpty) return cashDesks.first.balance;
+    return cashInDrawerExpected;
+  }
 
   List<Product> get lowStockProducts => products.where((p) => p.isLowStock).toList();
   int get lowStockCount => products.where((p) => p.isLowStock).length;
@@ -1356,6 +1374,16 @@ class AppState extends ChangeNotifier {
           note: note.isNotEmpty ? note : 'Règlement facture ${supplierDebts[idx].invoiceRef}',
         ),
       );
+
+      // Déduire immédiatement de la caisse concernée
+      final desk = cashDesks.firstWhereOrNull((c) =>
+          c.name.trim().toLowerCase() == pm.trim().toLowerCase() ||
+          'caisse ${c.storeName.trim().toLowerCase()}' == pm.trim().toLowerCase() ||
+          c.storeName.trim().toLowerCase() == currentStore.trim().toLowerCase()) ?? cashDesks.firstOrNull;
+      if (desk != null) {
+        desk.balance = (desk.balance - amount).clamp(0.0, double.infinity);
+      }
+
       _saveToPrefs();
       notifyListeners();
     }
@@ -1556,20 +1584,27 @@ class AppState extends ChangeNotifier {
     required String productId,
     required int newStock,
     required String reason,
+    String? storeName,
   }) {
     final idx = products.indexWhere((prod) => prod.id == productId);
     if (idx == -1) return;
     final p = products[idx];
-    final diff = newStock - p.stock;
-    p.stock = newStock;
+    final targetStore = (storeName != null && storeName.isNotEmpty && storeName != 'Tous')
+        ? storeName
+        : currentStore;
+    final oldStoreStock = p.stockForStore(targetStore);
+    final diff = newStock - oldStoreStock;
+
+    p.setStockForStore(targetStore, newStock);
+
     final sm = StockMovement(
       id: 'sm_${DateTime.now().millisecondsSinceEpoch}',
       productId: p.id,
       productName: p.name,
       type: diff >= 0 ? 'AJUSTEMENT (+)' : 'AVARIE / PERTE (-)',
       quantity: diff.abs().round(),
-      newStock: newStock.round(),
-      reason: reason,
+      newStock: p.stockForStore(targetStore),
+      reason: '$reason ($targetStore)',
       date: DateTime.now(),
     );
     stockMovements.insert(0, sm);
@@ -1577,6 +1612,72 @@ class AppState extends ChangeNotifier {
     notifyListeners();
 
     _supabase?.from('products').update({'stock': p.stock}).eq('id', p.id).then((_) {}, onError: (_) {});
+  }
+
+  // --- ACTIONS TRANSFERTS DE STOCK INTER-BOUTIQUES ---
+  void addStockTransfer(StockTransfer transfer) {
+    stockTransfers.insert(0, transfer);
+
+    for (final item in transfer.items) {
+      final pIdx = products.indexWhere((p) => p.id == item.productId || p.name.toLowerCase() == item.productName.toLowerCase());
+      if (pIdx != -1) {
+        final prod = products[pIdx];
+        // Déduire de la source
+        final curSource = prod.stockForStore(transfer.sourceStore);
+        prod.setStockForStore(transfer.sourceStore, (curSource - item.quantity).clamp(0, 9999999));
+
+        // Ajouter à la destination
+        final curDest = prod.stockForStore(transfer.destinationStore);
+        prod.setStockForStore(transfer.destinationStore, curDest + item.quantity);
+
+        // Mouvement de stock
+        final sm = StockMovement(
+          id: 'sm_${DateTime.now().millisecondsSinceEpoch}_${prod.id}',
+          productId: prod.id,
+          productName: prod.name,
+          type: 'TRANSFERT',
+          quantity: item.quantity,
+          newStock: prod.stock,
+          reason: '${transfer.reference} : ${transfer.sourceStore} -> ${transfer.destinationStore}',
+          date: transfer.date,
+        );
+        stockMovements.insert(0, sm);
+      }
+    }
+
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  // --- ACTIONS INVENTAIRE PHYSIQUE ---
+  void saveInventorySession(InventorySession session) {
+    inventorySessions.insert(0, session);
+
+    // Ajuster le stock de chaque produit selon le comptage réel
+    for (final item in session.items) {
+      final pIdx = products.indexWhere((p) => p.id == item.productId || p.name.toLowerCase() == item.productName.toLowerCase());
+      if (pIdx != -1) {
+        final prod = products[pIdx];
+        if (item.difference != 0) {
+          prod.setStockForStore(session.storeName, item.countedStock);
+
+          final sm = StockMovement(
+            id: 'sm_${DateTime.now().millisecondsSinceEpoch}_${prod.id}',
+            productId: prod.id,
+            productName: prod.name,
+            type: item.difference > 0 ? 'INVENTAIRE (+)' : 'INVENTAIRE (-)',
+            quantity: item.difference.abs(),
+            newStock: prod.stockForStore(session.storeName),
+            reason: '${session.reference} (${session.storeName}) ${item.discrepancyReason.isNotEmpty ? "- " + item.discrepancyReason : ""}',
+            date: session.completedAt,
+          );
+          stockMovements.insert(0, sm);
+        }
+      }
+    }
+
+    _saveToPrefs();
+    notifyListeners();
   }
 
   // --- PARAMÈTRES & BOUTIQUE ---

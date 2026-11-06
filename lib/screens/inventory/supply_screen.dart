@@ -551,6 +551,14 @@ class _SupplyScreenState extends State<SupplyScreen> {
             ],
           ),
         );
+
+        // Déduire le paiement comptant du solde de la caisse
+        final targetDesk = appState.cashDesks.firstWhereOrNull((c) =>
+            c.storeName.trim().toLowerCase() == _selectedStore.trim().toLowerCase() ||
+            c.name.trim().toLowerCase() == _supplyPaymentMethod.trim().toLowerCase()) ?? appState.cashDesks.firstOrNull;
+        if (targetDesk != null) {
+          targetDesk.balance = (targetDesk.balance - _grandTotal).clamp(0.0, double.infinity);
+        }
       }
     }
 
@@ -611,14 +619,16 @@ class _SupplyScreenState extends State<SupplyScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // 2. SEGMENTED TABS: Achat fournisseur | Stock existant (Exacte reproduction screenshot)
+                    // 2. SEGMENTED TABS: Achat fournisseur | Stock existant (Total background sur le segment actif)
                     Container(
                       height: 44,
+                      clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
+                        color: isDark ? AppTheme.darkSurface : Colors.white,
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
                           color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280),
-                          width: 0.9,
+                          width: 1.0,
                         ),
                       ),
                       child: Row(
@@ -626,14 +636,11 @@ class _SupplyScreenState extends State<SupplyScreen> {
                           Expanded(
                             child: InkWell(
                               onTap: () => setState(() => _selectedMode = 'Achat fournisseur'),
-                              borderRadius: const BorderRadius.horizontal(left: Radius.circular(22)),
                               child: Container(
-                                decoration: BoxDecoration(
-                                  color: _selectedMode == 'Achat fournisseur'
-                                      ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFED7AA))
-                                      : Colors.transparent,
-                                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(22)),
-                                ),
+                                height: double.infinity,
+                                color: _selectedMode == 'Achat fournisseur'
+                                    ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFED7AA))
+                                    : Colors.transparent,
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -663,20 +670,18 @@ class _SupplyScreenState extends State<SupplyScreen> {
                             ),
                           ),
                           Container(
-                            width: 0.9,
+                            width: 1.0,
+                            height: double.infinity,
                             color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280),
                           ),
                           Expanded(
                             child: InkWell(
                               onTap: () => setState(() => _selectedMode = 'Stock existant'),
-                              borderRadius: const BorderRadius.horizontal(right: Radius.circular(22)),
                               child: Container(
-                                decoration: BoxDecoration(
-                                  color: _selectedMode == 'Stock existant'
-                                      ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFED7AA))
-                                      : Colors.transparent,
-                                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(22)),
-                                ),
+                                height: double.infinity,
+                                color: _selectedMode == 'Stock existant'
+                                    ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFED7AA))
+                                    : Colors.transparent,
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [

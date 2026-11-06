@@ -14,6 +14,108 @@ class ActivityHistoryScreen extends StatefulWidget {
 class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   final appState = AppState.instance;
   ActivityType _selectedFilter = ActivityType.all;
+  String _selectedPeriod = 'Ce mois';
+  DateTimeRange? _customDateRange;
+
+  final List<String> _periods = const [
+    'Aujourd\'hui',
+    'Hier',
+    'Cette semaine',
+    'Semaine passée',
+    'Ce mois',
+    'Le mois passé',
+    'Cette année',
+    'L\'année dernière',
+    'Personnalisé',
+  ];
+
+  DateTimeRange _getDateRangeForPeriod(String period, DateTime now) {
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+
+    switch (period) {
+      case 'Aujourd\'hui':
+        return DateTimeRange(start: todayStart, end: todayEnd);
+
+      case 'Hier':
+        final yStart = todayStart.subtract(const Duration(days: 1));
+        final yEnd = DateTime(yStart.year, yStart.month, yStart.day, 23, 59, 59, 999);
+        return DateTimeRange(start: yStart, end: yEnd);
+
+      case 'Cette semaine':
+        final weekday = now.weekday; // 1 = Lundi, 7 = Dimanche
+        final startMonday = todayStart.subtract(Duration(days: weekday - 1));
+        final endSunday = DateTime(startMonday.year, startMonday.month, startMonday.day + 6, 23, 59, 59, 999);
+        return DateTimeRange(start: startMonday, end: endSunday);
+
+      case 'Semaine passée':
+        final weekday = now.weekday;
+        final startLastMonday = todayStart.subtract(Duration(days: weekday - 1 + 7));
+        final endLastSunday = DateTime(startLastMonday.year, startLastMonday.month, startLastMonday.day + 6, 23, 59, 59, 999);
+        return DateTimeRange(start: startLastMonday, end: endLastSunday);
+
+      case 'Ce mois':
+        final firstDayThisMonth = DateTime(now.year, now.month, 1);
+        final lastDayThisMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
+        return DateTimeRange(start: firstDayThisMonth, end: lastDayThisMonth);
+
+      case 'Le mois passé':
+        final firstDayPrevMonth = DateTime(now.year, now.month - 1, 1);
+        final lastDayPrevMonth = DateTime(now.year, now.month, 0, 23, 59, 59, 999);
+        return DateTimeRange(start: firstDayPrevMonth, end: lastDayPrevMonth);
+
+      case 'Cette année':
+        final firstDayThisYear = DateTime(now.year, 1, 1);
+        final lastDayThisYear = DateTime(now.year, 12, 31, 23, 59, 59, 999);
+        return DateTimeRange(start: firstDayThisYear, end: lastDayThisYear);
+
+      case 'L\'année dernière':
+        final firstDayPrevYear = DateTime(now.year - 1, 1, 1);
+        final lastDayPrevYear = DateTime(now.year - 1, 12, 31, 23, 59, 59, 999);
+        return DateTimeRange(start: firstDayPrevYear, end: lastDayPrevYear);
+
+      case 'Personnalisé':
+      default:
+        return _customDateRange ??
+            DateTimeRange(
+              start: todayStart.subtract(const Duration(days: 6)),
+              end: todayEnd,
+            );
+    }
+  }
+
+  Future<void> _pickCustomDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 2),
+      initialDateRange: _customDateRange ??
+          DateTimeRange(
+            start: now.subtract(const Duration(days: 7)),
+            end: now,
+          ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryNavy,
+              onPrimary: Colors.white,
+              secondary: AppTheme.accentGold,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _customDateRange = picked;
+        _selectedPeriod = 'Personnalisé';
+      });
+    }
+  }
 
   List<Map<String, dynamic>> _buildActivities() {
     final List<Map<String, dynamic>> list = [];
@@ -71,6 +173,15 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
         'raw': exp,
       });
     }
+
+    // Filtrage par période chronologique
+    final now = DateTime.now();
+    final range = _getDateRangeForPeriod(_selectedPeriod, now);
+    list.removeWhere((item) {
+      final dt = item['date'] as DateTime;
+      return dt.isBefore(range.start.subtract(const Duration(milliseconds: 1))) ||
+          dt.isAfter(range.end.add(const Duration(milliseconds: 1)));
+    });
 
     // Tri chronologique strict (plus récent en haut)
     list.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
@@ -274,7 +385,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
               // 1. BARRE DE FILTRES SEGMENTÉE (TOUT, VENTES, APPROV., DÉPENSES)
               Container(
                 color: AppTheme.primaryNavy,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.12),
@@ -288,6 +399,56 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                       _buildFilterTab(ActivityType.supply, 'Approv.'),
                       _buildFilterTab(ActivityType.expense, 'Dépenses'),
                     ],
+                  ),
+                ),
+              ),
+
+              // 1.5 SÉLECTEUR DE PÉRIODES CHRONOLOGIQUES
+              Container(
+                color: isDark ? const Color(0xFF0F1A28) : Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: SizedBox(
+                  height: 38,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _periods.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, idx) {
+                      final p = _periods[idx];
+                      final isSel = _selectedPeriod == p;
+
+                      return InkWell(
+                        onTap: () {
+                          if (p == 'Personnalisé') {
+                            _pickCustomDateRange();
+                          } else {
+                            setState(() => _selectedPeriod = p);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSel ? AppTheme.accentGold : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSel ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              p,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
+                                color: isSel ? Colors.white : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

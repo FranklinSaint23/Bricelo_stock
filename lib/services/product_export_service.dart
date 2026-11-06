@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:stock_prime/services/app_state.dart';
 
@@ -41,15 +41,20 @@ class ProductExportService {
         );
       }
 
-      final tempDir = await getTemporaryDirectory();
       final now = DateTime.now();
       final dateStr = '${now.year}${now.month.toString().padLeft(2, "0")}${now.day.toString().padLeft(2, "0")}_${now.hour.toString().padLeft(2, "0")}${now.minute.toString().padLeft(2, "0")}';
       final fileName = 'produits_bricelo_stock_$dateStr.csv';
-      final file = File('${tempDir.path}/$fileName');
+      final bytes = Uint8List.fromList(utf8.encode(buffer.toString()));
 
-      await file.writeAsString(buffer.toString(), encoding: utf8);
-
-      final xFile = XFile(file.path, mimeType: 'text/csv', name: fileName);
+      XFile xFile;
+      try {
+        final tempDir = Directory.systemTemp;
+        final file = File('${tempDir.path}/$fileName');
+        await file.writeAsBytes(bytes);
+        xFile = XFile(file.path, mimeType: 'text/csv', name: fileName);
+      } catch (_) {
+        xFile = XFile.fromData(bytes, mimeType: 'text/csv', name: fileName);
+      }
 
       await Share.shareXFiles(
         [xFile],

@@ -315,22 +315,28 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
         double totalCostOfGoodsSold = 0.0;
         for (final sale in filteredSales) {
           for (final it in sale.items) {
-            // Déterminer le coût d'achat unitaire réel de l'article :
-            // 1. Snapshot enregistré lors de la vente (it.buyPrice)
-            // 2. Coût actuel configuré dans le catalogue (prod.buyPrice)
-            // 3. Sinon estimation de secours à 70%
+            // Déterminer le coût d'achat unitaire réel de l'article avec null-safety absolue
             double unitCost = 0.0;
-            if (it.buyPrice > 0) {
-              unitCost = it.buyPrice;
+            final double itemBuyPrice = (it.buyPrice as num?)?.toDouble() ?? 0.0;
+            final double itemUnitPrice = (it.unitPrice as num?)?.toDouble() ?? 0.0;
+            final int itemQty = (it.quantity as num?)?.toInt() ?? 1;
+
+            if (itemBuyPrice > 0) {
+              unitCost = itemBuyPrice;
             } else {
               final pIdx = appState.products.indexWhere((prod) => prod.name.toLowerCase() == it.productName.toLowerCase());
-              if (pIdx != -1 && appState.products[pIdx].buyPrice > 0) {
-                unitCost = appState.products[pIdx].buyPrice;
+              if (pIdx != -1) {
+                final double prodBuyPrice = (appState.products[pIdx].buyPrice as num?)?.toDouble() ?? 0.0;
+                if (prodBuyPrice > 0) {
+                  unitCost = prodBuyPrice;
+                } else {
+                  unitCost = itemUnitPrice * 0.7;
+                }
               } else {
-                unitCost = it.unitPrice * 0.7;
+                unitCost = itemUnitPrice * 0.7;
               }
             }
-            totalCostOfGoodsSold += (unitCost * it.quantity);
+            totalCostOfGoodsSold += (unitCost * itemQty);
           }
         }
 
@@ -341,7 +347,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
         final periodExpenses = appState.expenses.where((e) {
           return e.createdAt.isAfter(range.start.subtract(const Duration(milliseconds: 1))) &&
               e.createdAt.isBefore(range.end.add(const Duration(milliseconds: 1)));
-        }).fold(0.0, (sum, e) => sum + e.amount);
+        }).fold(0.0, (sum, e) => sum + ((e.amount as num?)?.toDouble() ?? 0.0));
 
         final netProfit = estimatedProfit - periodExpenses;
 
@@ -349,18 +355,21 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
         final Map<String, ({int quantity, double revenue, double unitPrice})> productStats = {};
         for (final sale in filteredSales) {
           for (final it in sale.items) {
+            final double itTotal = (it.total as num?)?.toDouble() ?? 0.0;
+            final double itUnitPrice = (it.unitPrice as num?)?.toDouble() ?? 0.0;
+            final int itQty = (it.quantity as num?)?.toInt() ?? 1;
             final existing = productStats[it.productName];
             if (existing != null) {
               productStats[it.productName] = (
-                quantity: existing.quantity + it.quantity,
-                revenue: existing.revenue + it.total,
-                unitPrice: it.unitPrice,
+                quantity: existing.quantity + itQty,
+                revenue: existing.revenue + itTotal,
+                unitPrice: itUnitPrice,
               );
             } else {
               productStats[it.productName] = (
-                quantity: it.quantity,
-                revenue: it.total,
-                unitPrice: it.unitPrice,
+                quantity: itQty,
+                revenue: itTotal,
+                unitPrice: itUnitPrice,
               );
             }
           }

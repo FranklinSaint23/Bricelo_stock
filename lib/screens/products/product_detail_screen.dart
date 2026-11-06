@@ -395,8 +395,49 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           title: const Text('Supprimer ce produit', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                           onTap: () {
                             Navigator.pop(ctx);
-                            appState.removeProduct(p.id);
-                            Navigator.pop(context);
+                            showDialog(
+                              context: context,
+                              builder: (dialogCtx) => AlertDialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                title: const Row(
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+                                    SizedBox(width: 8),
+                                    Text('Confirmer la suppression', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  ],
+                                ),
+                                content: Text(
+                                  'Êtes-vous sûr de vouloir supprimer définitivement « ${p.name} » ?\nCette action retirera le produit du catalogue.',
+                                  style: const TextStyle(fontSize: 14, height: 1.4),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(dialogCtx),
+                                    child: const Text('Annuler', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(dialogCtx);
+                                      appState.removeProduct(p.id);
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('« ${p.name} » a été supprimé.'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Supprimer', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
+                              ),
+                            );
                           },
                         ),
                       ],
@@ -689,20 +730,214 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   children: [
                     Expanded(
                       child: TextButton.icon(
-                        onPressed: () => setState(() => _showLots = !_showLots),
+                        style: TextButton.styleFrom(
+                          foregroundColor: _showLots ? AppTheme.accentGold : (isDark ? Colors.white : AppTheme.primaryNavy),
+                        ),
+                        onPressed: () => setState(() {
+                          _showLots = !_showLots;
+                          if (_showLots) _showPriceHistory = false;
+                        }),
                         icon: Icon(_showLots ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 18),
                         label: const Text('Lots de stock', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                     Expanded(
                       child: TextButton.icon(
-                        onPressed: () => setState(() => _showPriceHistory = !_showPriceHistory),
+                        style: TextButton.styleFrom(
+                          foregroundColor: _showPriceHistory ? AppTheme.accentGold : (isDark ? Colors.white : AppTheme.primaryNavy),
+                        ),
+                        onPressed: () => setState(() {
+                          _showPriceHistory = !_showPriceHistory;
+                          if (_showPriceHistory) _showLots = false;
+                        }),
                         icon: Icon(_showPriceHistory ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 18),
                         label: const Text('Historique des prix', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
                 ),
+
+                // VUE DÉTAILLÉE : LOTS DE STOCK
+                if (_showLots) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Lots & Réceptions de stock',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryNavy),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppTheme.accentGold.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '${p.stock} ${p.unit}(s) en stock',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFB45309)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Répartition par boutique
+                        ...appState.outlets.map((outlet) {
+                          final stQty = p.stockForStore(outlet.name);
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.storefront_outlined, size: 16, color: Color(0xFF64748B)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(outlet.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                ),
+                                Text(
+                                  '$stQty ${p.unit}(s)',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: stQty > 0 ? const Color(0xFF0F172A) : const Color(0xFFDC2626),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        const Divider(height: 18),
+                        // Lots d'approvisionnement récents
+                        const Text(
+                          'Mouvements de réceptions récents',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                        ),
+                        const SizedBox(height: 8),
+                        Builder(
+                          builder: (_) {
+                            final movs = appState.stockMovements
+                                .where((m) => m.productId == p.id || m.productName.toLowerCase() == p.name.toLowerCase())
+                                .take(5)
+                                .toList();
+                            if (movs.isEmpty) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Text(
+                                  'Lot initial créé lors de l\'enregistrement (Fournisseur : ${p.supplierName ?? "Non spécifié"}).',
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic),
+                                ),
+                              );
+                            }
+                            return Column(
+                              children: movs.map((m) {
+                                final isAdd = m.type.contains('+');
+                                final dtStr = '${m.date.day.toString().padLeft(2, "0")}/${m.date.month.toString().padLeft(2, "0")}/${m.date.year}';
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    children: [
+                                      Icon(isAdd ? Icons.add_circle : Icons.remove_circle, size: 16, color: isAdd ? const Color(0xFF059669) : const Color(0xFFDC2626)),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          '${m.type} • ${m.reason}',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                        ),
+                                      ),
+                                      Text(
+                                        '$dtStr • ${m.quantity} ${p.unit}(s)',
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: isAdd ? const Color(0xFF059669) : const Color(0xFFDC2626)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // VUE DÉTAILLÉE : HISTORIQUE DES PRIX
+                if (_showPriceHistory) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Grille tarifaire & Marges',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryNavy),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Prix de vente détail', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                            Text(
+                              AppTheme.formatFCFA(p.sellPrice),
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F172A)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Prix de gros', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                            Text(
+                              AppTheme.formatFCFA(p.wholesalePrice),
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF2563EB)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Dernier coût d\'achat', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                            Text(
+                              AppTheme.formatFCFA(p.buyPrice),
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFFD97706)),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 18),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Marge brute unitaire', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                            Text(
+                              '${AppTheme.formatFCFA(p.margin)} (${p.marginPercent.toStringAsFixed(1)}%)',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF059669)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

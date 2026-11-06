@@ -114,8 +114,8 @@ class Product {
       };
 
   factory Product.fromJson(Map<String, dynamic> j) {
-    final sell = (j['sellPrice'] ?? j['price'] ?? 0).toDouble();
-    final buy = (j['buyPrice'] ?? j['purchase_price'] ?? (sell * 0.7)).toDouble();
+    final sell = (j['sellPrice'] as num?)?.toDouble() ?? (j['price'] as num?)?.toDouble() ?? 0.0;
+    final buy = (j['buyPrice'] as num?)?.toDouble() ?? (j['purchase_price'] as num?)?.toDouble() ?? (sell * 0.7);
     final rawMap = j['stockByStore'];
     final Map<String, int> sMap = {};
     if (rawMap is Map) {
@@ -133,13 +133,14 @@ class Product {
       sellPrice: sell,
       wholesalePrice: (j['wholesalePrice'] as num?)?.toDouble() ?? (sell * 0.9),
       stock: (j['stock'] as num?)?.toInt() ?? 0,
-      minStockAlert: (j['minStockAlert'] ?? j['min_stock'] ?? 5 as num).toInt(),
+      minStockAlert: (j['minStockAlert'] as num?)?.toInt() ?? (j['min_stock'] as num?)?.toInt() ?? 5,
       unit: (j['unit'] ?? 'Pièce').toString(),
       productType: (j['productType'] ?? j['product_type'] ?? 'Produit').toString(),
       isSyncedToBricelo: j['isSyncedToBricelo'] as bool? ?? true,
       supplierName: j['supplierName']?.toString(),
-      imageUrl: j['imageUrl']?.toString(),
-      stockByStore: sMap,);
+      imageUrl: j['imageUrl']?.toString() ?? j['image_url']?.toString(),
+      stockByStore: sMap,
+    );
   }
 }
 
@@ -210,14 +211,16 @@ class SaleItemSummary {
 
   factory SaleItemSummary.fromJson(Map<String, dynamic> j) {
     final qty = (j['quantity'] as num?)?.toInt() ?? 1;
-    final up = ((j['unitPrice'] ?? j['unit_price'] ?? 0) as num).toDouble();
+    final up = (j['unitPrice'] as num?)?.toDouble() ?? (j['unit_price'] as num?)?.toDouble() ?? 0.0;
+    final bp = (j['buyPrice'] as num?)?.toDouble() ?? (j['buy_price'] as num?)?.toDouble() ?? 0.0;
+    final tot = (j['total'] as num?)?.toDouble() ?? (qty * up);
     return SaleItemSummary(
       productName: (j['productName'] ?? j['product_name'] ?? '').toString(),
       quantity: qty,
       unitPrice: up,
-      total: (j['total'] as num?)?.toDouble() ?? (qty * up).toDouble(),
+      total: tot,
       isGift: (j['isGift'] as bool?) ?? false,
-      buyPrice: ((j['buyPrice'] ?? j['buy_price'] ?? 0) as num).toDouble(),
+      buyPrice: bp,
     );
   }
 }
@@ -243,10 +246,10 @@ class Sale {
     required this.createdAt,
     required this.items,
     required this.total,
-    this.discountTotal = 0,
+    this.discountTotal = 0.0,
     required this.paymentMethod,
     required this.amountReceived,
-    this.changeReturned = 0,
+    this.changeReturned = 0.0,
     this.customerName = 'Client Comptoir',
     this.customerPhone = '',
     this.cashierName = 'Gérant',
@@ -271,23 +274,29 @@ class Sale {
         'storeName': storeName,
       };
 
-  factory Sale.fromJson(Map<String, dynamic> j) => Sale(
-        id: (j['id'] ?? '').toString(),
-        ticketNumber: (j['ticketNumber'] ?? j['id'] ?? 'SP-1001').toString(),
-        createdAt: DateTime.tryParse((j['createdAt'] ?? j['sale_date'] ?? j['created_at'] ?? '').toString()) ?? DateTime.now(),
-        items: (j['items'] as List<dynamic>? ?? [])
-            .map((e) => SaleItemSummary.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-        total: (j['total'] ?? j['total_amount'] ?? 0 as num).toDouble(),
-        discountTotal: (j['discountTotal'] as num?)?.toDouble() ?? 0,
-        paymentMethod: (j['paymentMethod'] ?? j['payment_method'] ?? 'Espèces').toString(),
-        amountReceived: (j['amountReceived'] ?? j['amount_received'] ?? j['total'] ?? 0 as num).toDouble(),
-        changeReturned: (j['changeReturned'] ?? j['change_returned'] ?? 0 as num).toDouble(),
-        customerName: (j['customerName'] ?? j['customer_name'] ?? 'Client Comptoir').toString(),
-        customerPhone: (j['customerPhone'] ?? '').toString(),
-        cashierName: (j['cashierName'] ?? j['cashier_name'] ?? 'Gérant').toString(),
-        storeName: (j['storeName'] ?? j['store_name'] ?? 'Boutique Principale').toString(),
-      );
+  factory Sale.fromJson(Map<String, dynamic> j) {
+    final tot = (j['total'] as num?)?.toDouble() ?? (j['total_amount'] as num?)?.toDouble() ?? 0.0;
+    final disc = (j['discountTotal'] as num?)?.toDouble() ?? 0.0;
+    final rec = (j['amountReceived'] as num?)?.toDouble() ?? (j['amount_received'] as num?)?.toDouble() ?? tot;
+    final chg = (j['changeReturned'] as num?)?.toDouble() ?? (j['change_returned'] as num?)?.toDouble() ?? 0.0;
+    return Sale(
+      id: (j['id'] ?? '').toString(),
+      ticketNumber: (j['ticketNumber'] ?? j['id'] ?? 'SP-1001').toString(),
+      createdAt: DateTime.tryParse((j['createdAt'] ?? j['sale_date'] ?? j['created_at'] ?? '').toString()) ?? DateTime.now(),
+      items: (j['items'] as List<dynamic>? ?? [])
+          .map((e) => SaleItemSummary.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
+      total: tot,
+      discountTotal: disc,
+      paymentMethod: (j['paymentMethod'] ?? j['payment_method'] ?? 'Espèces').toString(),
+      amountReceived: rec,
+      changeReturned: chg,
+      customerName: (j['customerName'] ?? j['customer_name'] ?? 'Client Comptoir').toString(),
+      customerPhone: (j['customerPhone'] ?? '').toString(),
+      cashierName: (j['cashierName'] ?? j['cashier_name'] ?? 'Gérant').toString(),
+      storeName: (j['storeName'] ?? j['store_name'] ?? 'Boutique Principale').toString(),
+    );
+  }
 }
 
 class DebtPayment {
@@ -875,5 +884,212 @@ class CashDesk {
         isDefault: json['isDefault'] as bool? ?? false,
         balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
         createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
+      );
+}
+
+// ==========================================
+// MODÈLE TRANSFERT DE STOCK INTER-BOUTIQUES
+// ==========================================
+class TransferItem {
+  final String productId;
+  final String productName;
+  final int quantity;
+  final String unit;
+
+  TransferItem({
+    required this.productId,
+    required this.productName,
+    required this.quantity,
+    this.unit = 'Pièce',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'productId': productId,
+        'productName': productName,
+        'quantity': quantity,
+        'unit': unit,
+      };
+
+  factory TransferItem.fromJson(Map<String, dynamic> j) => TransferItem(
+        productId: (j['productId'] ?? '').toString(),
+        productName: (j['productName'] ?? '').toString(),
+        quantity: (j['quantity'] as num?)?.toInt() ?? 1,
+        unit: (j['unit'] ?? 'Pièce').toString(),
+      );
+}
+
+class StockTransfer {
+  final String id;
+  final String reference;
+  final String sourceStore;
+  final String destinationStore;
+  final List<TransferItem> items;
+  final DateTime date;
+  final String author;
+  final String status; // 'Effectué', 'En transit', 'Reçu'
+  final String note;
+
+  StockTransfer({
+    required this.id,
+    required this.reference,
+    required this.sourceStore,
+    required this.destinationStore,
+    required this.items,
+    required this.date,
+    this.author = 'Gérant',
+    this.status = 'Effectué',
+    this.note = '',
+  });
+
+  int get totalQuantity => items.fold(0, (sum, i) => sum + i.quantity);
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'reference': reference,
+        'sourceStore': sourceStore,
+        'destinationStore': destinationStore,
+        'items': items.map((e) => e.toJson()).toList(),
+        'date': date.toIso8601String(),
+        'author': author,
+        'status': status,
+        'note': note,
+      };
+
+  factory StockTransfer.fromJson(Map<String, dynamic> j) => StockTransfer(
+        id: (j['id'] ?? '').toString(),
+        reference: (j['reference'] ?? 'TRF-1001').toString(),
+        sourceStore: (j['sourceStore'] ?? 'Boutique Principale').toString(),
+        destinationStore: (j['destinationStore'] ?? 'Entrepôt').toString(),
+        items: (j['items'] as List<dynamic>? ?? [])
+            .map((e) => TransferItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+        date: DateTime.tryParse((j['date'] ?? '').toString()) ?? DateTime.now(),
+        author: (j['author'] ?? 'Gérant').toString(),
+        status: (j['status'] ?? 'Effectué').toString(),
+        note: (j['note'] ?? '').toString(),
+      );
+}
+
+// ==========================================
+// MODÈLES SESSION D'INVENTAIRE PHYSIQUE
+// ==========================================
+class InventoryItemRecord {
+  final String productId;
+  final String productName;
+  final String category;
+  final String barcode;
+  final String unit;
+  final int theoreticalStock;
+  final int countedStock;
+  final double buyPrice;
+  final double sellPrice;
+  final String supplierName;
+  final List<String> recentBuyers;
+  final String discrepancyReason;
+
+  InventoryItemRecord({
+    required this.productId,
+    required this.productName,
+    required this.category,
+    required this.barcode,
+    this.unit = 'Pièce',
+    required this.theoreticalStock,
+    required this.countedStock,
+    required this.buyPrice,
+    required this.sellPrice,
+    this.supplierName = '',
+    this.recentBuyers = const [],
+    this.discrepancyReason = '',
+  });
+
+  int get difference => countedStock - theoreticalStock;
+  double get theoreticalValue => theoreticalStock * buyPrice;
+  double get countedValue => countedStock * buyPrice;
+  double get discrepancyValue => difference * buyPrice;
+
+  Map<String, dynamic> toJson() => {
+        'productId': productId,
+        'productName': productName,
+        'category': category,
+        'barcode': barcode,
+        'unit': unit,
+        'theoreticalStock': theoreticalStock,
+        'countedStock': countedStock,
+        'buyPrice': buyPrice,
+        'sellPrice': sellPrice,
+        'supplierName': supplierName,
+        'recentBuyers': recentBuyers,
+        'discrepancyReason': discrepancyReason,
+      };
+
+  factory InventoryItemRecord.fromJson(Map<String, dynamic> j) => InventoryItemRecord(
+        productId: (j['productId'] ?? '').toString(),
+        productName: (j['productName'] ?? '').toString(),
+        category: (j['category'] ?? '').toString(),
+        barcode: (j['barcode'] ?? '').toString(),
+        unit: (j['unit'] ?? 'Pièce').toString(),
+        theoreticalStock: (j['theoreticalStock'] as num?)?.toInt() ?? 0,
+        countedStock: (j['countedStock'] as num?)?.toInt() ?? 0,
+        buyPrice: (j['buyPrice'] as num?)?.toDouble() ?? 0.0,
+        sellPrice: (j['sellPrice'] as num?)?.toDouble() ?? 0.0,
+        supplierName: (j['supplierName'] ?? '').toString(),
+        recentBuyers: (j['recentBuyers'] as List<dynamic>? ?? []).map((e) => e.toString()).toList(),
+        discrepancyReason: (j['discrepancyReason'] ?? '').toString(),
+      );
+}
+
+class InventorySession {
+  final String id;
+  final String reference;
+  final String storeName;
+  final DateTime startedAt;
+  final DateTime completedAt;
+  final String conductedBy;
+  final String status; // 'Validé', 'En cours'
+  final List<InventoryItemRecord> items;
+  final String note;
+
+  InventorySession({
+    required this.id,
+    required this.reference,
+    required this.storeName,
+    required this.startedAt,
+    required this.completedAt,
+    required this.conductedBy,
+    this.status = 'Validé',
+    required this.items,
+    this.note = '',
+  });
+
+  int get totalArticlesCounted => items.length;
+  int get articlesWithDiscrepancy => items.where((i) => i.difference != 0).length;
+  double get totalDiscrepancyValue => items.fold(0.0, (sum, i) => sum + i.discrepancyValue);
+  double get totalCountedValue => items.fold(0.0, (sum, i) => sum + i.countedValue);
+  double get totalTheoreticalValue => items.fold(0.0, (sum, i) => sum + i.theoreticalValue);
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'reference': reference,
+        'storeName': storeName,
+        'startedAt': startedAt.toIso8601String(),
+        'completedAt': completedAt.toIso8601String(),
+        'conductedBy': conductedBy,
+        'status': status,
+        'items': items.map((e) => e.toJson()).toList(),
+        'note': note,
+      };
+
+  factory InventorySession.fromJson(Map<String, dynamic> j) => InventorySession(
+        id: (j['id'] ?? '').toString(),
+        reference: (j['reference'] ?? 'INV-1001').toString(),
+        storeName: (j['storeName'] ?? 'Boutique Principale').toString(),
+        startedAt: DateTime.tryParse((j['startedAt'] ?? '').toString()) ?? DateTime.now(),
+        completedAt: DateTime.tryParse((j['completedAt'] ?? '').toString()) ?? DateTime.now(),
+        conductedBy: (j['conductedBy'] ?? 'Gérant').toString(),
+        status: (j['status'] ?? 'Validé').toString(),
+        items: (j['items'] as List<dynamic>? ?? [])
+            .map((e) => InventoryItemRecord.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+        note: (j['note'] ?? '').toString(),
       );
 }
