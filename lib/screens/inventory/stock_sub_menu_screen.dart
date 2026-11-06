@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 import 'package:stock_prime/screens/screens.dart';
+import 'package:stock_prime/services/product_export_service.dart';
 
 class StockSubMenuScreen extends StatelessWidget {
   const StockSubMenuScreen({super.key});
@@ -9,7 +10,7 @@ class StockSubMenuScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      appBar: StockAppBar.forestGreen(
+      appBar: StockAppBar.navy(
         title: 'Stock',
         onBack: () => Navigator.pop(context),
       ),
@@ -73,12 +74,20 @@ class StockSubMenuScreen extends StatelessWidget {
                   },
                 ),
                 _buildDivider(),
+                // 1. IMPORTER DES PRODUITS (Excel, Word, PDF, CSV)
                 _buildRow(
-                  icon: Icons.document_scanner_rounded,
-                  title: 'Trouver une unité',
+                  icon: Icons.upload_file_rounded,
+                  title: 'Importer des produits',
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const FindUnitScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ImportProductsScreen()));
                   },
+                ),
+                _buildDivider(),
+                // 2. EXPORTER LA LISTE DES PRODUITS (Excel universel)
+                _buildRow(
+                  icon: Icons.download_rounded,
+                  title: 'Exporter la liste des produits',
+                  onTap: () => ProductExportService.exportProductsToExcelCsv(context),
                 ),
                 _buildDivider(),
                 _buildRow(
@@ -93,9 +102,12 @@ class StockSubMenuScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: StockBottomBar(
-        currentIndex: 4,
-        onTap: (_) => Navigator.pop(context),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: StockBottomBar(
+          currentIndex: 4,
+          onTap: (_) => Navigator.pop(context),
+        ),
       ),
     );
   }
@@ -117,7 +129,11 @@ class StockSubMenuScreen extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF1F2937)),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF1F2937),
+                ),
               ),
             ),
             Icon(

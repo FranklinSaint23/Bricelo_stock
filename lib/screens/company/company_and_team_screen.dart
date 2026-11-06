@@ -51,8 +51,6 @@ class CompanyAndTeamScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _buildRow(icon: Icons.speed_rounded, title: 'Configuration rapide'),
-                _buildDivider(),
                 _buildRow(
                   icon: Icons.business_center_rounded,
                   title: 'Profil de l\'entreprise',

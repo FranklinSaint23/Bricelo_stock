@@ -1,13 +1,248 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:stock_prime/models/models.dart';
+import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 
-class ImportProductsScreen extends StatelessWidget {
+class ImportProductsScreen extends StatefulWidget {
   const ImportProductsScreen({super.key});
+
+  @override
+  State<ImportProductsScreen> createState() => _ImportProductsScreenState();
+}
+
+class _ImportProductsScreenState extends State<ImportProductsScreen> {
+  final appState = AppState.instance;
+  bool _isLoading = false;
+  String? _selectedFileName;
+  List<Product> _parsedProducts = [];
+  final _pasteController = TextEditingController();
+
+  Future<void> _pickAndParseFile() async {
+    try {
+      final files = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv', 'xlsx', 'xls', 'txt', 'pdf', 'docx', 'doc'],
+      );
+
+      if (files.isEmpty) return;
+
+      final file = files.first;
+      setState(() {
+        _isLoading = true;
+        _selectedFileName = file.name;
+        _parsedProducts = [];
+      });
+
+      String content = '';
+      try {
+        final bytes = await file.readAsBytes();
+        try {
+          content = utf8.decode(bytes, allowMalformed: true);
+        } catch (_) {
+          content = latin1.decode(bytes);
+        }
+      } catch (_) {
+        if (file.path != null) {
+          final f = File(file.path!);
+          try {
+            content = await f.readAsString(encoding: utf8);
+          } catch (_) {
+            content = await f.readAsString(encoding: latin1);
+          }
+        }
+      }
+
+      final products = _parseContentToProducts(content);
+
+      setState(() {
+        _isLoading = false;
+        _parsedProducts = products;
+      });
+
+      if (products.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Aucun format de produit détecté dans ce fichier. Vous pouvez aussi coller le texte directement.'),
+              backgroundColor: Color(0xFFD97706),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lecture fichier: $e'), backgroundColor: const Color(0xFFDC2626)),
+        );
+      }
+    }
+  }
+
+  void _parsePastedText() {
+    final text = _pasteController.text.trim();
+    if (text.isEmpty) return;
+
+    final products = _parseContentToProducts(text);
+    setState(() {
+      _selectedFileName = 'Texte / Tableau collé';
+      _parsedProducts = products;
+    });
+
+    if (products.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aucun produit détecté dans le texte collé. Vérifiez le format (Ex: Nom, Quantité, Prix).'),
+          backgroundColor: Color(0xFFD97706),
+        ),
+      );
+    }
+  }
+
+  List<Product> _parseContentToProducts(String text) {
+    final lines = text
+        .split(RegExp(r'\r?\n'))
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+
+    if (lines.isEmpty) return [];
+
+    final List<Product> result = [];
+    int nameIdx = 0;
+    int qtyIdx = 1;
+    int priceIdx = 2;
+    int buyPriceIdx = -1;
+    int catIdx = -1;
+    int barcodeIdx = -1;
+    int unitIdx = -1;
+
+    bool hasHeader = false;
+    final firstLine = lines.first.toLowerCase();
+
+    // Détecteur de séparateur (; ou , ou \t ou |)
+    String separator = ';';
+    if (firstLine.contains(';') && firstLine.split(';').length > 1) {
+      separator = ';';
+    } else if (firstLine.contains('\t')) {
+      separator = '\t';
+    } else if (firstLine.contains('|')) {
+      separator = '|';
+    } else if (firstLine.contains(',')) {
+      separator = ',';
+    }
+
+    final headers = firstLine.split(separator).map((s) => s.trim().replaceAll('"', '').toLowerCase()).toList();
+
+    if (headers.any((h) => h.contains('nom') || h.contains('designation') || h.contains('article') || h.contains('produit') || h.contains('name'))) {
+      hasHeader = true;
+      for (int i = 0; i < headers.length; i++) {
+        final h = headers[i];
+        if (h.contains('nom') || h.contains('designation') || h.contains('article') || h.contains('produit') || h == 'name') {
+          nameIdx = i;
+        } else if (h.contains('qte') || h.contains('quantite') || h.contains('stock') || h == 'qty') {
+          qtyIdx = i;
+        } else if (h.contains('pu') || h.contains('prix_vente') || h.contains('prix unitaire') || h.contains('prix') || h == 'price') {
+          priceIdx = i;
+        } else if (h.contains('cout') || h.contains('achat') || h.contains('cost') || h == 'buy_price') {
+          buyPriceIdx = i;
+        } else if (h.contains('cat') || h.contains('famille') || h == 'category') {
+          catIdx = i;
+        } else if (h.contains('code') || h.contains('barcode') || h.contains('barre')) {
+          barcodeIdx = i;
+        } else if (h.contains('unit') || h.contains('unite')) {
+          unitIdx = i;
+        }
+      }
+    }
+
+    final startIndex = hasHeader ? 1 : 0;
+    for (int i = startIndex; i < lines.length; i++) {
+      final row = lines[i].split(separator).map((s) => s.trim().replaceAll('"', '')).toList();
+      if (row.isEmpty) continue;
+
+      String name = '';
+      if (nameIdx < row.length) name = row[nameIdx].trim();
+      if (name.isEmpty) continue;
+
+      int qty = 1;
+      if (qtyIdx < row.length) {
+        final parsedQty = double.tryParse(row[qtyIdx].replaceAll(RegExp(r'[^0-9.]'), ''));
+        if (parsedQty != null) qty = parsedQty.toInt();
+      }
+
+      double sellPrice = 0.0;
+      if (priceIdx < row.length) {
+        sellPrice = double.tryParse(row[priceIdx].replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+      }
+
+      double buyPrice = 0.0;
+      if (buyPriceIdx >= 0 && buyPriceIdx < row.length) {
+        buyPrice = double.tryParse(row[buyPriceIdx].replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+      }
+
+      String category = 'Général';
+      if (catIdx >= 0 && catIdx < row.length && row[catIdx].isNotEmpty) {
+        category = row[catIdx];
+      }
+
+      String barcode = '';
+      if (barcodeIdx >= 0 && barcodeIdx < row.length) {
+        barcode = row[barcodeIdx];
+      }
+
+      String unit = 'Pièce';
+      if (unitIdx >= 0 && unitIdx < row.length && row[unitIdx].isNotEmpty) {
+        unit = row[unitIdx];
+      }
+
+      result.add(Product(
+        id: 'imp_${DateTime.now().millisecondsSinceEpoch}_$i',
+        name: name,
+        category: category,
+        sellPrice: sellPrice,
+        buyPrice: buyPrice,
+        stock: qty,
+        unit: unit,
+        barcode: barcode,
+      ));
+    }
+
+    return result;
+  }
+
+  void _confirmImport() {
+    if (_parsedProducts.isEmpty) return;
+
+    for (final p in _parsedProducts) {
+      // Si le produit existe déjà, incrémenter le stock
+      final existing = appState.products.where((item) => item.name.trim().toLowerCase() == p.name.trim().toLowerCase()).firstOrNull;
+      if (existing != null) {
+        existing.stock += p.stock;
+        if (p.sellPrice > 0) existing.sellPrice = p.sellPrice;
+        if (p.buyPrice > 0) existing.buyPrice = p.buyPrice;
+      } else {
+        appState.addProduct(p);
+      }
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF059669),
+        content: Text('${_parsedProducts.length} produit(s) importé(s) dans votre stock avec succès !'),
+      ),
+    );
+
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
@@ -31,141 +266,218 @@ class ImportProductsScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+      body: SafeArea(
+        top: false,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
           children: [
-            // ICON FICHIER VERT/NAVY AVEC FLECHE
+            // 1. BANNIÈRE EXPLICATIVE
             Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Center(
-                child: Icon(Icons.upload_file_outlined, color: AppTheme.primaryNavy, size: 36),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Votre liste, en une fois',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Une capture d\'écran ou une photo de votre liste, ou un fichier Excel ou CSV avec au moins le nom et le prix de vente. Catégorie, référence et code-barres sont repris s\'ils existent ; le stock se saisit ensuite avec « Saisir le stock existant ». 2000 lignes maximum.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.5,
-                color: Color(0xFF4B5563),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // CADRE D'INSTRUCTIONS
-            Container(
-              width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '1. Photographiez votre liste, ou utilisez un fichier Excel / CSV',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1F2937)),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.upload_file_rounded, color: AppTheme.accentGold, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Importation multi-formats',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+                            ),
+                            Text(
+                              'Excel (.xlsx, .xls), CSV, Word, PDF ou texte',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                    '2. Relisez : catégories, doublons, prix',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1F2937)),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Importez vos produits depuis un fichier ou copiez-collez simplement un tableau depuis Word / PDF. Les colonnes détectées sont : Nom du produit, Quantité, Prix unitaire, Coût, Catégorie.',
+                    style: TextStyle(fontSize: 12.5, color: Color(0xFF475569), height: 1.4),
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                    '3. Importez, puis ajoutez les photos',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1F2937)),
+                  const SizedBox(height: 16),
+
+                  // Bouton Choisir un fichier
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryNavy,
+                        foregroundColor: AppTheme.accentGold,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.file_open_rounded, size: 20, color: AppTheme.accentGold),
+                      label: Text(
+                        _isLoading ? 'Lecture du fichier...' : 'Sélectionner un fichier (Excel, CSV, Word, PDF)',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                      ),
+                      onPressed: _isLoading ? null : _pickAndParseFile,
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 18),
 
-            // BOUTON 1 : PHOTOGRAPHIER MA LISTE
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryNavy,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  elevation: 0,
-                ),
-                icon: const Icon(Icons.camera_alt_outlined, size: 20, color: Colors.white),
-                label: const Text(
-                  'Photographier ma liste',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Ouverture de la caméra pour reconnaissance IA...')),
+            // 2. OPTION COLLER DIRECTEMENT UN TABLEAU / TEXTE
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ou coller un tableau copié',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Copiez un tableau de produits depuis Word, Excel ou WhatsApp et collez-le ici :',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _pasteController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: "Exemple :\nSavon; 20; 500\nLait en poudre; 10; 2500\nBiscotte; 15; 800",
+                      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.all(12),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.accentGold,
+                        foregroundColor: AppTheme.primaryNavy,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.playlist_add_check, size: 18, color: AppTheme.primaryNavy),
+                      label: const Text('Analyser le texte', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      onPressed: _parsePastedText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // 3. APERÇU DES PRODUITS DÉTECTÉS
+            if (_parsedProducts.isNotEmpty) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Articles détectés (${_parsedProducts.length})',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+                  ),
+                  if (_selectedFileName != null)
+                    Flexible(
+                      child: Text(
+                        _selectedFileName!,
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _parsedProducts.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (ctx, idx) {
+                  final p = _parsedProducts[idx];
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: const Color(0xFFFEF3C7),
+                          child: Text('${idx + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF0F172A))),
+                              Text('Catégorie: ${p.category}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('${p.stock} ${p.unit}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                            Text(AppTheme.formatFCFA(p.sellPrice), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFFD97706))),
+                          ],
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
-            ),
-            const SizedBox(height: 14),
+              const SizedBox(height: 20),
 
-            // BOUTON 2 : CHOISIR UN FICHIER
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppTheme.primaryNavy, width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                ),
-                icon: const Icon(Icons.description_outlined, size: 20, color: AppTheme.primaryNavy),
-                label: const Text(
-                  'Choisir un fichier',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Sélectionnez un fichier Excel (.xlsx) ou CSV')),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // LIEN : TELECHARGER LE MODELE CSV
-            TextButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Modèle CSV téléchargé avec succès !')),
-                );
-              },
-              icon: const Icon(Icons.file_download_outlined, color: AppTheme.primaryNavy, size: 18),
-              label: const Text(
-                'Télécharger le modèle CSV',
-                style: TextStyle(
-                  color: AppTheme.primaryNavy,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  decoration: TextDecoration.underline,
+              // BOUTON CONFIRMER L'IMPORTATION
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF059669),
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.check_circle_rounded, size: 20),
+                  label: Text(
+                    'Importer ${_parsedProducts.length} produit(s) dans le stock',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  onPressed: _confirmImport,
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),

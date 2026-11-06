@@ -49,6 +49,203 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     }
   }
 
+  void _showExpenseDetailModal(BuildContext context, Expense exp) {
+    final isDark = appState.isDarkMode;
+    final catMatch = _cameroonCategories.firstWhere(
+      (c) => c.name.toLowerCase() == exp.category.toLowerCase(),
+      orElse: () => (name: exp.category, icon: Icons.price_change_rounded),
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Entête
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(catMatch.icon, color: const Color(0xFFB45309), size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              exp.category,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                            ),
+                            const Text(
+                              'Détail de la dépense',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // Montant en grand
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        '-${AppTheme.formatFCFA(exp.amount)}',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFFDC2626),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        exp.description,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Fiche d'informations
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildDetailRow('Compte / Caisse', exp.paidFromCaisse, Icons.account_balance_wallet_outlined),
+                      const Divider(height: 16, color: Color(0xFFE2E8F0)),
+                      _buildDetailRow(
+                        'Date & Heure',
+                        '${exp.createdAt.day.toString().padLeft(2, "0")}/${exp.createdAt.month.toString().padLeft(2, "0")}/${exp.createdAt.year} à ${exp.createdAt.hour.toString().padLeft(2, "0")}:${exp.createdAt.minute.toString().padLeft(2, "0")}',
+                        Icons.access_time_rounded,
+                      ),
+                      if (exp.reference != null && exp.reference!.isNotEmpty) ...[
+                        const Divider(height: 16, color: Color(0xFFE2E8F0)),
+                        _buildDetailRow('Référence pièce', exp.reference!, Icons.receipt_long_rounded),
+                      ],
+                      const Divider(height: 16, color: Color(0xFFE2E8F0)),
+                      _buildDetailRow('Enregistrée par', exp.paidBy, Icons.person_outline_rounded),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Bouton Supprimer cette dépense
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFDC2626),
+                      side: const BorderSide(color: Color(0xFFFCA5A5)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                    label: const Text('Supprimer cette dépense', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _confirmDeleteExpense(context, exp);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF64748B)),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B))),
+        const Spacer(),
+        Flexible(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _confirmDeleteExpense(BuildContext context, Expense exp) {
+    showDialog(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Confirmer la suppression', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('Voulez-vous supprimer cette dépense de ${AppTheme.formatFCFA(exp.amount)} ? Le solde de la caisse (${exp.paidFromCaisse}) sera réajusté.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dlgCtx), child: const Text('Annuler')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            onPressed: () {
+              Navigator.pop(dlgCtx);
+              // Supprimer et réajuster la caisse
+              appState.expenses.removeWhere((e) => e.id == exp.id);
+              final caisse = appState.cashDesks.where((c) => c.name.toLowerCase() == exp.paidFromCaisse.toLowerCase()).firstOrNull;
+              if (caisse != null) {
+                caisse.balance += exp.amount;
+              }
+              setState(() {});
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Dépense supprimée et solde réajusté avec succès')),
+              );
+            },
+            child: const Text('Supprimer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _openNewExpenseModal(BuildContext context) {
     final isDark = appState.isDarkMode;
     final descCtrl = TextEditingController();
@@ -472,107 +669,119 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             orElse: () => (name: exp.category, icon: Icons.price_change_rounded),
                           );
 
-                          return Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.02),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFEF3C7),
-                                    borderRadius: BorderRadius.circular(12),
+                          return InkWell(
+                            onTap: () => _showExpenseDetailModal(context, exp),
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
                                   ),
-                                  child: Icon(catMatch.icon, color: const Color(0xFFB45309), size: 22),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        exp.description.isNotEmpty ? exp.description : exp.category,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                          color: Color(0xFF0F172A),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEF3C7),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(catMatch.icon, color: const Color(0xFFB45309), size: 22),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          exp.description.isNotEmpty ? exp.description : exp.category,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                      const SizedBox(height: 3),
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFF1F5F9),
-                                              borderRadius: BorderRadius.circular(4),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF1F5F9),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                exp.category,
+                                                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                                              ),
                                             ),
-                                            child: Text(
-                                              exp.category,
-                                              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                                            const SizedBox(width: 6),
+                                            Flexible(
+                                              child: Text(
+                                                '${exp.createdAt.day.toString().padLeft(2, "0")}/${exp.createdAt.month.toString().padLeft(2, "0")}/${exp.createdAt.year} • ${exp.paidFromCaisse}',
+                                                style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            '${exp.createdAt.day.toString().padLeft(2, "0")}/${exp.createdAt.month.toString().padLeft(2, "0")}/${exp.createdAt.year} • ${exp.paidFromCaisse}',
-                                            style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '-${AppTheme.formatFCFA(exp.amount)}',
-                                  style: const TextStyle(
-                                    fontSize: 14.5,
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(0xFFDC2626),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '-${AppTheme.formatFCFA(exp.amount)}',
+                                    style: const TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFFDC2626),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           );
                         },
                       ),
               ),
 
-              // Bouton Créer en bas
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryNavy,
-                      foregroundColor: AppTheme.accentGold,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              // Bouton Créer en bas (Protégé contre la barre de boutons Samsung / Android)
+              SafeArea(
+                top: false,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryNavy,
+                        foregroundColor: AppTheme.accentGold,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.add_rounded, size: 20, color: AppTheme.accentGold),
+                      label: const Text(
+                        'Créer une dépense',
+                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
+                      ),
+                      onPressed: () => _openNewExpenseModal(context),
                     ),
-                    icon: const Icon(Icons.add_rounded, size: 20, color: AppTheme.accentGold),
-                    label: const Text(
-                      'Créer une dépense',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
-                    ),
-                    onPressed: () => _openNewExpenseModal(context),
                   ),
                 ),
               ),

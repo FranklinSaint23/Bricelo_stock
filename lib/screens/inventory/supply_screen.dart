@@ -611,14 +611,16 @@ class _SupplyScreenState extends State<SupplyScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // 2. SEGMENTED TABS: Achat fournisseur | Stock existant (Exacte reproduction screenshot)
+                    // 2. SEGMENTED TABS: Achat fournisseur | Stock existant (Background total unifié & élégant)
                     Container(
-                      height: 44,
+                      height: 46,
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(22),
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280),
-                          width: 0.9,
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          width: 1,
                         ),
                       ),
                       child: Row(
@@ -626,13 +628,23 @@ class _SupplyScreenState extends State<SupplyScreen> {
                           Expanded(
                             child: InkWell(
                               onTap: () => setState(() => _selectedMode = 'Achat fournisseur'),
-                              borderRadius: const BorderRadius.horizontal(left: Radius.circular(22)),
-                              child: Container(
+                              borderRadius: BorderRadius.circular(20),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
                                 decoration: BoxDecoration(
                                   color: _selectedMode == 'Achat fournisseur'
                                       ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFED7AA))
                                       : Colors.transparent,
-                                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(22)),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: _selectedMode == 'Achat fournisseur'
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.05),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ]
+                                      : null,
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -650,7 +662,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                       style: TextStyle(
                                         fontWeight: _selectedMode == 'Achat fournisseur'
                                             ? FontWeight.bold
-                                            : FontWeight.normal,
+                                            : FontWeight.w500,
                                         fontSize: 13,
                                         color: _selectedMode == 'Achat fournisseur'
                                             ? (isDark ? AppTheme.accentGold : const Color(0xFF111827))
@@ -662,20 +674,27 @@ class _SupplyScreenState extends State<SupplyScreen> {
                               ),
                             ),
                           ),
-                          Container(
-                            width: 0.9,
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280),
-                          ),
+                          const SizedBox(width: 4),
                           Expanded(
                             child: InkWell(
                               onTap: () => setState(() => _selectedMode = 'Stock existant'),
-                              borderRadius: const BorderRadius.horizontal(right: Radius.circular(22)),
-                              child: Container(
+                              borderRadius: BorderRadius.circular(20),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
                                 decoration: BoxDecoration(
                                   color: _selectedMode == 'Stock existant'
                                       ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFED7AA))
                                       : Colors.transparent,
-                                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(22)),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: _selectedMode == 'Stock existant'
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.05),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ]
+                                      : null,
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -693,7 +712,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                       style: TextStyle(
                                         fontWeight: _selectedMode == 'Stock existant'
                                             ? FontWeight.bold
-                                            : FontWeight.normal,
+                                            : FontWeight.w500,
                                         fontSize: 13,
                                         color: _selectedMode == 'Stock existant'
                                             ? (isDark ? AppTheme.accentGold : const Color(0xFF111827))
@@ -931,7 +950,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                         ),
                         icon: const Icon(Icons.search, size: 18, color: AppTheme.accentGold),
                         label: const Text(
-                          'Scanner ou rechercher',
+                          'Rechercher',
                           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                         ),
                         onPressed: _showAddProductsModal,

@@ -360,6 +360,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return AnimatedBuilder(
       animation: appState,
       builder: (context, _) {
+        final isDark = appState.isDarkMode;
         final p = _currentProduct;
         final stores = appState.availableStores.isNotEmpty ? appState.availableStores : [appState.currentStore];
         final totalStockValuation = p.sellPrice * p.stock;
@@ -706,51 +707,54 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
 
-          // BARRE FIXE EN BAS : MODIFIER (VERT) & ÉTIQUETTES
-          bottomSheet: Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -3)),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.accentGold,
-                        foregroundColor: AppTheme.primaryNavy,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          // BARRE FIXE EN BAS : MODIFIER & ÉTIQUETTES (Protégée contre la barre de navigation Samsung / Android)
+          bottomSheet: SafeArea(
+            top: false,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                border: Border(top: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -3)),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.accentGold,
+                          foregroundColor: AppTheme.primaryNavy,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primaryNavy),
+                        label: const Text('Modifier', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        onPressed: () => _showEditProductSheet(p),
                       ),
-                      icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primaryNavy),
-                      label: const Text('Modifier', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      onPressed: () => _showEditProductSheet(p),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primaryNavy,
-                        side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDark ? Colors.white : AppTheme.primaryNavy,
+                          side: BorderSide(color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1), width: 1.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.qr_code_2_rounded, size: 20),
+                        label: const Text('Étiquettes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        onPressed: () => _showLabelsDialog(context, p),
                       ),
-                      icon: const Icon(Icons.qr_code_2_rounded, size: 20),
-                      label: const Text('Étiquettes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      onPressed: () => _showLabelsDialog(context, p),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

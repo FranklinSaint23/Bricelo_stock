@@ -777,6 +777,22 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setCashDeskInitialBalance(String id, double initialBalance, {String? reason}) async {
+    final idx = cashDesks.indexWhere((c) => c.id == id);
+    if (idx == -1) return;
+    cashDesks[idx].balance = initialBalance;
+    await _saveToPrefs();
+    notifyListeners();
+  }
+
+  Future<void> adjustCashDeskBalance(String id, double countedBalance, {required String reason}) async {
+    final idx = cashDesks.indexWhere((c) => c.id == id);
+    if (idx == -1) return;
+    cashDesks[idx].balance = countedBalance;
+    await _saveToPrefs();
+    notifyListeners();
+  }
+
   // --- GESTION DYNAMIQUE DES CLIENTS ---
   void addCustomer(Customer customer) {
     customers.insert(0, customer);

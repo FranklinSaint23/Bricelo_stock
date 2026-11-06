@@ -461,7 +461,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                   children: [
                     const Icon(Icons.discount_outlined, size: 16, color: AppTheme.accentGold),
                     const SizedBox(width: 6),
-                    const Text('Remise ticket :', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                    const Text('Remise globale :', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: TextFormField(
