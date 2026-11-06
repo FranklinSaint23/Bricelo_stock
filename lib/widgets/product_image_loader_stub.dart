@@ -9,3 +9,4 @@ Widget? buildPlatformFileImage({
 }) {
   return null;
 }
+
