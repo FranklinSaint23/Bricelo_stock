@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/services/global_stats_pdf_service.dart';
+import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 
 class GlobalStatsScreen extends StatefulWidget {
@@ -498,6 +500,45 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
               'Statistiques globales',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.picture_as_pdf_rounded, color: AppTheme.accentGold),
+                tooltip: 'Télécharger le rapport (PDF)',
+                onPressed: () => _exportPdf(
+                  range: range,
+                  totalRevenue: totalRevenue,
+                  peakRevenueText: peakRevenueSlot != null && peakRevenueSlot.revenue > 0
+                      ? 'Fr.${peakRevenueSlot.revenue.round()} est le plus élevé (${peakRevenueSlot.label})'
+                      : '',
+                  grossMargin: grossMargin,
+                  marginRate: marginRate,
+                  peakGrossText: peakGrossSlot != null && peakGrossSlot.grossProfit > 0
+                      ? 'Fr.${peakGrossSlot.grossProfit.round()} est le plus élevé (${peakGrossSlot.label})'
+                      : '',
+                  netProfit: netProfit,
+                  peakNetText: peakNetSlot != null && peakNetSlot.netProfit > 0
+                      ? 'Fr.${peakNetSlot.netProfit.round()} est le plus élevé (${peakNetSlot.label})'
+                      : '',
+                  totalExpenses: totalExpenses,
+                  totalSalesCount: totalSalesCount,
+                  totalDiscounts: totalDiscounts,
+                  averageBasket: averageBasket,
+                  sortedProducts: sortedProducts,
+                  sortedCustomers: sortedCustomers,
+                  sortedSuppliers: sortedSuppliers,
+                  sortedPayments: sortedPayments,
+                  paymentsCount: paymentsCount,
+                  sortedTeam: sortedTeam,
+                  lowestStock: lowestStock,
+                  highestStock: highestStock,
+                  totalInvCount: totalInvCount,
+                  totalDiscrepancyValue: totalDiscrepancyValue,
+                  totalCountedUnits: totalCountedUnits,
+                  totalTheorUnits: totalTheorUnits,
+                  sortedStoreProductivity: sortedStoreProductivity,
+                ),
+              ),
+            ],
           ),
           body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -605,7 +646,7 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
                       amount: AppTheme.formatFCFA(grossMargin),
                       icon: Icons.account_balance_wallet_outlined,
                       iconColor: AppTheme.accentGold,
-                      badgeText: '${marginRate.toStringAsFixed(1)}% marge',
+                      badgeText: '${marginRate.toStringAsFixed(1)}%',
                       subRecord: peakGrossSlot != null && peakGrossSlot.grossProfit > 0
                           ? '🏆 Record : ${AppTheme.formatFCFA(peakGrossSlot.grossProfit)} (${peakGrossSlot.label})'
                           : 'Aucun record enregistré',
@@ -1165,27 +1206,31 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(icon, color: iconColor, size: 18),
-                  const SizedBox(width: 6),
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
-                  ),
-                ],
+              Icon(icon, color: iconColor, size: 15),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              if (badgeText != null)
+              if (badgeText != null) ...[
+                const SizedBox(width: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                   decoration: BoxDecoration(
                     color: AppTheme.accentGold.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(badgeText, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
+                  child: Text(
+                    badgeText,
+                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFFB45309)),
+                  ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -1295,5 +1340,142 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _exportPdf({
+    required DateTimeRange range,
+    required double totalRevenue,
+    required String peakRevenueText,
+    required double grossMargin,
+    required double marginRate,
+    required String peakGrossText,
+    required double netProfit,
+    required String peakNetText,
+    required double totalExpenses,
+    required int totalSalesCount,
+    required double totalDiscounts,
+    required double averageBasket,
+    required List<MapEntry<String, ({int quantity, double revenue, double unitPrice})>> sortedProducts,
+    required List<MapEntry<String, ({double totalSpent, int ordersCount, Map<String, int> boughtProducts})>> sortedCustomers,
+    required List<MapEntry<String, ({double totalSpent, int supplyCount, Map<String, int> productsSupplied})>> sortedSuppliers,
+    required List<MapEntry<String, double>> sortedPayments,
+    required Map<String, int> paymentsCount,
+    required List<MapEntry<String, ({int salesCount, double totalRevenue})>> sortedTeam,
+    required List<Product> lowestStock,
+    required List<Product> highestStock,
+    required int totalInvCount,
+    required double totalDiscrepancyValue,
+    required int totalCountedUnits,
+    required int totalTheorUnits,
+    required List<MapEntry<String, ({double revenue, int salesCount})>> sortedStoreProductivity,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Génération du rapport PDF en cours...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      final topProductsList = sortedProducts.take(10).map((e) => (
+        name: e.key,
+        quantity: e.value.quantity,
+        revenue: e.value.revenue,
+      )).toList();
+
+      final topCustomersList = sortedCustomers.take(5).map((e) {
+        final topProd = e.value.boughtProducts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+        return (
+          name: e.key,
+          totalSpent: e.value.totalSpent,
+          ordersCount: e.value.ordersCount,
+          favProduct: topProd.isNotEmpty ? topProd.first.key : 'Divers',
+        );
+      }).toList();
+
+      final topSuppliersList = sortedSuppliers.take(5).map((e) {
+        final topP = e.value.productsSupplied.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+        return (
+          name: e.key,
+          totalSpent: e.value.totalSpent,
+          supplyCount: e.value.supplyCount,
+          mainProduct: topP.isNotEmpty ? topP.first.key : 'Articles divers',
+        );
+      }).toList();
+
+      final paymentMethodsList = sortedPayments.map((e) => (
+        method: e.key,
+        amount: e.value,
+        count: paymentsCount[e.key] ?? 0,
+        percent: totalRevenue > 0 ? (e.value / totalRevenue * 100) : 0.0,
+      )).toList();
+
+      final teamList = sortedTeam.map((e) => (
+        name: e.key,
+        role: e.key == appState.displayUserName ? appState.userRole : 'Caissier',
+        count: e.value.salesCount,
+        revenue: e.value.totalRevenue,
+      )).toList();
+
+      final lowList = lowestStock.map((p) => (
+        name: p.name,
+        stock: _selectedStore == 'Tous' ? p.stock : p.stockForStore(_selectedStore),
+        unit: p.unit,
+      )).toList();
+
+      final highList = highestStock.map((p) => (
+        name: p.name,
+        stock: _selectedStore == 'Tous' ? p.stock : p.stockForStore(_selectedStore),
+        unit: p.unit,
+      )).toList();
+
+      final storeProdList = sortedStoreProductivity.map((e) => (
+        storeName: e.key,
+        revenue: e.value.revenue,
+        count: e.value.salesCount,
+        percent: totalRevenue > 0 ? (e.value.revenue / totalRevenue * 100) : 0.0,
+      )).toList();
+
+      await GlobalStatsPdfService.generateAndSharePdf(
+        companyName: appState.displayCompanyName.isNotEmpty ? appState.displayCompanyName : 'Bricelo Confort Nkolmesseng',
+        userName: appState.displayUserName.isNotEmpty ? appState.displayUserName : 'BRICE',
+        userEmail: appState.userEmail,
+        storeName: _selectedStore == 'Tous' ? 'Toutes les boutiques' : _selectedStore,
+        periodName: _selectedPeriod,
+        startDate: range.start,
+        endDate: range.end,
+        totalRevenue: totalRevenue,
+        peakRevenueText: peakRevenueText,
+        grossMargin: grossMargin,
+        marginRate: marginRate,
+        peakGrossText: peakGrossText,
+        netProfit: netProfit,
+        peakNetText: peakNetText,
+        totalExpenses: totalExpenses,
+        totalSalesCount: totalSalesCount,
+        totalDiscounts: totalDiscounts,
+        averageBasket: averageBasket,
+        topProducts: topProductsList,
+        topCustomers: topCustomersList,
+        topSuppliers: topSuppliersList,
+        paymentMethods: paymentMethodsList,
+        teamMembers: teamList,
+        lowestStocks: lowList,
+        highestStocks: highList,
+        totalInventoriesCount: totalInvCount,
+        totalDiscrepancyValue: totalDiscrepancyValue,
+        totalCountedUnits: totalCountedUnits,
+        totalTheoreticalUnits: totalTheorUnits,
+        storeProductivity: storeProdList,
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFFDC2626),
+          content: Text('Erreur lors de la génération du PDF: $e'),
+        ),
+      );
+    }
   }
 }
