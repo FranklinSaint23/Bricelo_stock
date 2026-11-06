@@ -165,28 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryNavy.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 7,
-                          height: 7,
-                          decoration: const BoxDecoration(color: Color(0xFF16A34A), shape: BoxShape.circle),
-                        ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'Supabase Cloud',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryNavy),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox.shrink(),
                 ],
               ),
               const SizedBox(height: 18),

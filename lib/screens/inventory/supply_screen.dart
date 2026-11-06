@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:collection/collection.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/models/models.dart';
@@ -195,7 +196,8 @@ class _SupplyScreenState extends State<SupplyScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.close, color: isDark ? Colors.white70 : const Color(0xFF6B7280)),
+                          icon: const Icon(Icons.check_rounded, color: AppTheme.accentGold, size: 28),
+                          tooltip: 'Valider',
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
@@ -234,7 +236,9 @@ class _SupplyScreenState extends State<SupplyScreen> {
                               separatorBuilder: (context, index) => const SizedBox(height: 8),
                               itemBuilder: (context, idx) {
                                 final p = products[idx];
-                                final alreadyAdded = _items.any((i) => i.product.id == p.id);
+                                final existingIndex = _items.indexWhere((i) => i.product.id == p.id);
+                                final alreadyAdded = existingIndex != -1;
+                                final item = alreadyAdded ? _items[existingIndex] : null;
 
                                 return Container(
                                   padding: const EdgeInsets.all(12),
@@ -245,51 +249,146 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                       color: alreadyAdded
                                           ? AppTheme.accentGold
                                           : (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
+                                      width: alreadyAdded ? 1.5 : 1,
                                     ),
                                   ),
-                                  child: Row(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  p.name,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                    color: isDark ? Colors.white : const Color(0xFF111827),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  'Stock (${_selectedStore.isNotEmpty ? _selectedStore : "Boutique"}): ${p.stockForStore(_selectedStore)}',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: isDark ? Colors.white60 : const Color(0xFF6B7280),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (!alreadyAdded)
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: AppTheme.primaryNavy,
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              ),
+                                              onPressed: () {
+                                                setState(() {
+                                                  _items.add(_createSupplyItem(p));
+                                                });
+                                                setModalState(() {});
+                                              },
+                                              child: const Text('+ Ajouter'),
+                                            )
+                                          else
+                                            IconButton(
+                                              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                                              onPressed: () {
+                                                setState(() {
+                                                  _items.removeAt(existingIndex);
+                                                });
+                                                setModalState(() {});
+                                              },
+                                            ),
+                                        ],
+                                      ),
+                                      if (alreadyAdded && item != null) ...[
+                                        const SizedBox(height: 10),
+                                        Row(
                                           children: [
-                                            Text(
-                                              p.name,
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                                color: isDark ? Colors.white : const Color(0xFF111827),
+                                            // Contrôle direct de la quantité
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        if (item.quantity > 1) {
+                                                          item.quantity -= 1;
+                                                          item.quantityController.text = item.quantity.toString();
+                                                        } else {
+                                                          _items.removeAt(existingIndex);
+                                                        }
+                                                      });
+                                                      setModalState(() {});
+                                                    },
+                                                    child: const Padding(
+                                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                      child: Icon(Icons.remove, size: 16, color: Color(0xFF475569)),
+                                                    ),
+                                                  ),
+                                                  Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                    child: Text(
+                                                      '${item.quantity}',
+                                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        item.quantity += 1;
+                                                        item.quantityController.text = item.quantity.toString();
+                                                      });
+                                                      setModalState(() {});
+                                                    },
+                                                    child: const Padding(
+                                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                      child: Icon(Icons.add, size: 16, color: Color(0xFF475569)),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              'Prix d\'achat: ${AppTheme.formatFCFA(p.buyPrice)} • Stock ($_selectedStore): ${p.stockForStore(_selectedStore)}',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: isDark ? Colors.white60 : const Color(0xFF6B7280),
+                                            const SizedBox(width: 10),
+                                            // Saisie directe du coût unitaire
+                                            Expanded(
+                                              child: SizedBox(
+                                                height: 36,
+                                                child: TextFormField(
+                                                  controller: item.priceController,
+                                                  keyboardType: TextInputType.number,
+                                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Coût unitaire',
+                                                    suffixText: 'F CFA',
+                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                                    isDense: true,
+                                                  ),
+                                                  onChanged: (val) {
+                                                    setState(() {
+                                                      item.buyPrice = double.tryParse(val.trim()) ?? 0.0;
+                                                    });
+                                                  },
+                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: alreadyAdded ? const Color(0xFFE2E8F0) : AppTheme.primaryNavy,
-                                          foregroundColor: alreadyAdded ? const Color(0xFF475569) : Colors.white,
-                                          elevation: 0,
-                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            if (!alreadyAdded) {
-                                              _items.add(_createSupplyItem(p));
-                                            }
-                                          });
-                                          setModalState(() {});
-                                        },
-                                        child: Text(alreadyAdded ? 'Ajouté' : '+ Ajouter'),
-                                      ),
+                                      ],
                                     ],
                                   ),
                                 );
@@ -636,28 +735,36 @@ class _SupplyScreenState extends State<SupplyScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: appState.outlets.any((o) => o.name == _selectedStore)
-                              ? _selectedStore
-                              : (appState.outlets.isNotEmpty ? appState.outlets.first.name : appState.currentStore),
+                          value: () {
+                            final storeList = appState.availableStores.isNotEmpty
+                                ? appState.availableStores
+                                : (appState.outlets.isNotEmpty ? appState.outlets.map((o) => o.name).toList() : [appState.currentStore]);
+                            return storeList.contains(_selectedStore) ? _selectedStore : storeList.first;
+                          }(),
                           isExpanded: true,
                           dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
                           icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.primaryNavy),
-                          items: appState.outlets.map((o) {
+                          items: (appState.availableStores.isNotEmpty
+                                  ? appState.availableStores
+                                  : (appState.outlets.isNotEmpty ? appState.outlets.map((o) => o.name).toList() : [appState.currentStore]))
+                              .map((sName) {
+                            final outlet = appState.outlets.firstWhereOrNull((o) => o.name == sName);
+                            final isDef = outlet?.isDefault ?? (sName == appState.currentStore);
                             return DropdownMenuItem<String>(
-                              value: o.name,
+                              value: sName,
                               child: Row(
                                 children: [
-                                  Icon(Icons.storefront_outlined, size: 16, color: o.isDefault ? AppTheme.accentGold : Colors.grey),
+                                  Icon(Icons.storefront_outlined, size: 16, color: isDef ? AppTheme.accentGold : Colors.grey),
                                   const SizedBox(width: 8),
                                   Text(
-                                    o.name,
+                                    sName,
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
                                       color: isDark ? Colors.white : const Color(0xFF111827),
                                     ),
                                   ),
-                                  if (o.isDefault) ...[
+                                  if (isDef) ...[
                                     const SizedBox(width: 8),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

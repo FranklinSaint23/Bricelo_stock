@@ -484,19 +484,10 @@ class _PosScreenState extends State<PosScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
-        centerTitle: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Point de vente'.tr,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Colors.white),
-            ),
-            Text(
-              appState.currentStore,
-              style: const TextStyle(fontSize: 11, color: AppTheme.accentGold, fontWeight: FontWeight.w600),
-            ),
-          ],
+        centerTitle: true,
+        title: Text(
+          'Point de vente'.tr,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Colors.white),
         ),
         actions: [
           if (appState.heldCarts.isNotEmpty)
@@ -588,68 +579,60 @@ class _PosScreenState extends State<PosScreen> {
             ),
           ),
 
-          // 2. SÉLECTION DES BOUTIQUES COMMENÇANT PAR TOUTES
-          SizedBox(
-            height: 38,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: stores.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, idx) {
-                final store = stores[idx];
-                final isSelected = _selectedStore == store;
-                return InkWell(
-                  onTap: () {
-                    setState(() {
-                      _selectedStore = store;
-                      if (store != 'Toutes') {
-                        appState.setCurrentStore(store);
-                      }
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.accentGold : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected ? AppTheme.accentGold : const Color(0xFFE2E8F0),
-                        width: 1.2,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: AppTheme.accentGold.withOpacity(0.25),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          store == 'Toutes' ? Icons.storefront_rounded : Icons.store_rounded,
-                          size: 15,
-                          color: isSelected ? AppTheme.primaryNavy : const Color(0xFF64748B),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          store,
-                          style: TextStyle(
-                            color: isSelected ? AppTheme.primaryNavy : const Color(0xFF334155),
-                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                            fontSize: 12.5,
+          // 2. SÉLECTION DES BOUTIQUES (DROPDOWN COMMENÇANT PAR TOUTES)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 1)),
+                ],
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: stores.contains(_selectedStore) ? _selectedStore : 'Toutes',
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.accentGold),
+                  items: stores.map((store) {
+                    return DropdownMenuItem<String>(
+                      value: store,
+                      child: Row(
+                        children: [
+                          Icon(
+                            store == 'Toutes' ? Icons.storefront_rounded : Icons.store_rounded,
+                            size: 18,
+                            color: AppTheme.primaryNavy,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                          const SizedBox(width: 8),
+                          Text(
+                            store == 'Toutes' ? 'Toutes les boutiques' : store,
+                            style: const TextStyle(
+                              color: AppTheme.primaryNavy,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (newStore) {
+                    if (newStore != null) {
+                      setState(() {
+                        _selectedStore = newStore;
+                        if (newStore != 'Toutes') {
+                          appState.setCurrentStore(newStore);
+                        }
+                      });
+                    }
+                  },
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -721,7 +704,8 @@ class _PosScreenState extends State<PosScreen> {
                     itemBuilder: (context, idx) {
                       final p = products[idx];
                       final availStock = _selectedStore == 'Toutes' ? p.stock : p.stockForStore(_selectedStore);
-                      final isLow = availStock <= 5;
+                      final isOutOfStock = p.productType != 'Service' && availStock <= 0;
+                      final isLow = availStock <= 5 && !isOutOfStock;
                       final inCartQty = appState.cart
                           .where((c) => c.product.id == p.id)
                           .fold<int>(0, (sum, c) => sum + c.quantity);
@@ -731,209 +715,234 @@ class _PosScreenState extends State<PosScreen> {
                           ? 'pièce(s)'
                           : p.unit;
 
-                      return InkWell(
-                        onTap: () {
-                          if (p.productType != 'Service' && inCartQty >= availStock) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                backgroundColor: const Color(0xFFDC2626),
-                                content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                            return;
-                          }
-                          if (inCart) {
-                            final ok = appState.updateCartQuantity(cartItem!, 1);
-                            if (!ok) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: const Color(0xFFDC2626),
-                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          } else {
-                            final ok = appState.addToCart(p);
-                            if (!ok) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: const Color(0xFFDC2626),
-                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: inCart ? const Color(0xFFFFFBEB) : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: inCart ? AppTheme.accentGold : const Color(0xFFE2E8F0),
-                              width: inCart ? 1.5 : 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.03),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  ProductImageWidget(
-                                    imageUrl: p.imageUrl,
-                                    size: 38,
-                                    borderRadius: 10,
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                    decoration: BoxDecoration(
-                                      color: isLow ? const Color(0xFFFFF8E7) : const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(6),
+                      return Opacity(
+                        opacity: isOutOfStock ? 0.45 : 1.0,
+                        child: InkWell(
+                          onTap: isOutOfStock
+                              ? () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: const Color(0xFFDC2626),
+                                      content: Text('Stock épuisé pour "${p.name}". Approvisionnement requis.'),
+                                      duration: const Duration(seconds: 2),
                                     ),
-                                    child: Text(
-                                      '$availStock $unitLabel',
-                                      style: const TextStyle(
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFFD97706),
+                                  );
+                                }
+                              : () {
+                                  if (p.productType != 'Service' && inCartQty >= availStock) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: const Color(0xFFDC2626),
+                                        content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                        duration: const Duration(seconds: 2),
                                       ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Spacer(),
-                              Text(
-                                p.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13.5,
-                                  color: Color(0xFF0F172A),
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 6),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      AppTheme.formatFCFA(p.sellPrice),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 13.5,
-                                        color: Color(0xFFD97706),
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  if (inCart)
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        InkWell(
-                                          onTap: () {
-                                            appState.updateCartQuantity(cartItem!, -1);
-                                          },
-                                          child: Container(
-                                            width: 26,
-                                            height: 26,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: const Color(0xFFCBD5E1)),
-                                            ),
-                                            child: Icon(
-                                              inCartQty == 1 ? Icons.delete_outline : Icons.remove,
-                                              size: 15,
-                                              color: inCartQty == 1 ? Colors.red : const Color(0xFF0F172A),
-                                            ),
-                                          ),
+                                    );
+                                    return;
+                                  }
+                                  if (inCart) {
+                                    final ok = appState.updateCartQuantity(cartItem!, 1);
+                                    if (!ok) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          backgroundColor: const Color(0xFFDC2626),
+                                          content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                          duration: const Duration(seconds: 2),
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                                          child: Text(
-                                            '$inCartQty',
-                                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
-                                          ),
+                                      );
+                                    }
+                                  } else {
+                                    final ok = appState.addToCart(p);
+                                    if (!ok) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          backgroundColor: const Color(0xFFDC2626),
+                                          content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                          duration: const Duration(seconds: 2),
                                         ),
-                                        InkWell(
-                                          onTap: () {
-                                            if (p.productType != 'Service' && inCartQty >= availStock) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  backgroundColor: const Color(0xFFDC2626),
-                                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                                  duration: const Duration(seconds: 2),
-                                                ),
-                                              );
-                                              return;
-                                            }
-                                            final ok = appState.updateCartQuantity(cartItem!, 1);
-                                            if (!ok) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  backgroundColor: const Color(0xFFDC2626),
-                                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                                  duration: const Duration(seconds: 2),
-                                                ),
-                                              );
-                                            }
-                                          },
-                                        child: Container(
-                                          width: 26,
-                                          height: 26,
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.accentGold,
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: const Icon(Icons.add, size: 15, color: AppTheme.primaryNavy),
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                else
-                                  InkWell(
-                                    onTap: () {
-                                      final ok = appState.addToCart(p);
-                                      if (!ok) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            backgroundColor: const Color(0xFFDC2626),
-                                            content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de ${p.stockForStore(appState.currentStore)}.'),
-                                            duration: const Duration(seconds: 2),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    child: Container(
-                                      width: 28,
-                                      height: 28,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primaryNavy,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: const Icon(Icons.add_rounded, color: AppTheme.accentGold, size: 18),
-                                    ),
-                                  ),
+                                      );
+                                    }
+                                  }
+                                },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: inCart ? const Color(0xFFFFFBEB) : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: inCart ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+                                width: inCart ? 1.5 : 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
                               ],
                             ),
-                          ],
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    ProductImageWidget(
+                                      imageUrl: p.imageUrl,
+                                      size: 38,
+                                      borderRadius: 10,
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                      decoration: BoxDecoration(
+                                        color: isOutOfStock
+                                            ? const Color(0xFFFEE2E2)
+                                            : (isLow ? const Color(0xFFFFF8E7) : const Color(0xFFF1F5F9)),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        isOutOfStock ? 'Épuisé' : '$availStock $unitLabel',
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: isOutOfStock ? const Color(0xFFDC2626) : const Color(0xFFD97706),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Spacer(),
+                                Text(
+                                  p.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13.5,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        AppTheme.formatFCFA(p.sellPrice),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 13.5,
+                                          color: Color(0xFFD97706),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (inCart)
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          InkWell(
+                                            onTap: () {
+                                              appState.updateCartQuantity(cartItem!, -1);
+                                            },
+                                            child: Container(
+                                              width: 26,
+                                              height: 26,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.circular(6),
+                                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                                              ),
+                                              child: Icon(
+                                                inCartQty == 1 ? Icons.delete_outline : Icons.remove,
+                                                size: 15,
+                                                color: inCartQty == 1 ? Colors.red : const Color(0xFF0F172A),
+                                              ),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                                            child: Text(
+                                              '$inCartQty',
+                                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () {
+                                              if (p.productType != 'Service' && inCartQty >= availStock) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    backgroundColor: const Color(0xFFDC2626),
+                                                    content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                                    duration: const Duration(seconds: 2),
+                                                  ),
+                                                );
+                                                return;
+                                              }
+                                              final ok = appState.updateCartQuantity(cartItem!, 1);
+                                              if (!ok) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    backgroundColor: const Color(0xFFDC2626),
+                                                    content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                                    duration: const Duration(seconds: 2),
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            child: Container(
+                                              width: 26,
+                                              height: 26,
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.accentGold,
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: const Icon(Icons.add, size: 15, color: AppTheme.primaryNavy),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    else
+                                      InkWell(
+                                        onTap: isOutOfStock
+                                            ? () {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    backgroundColor: const Color(0xFFDC2626),
+                                                    content: Text('Stock épuisé pour "${p.name}". Approvisionnement requis.'),
+                                                    duration: const Duration(seconds: 2),
+                                                  ),
+                                                );
+                                              }
+                                            : () {
+                                                final ok = appState.addToCart(p);
+                                                if (!ok) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      backgroundColor: const Color(0xFFDC2626),
+                                                      content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                                      duration: const Duration(seconds: 2),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                        child: Container(
+                                          width: 28,
+                                          height: 28,
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primaryNavy,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Icon(Icons.add_rounded, color: AppTheme.accentGold, size: 18),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    );
+                      );
                     },
                   ),
           ),

@@ -70,7 +70,7 @@ class Product {
         stockByStore = stockByStore ?? {};
 
   int stockForStore(String storeName) {
-    if (storeName == 'Tous' || storeName.trim().isEmpty) return stock;
+    if (storeName == 'Tous' || storeName == 'Toutes' || storeName.trim().isEmpty) return stock;
     final normalized = storeName.trim().toLowerCase();
     for (final entry in stockByStore.entries) {
       if (entry.key.trim().toLowerCase() == normalized) {
@@ -149,6 +149,7 @@ class CartItem {
   double unitPrice;
   double discount;
   bool isWholesale;
+  bool isGift;
 
   CartItem({
     required this.product,
@@ -156,10 +157,11 @@ class CartItem {
     required this.unitPrice,
     this.discount = 0,
     this.isWholesale = false,
+    this.isGift = false,
   });
 
-  double get subtotal => quantity * unitPrice;
-  double get total => (quantity * unitPrice) - discount;
+  double get subtotal => isGift ? 0.0 : quantity * unitPrice;
+  double get total => isGift ? 0.0 : ((quantity * unitPrice) - discount).clamp(0.0, double.infinity);
 }
 
 class HeldCart {
@@ -185,12 +187,14 @@ class SaleItemSummary {
   final int quantity;
   final double unitPrice;
   final double total;
+  final bool isGift;
 
   SaleItemSummary({
     required this.productName,
     required this.quantity,
     required this.unitPrice,
     required this.total,
+    this.isGift = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -198,6 +202,7 @@ class SaleItemSummary {
         'quantity': quantity,
         'unitPrice': unitPrice,
         'total': total,
+        'isGift': isGift,
       };
 
   factory SaleItemSummary.fromJson(Map<String, dynamic> j) {
@@ -208,6 +213,7 @@ class SaleItemSummary {
       quantity: qty,
       unitPrice: up,
       total: (j['total'] as num?)?.toDouble() ?? (qty * up).toDouble(),
+      isGift: (j['isGift'] as bool?) ?? false,
     );
   }
 }
@@ -442,6 +448,8 @@ class Expense {
   final double amount;
   final DateTime createdAt;
   final String paidBy;
+  final String paidFromCaisse;
+  final String? reference;
 
   DateTime get date => createdAt;
 
@@ -452,6 +460,8 @@ class Expense {
     required this.amount,
     required this.createdAt,
     this.paidBy = 'Gérant',
+    this.paidFromCaisse = 'Caisse 1',
+    this.reference,
   });
 
   Map<String, dynamic> toJson() => {
@@ -461,6 +471,8 @@ class Expense {
         'amount': amount,
         'createdAt': createdAt.toIso8601String(),
         'paidBy': paidBy,
+        'paidFromCaisse': paidFromCaisse,
+        'reference': reference,
       };
 
   factory Expense.fromJson(Map<String, dynamic> j) => Expense(
@@ -470,6 +482,8 @@ class Expense {
         amount: (j['amount'] as num?)?.toDouble() ?? 0,
         createdAt: DateTime.tryParse((j['createdAt'] ?? j['expense_date'] ?? '').toString()) ?? DateTime.now(),
         paidBy: (j['paidBy'] ?? j['beneficiary'] ?? 'Gérant').toString(),
+        paidFromCaisse: (j['paidFromCaisse'] ?? j['caisse'] ?? 'Caisse 1').toString(),
+        reference: j['reference']?.toString(),
       );
 }
 

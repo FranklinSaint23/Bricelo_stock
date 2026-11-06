@@ -930,14 +930,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildBriceloCategoryCard(
-                      title: 'Dépenses'.tr,
-                      subtitle: AppTheme.formatFCFA(appState.todayExpensesTotal),
-                      icon: Icons.receipt_long_rounded,
+                      title: 'Historique des ventes'.tr,
+                      subtitle: '${appState.sales.length} vente${appState.sales.length > 1 ? "s" : ""}',
+                      icon: Icons.history_rounded,
                       cardBg: const Color(0xFFFFF8E7),
                       iconBg: const Color(0xFFE5A600),
                       iconColor: Colors.white,
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasesAndExpensesScreen()));
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesHistoryScreen()));
                       },
                     ),
                   ),

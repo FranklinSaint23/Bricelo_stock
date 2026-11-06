@@ -237,7 +237,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   }
 
   // ==========================================
-  // ÉTAPE 1 : RÉCAPITULATIF (Remise par produit + Remise globale)
+  // ÉTAPE 1 : RÉCAPITULATIF (Remise inline par produit max 50% + Offrir + Remise globale inline + Date stricte)
   // ==========================================
   Widget _buildStep1Recap(BuildContext context) {
     final total = _calculatedTotal;
@@ -248,190 +248,251 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Liste des articles
-        ...appState.cart.map((item) => Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+        ...appState.cart.map((item) {
+          final maxDiscount = (item.unitPrice / 2) * item.quantity;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: item.isGift ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+                width: item.isGift ? 1.5 : 1,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.product.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  item.product.name,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                                ),
+                              ),
+                              if (item.isGift) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.accentGold.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text('OFFERT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.primaryNavy)),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.isGift
+                                ? '${item.quantity} x ${AppTheme.formatFCFA(item.unitPrice)} (Offert)'
+                                : '${item.quantity} x ${AppTheme.formatFCFA(item.unitPrice)} = ${AppTheme.formatFCFA(item.subtotal)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: item.isGift ? AppTheme.accentGold : const Color(0xFF64748B),
+                              fontWeight: item.isGift ? FontWeight.bold : FontWeight.normal,
                             ),
-                            const SizedBox(height: 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF64748B), size: 22),
+                      onPressed: () {
+                        setState(() {
+                          appState.updateCartQuantity(item, -1);
+                          _amountBuffer = _calculatedTotal.toInt().toString();
+                        });
+                      },
+                    ),
+                    Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle, color: AppTheme.primaryNavy, size: 22),
+                      onPressed: () {
+                        final ok = appState.updateCartQuantity(item, 1);
+                        if (!ok) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: const Color(0xFFDC2626),
+                              content: Text('Stock insuffisant ! Le stock disponible pour "${item.product.name}" est de ${appState.getAvailableStockForProduct(item.product)}.'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        } else {
+                          setState(() {
+                            _amountBuffer = _calculatedTotal.toInt().toString();
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // Ligne Actions : Bouton "Offrir" + Champ de saisie Remise inline (max 50%) + Total ligne
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Bouton pour offrir ce produit
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          item.isGift = !item.isGift;
+                          if (item.isGift) {
+                            item.discount = 0.0;
+                          }
+                          _amountBuffer = _calculatedTotal.toInt().toString();
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: item.isGift ? AppTheme.accentGold : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: item.isGift ? AppTheme.accentGold : const Color(0xFFCBD5E1),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              item.isGift ? Icons.card_giftcard_rounded : Icons.card_giftcard_outlined,
+                              size: 15,
+                              color: item.isGift ? AppTheme.primaryNavy : const Color(0xFF475569),
+                            ),
+                            const SizedBox(width: 5),
                             Text(
-                              '${item.quantity} x ${AppTheme.formatFCFA(item.unitPrice)} = ${AppTheme.formatFCFA(item.subtotal)}',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              item.isGift ? 'Produit offert 🎁' : 'Offrir ce produit',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: item.isGift ? AppTheme.primaryNavy : const Color(0xFF334155),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF64748B), size: 22),
-                        onPressed: () {
+                    ),
+                    // Champ de remise inline à côté (seulement si non offert)
+                    if (!item.isGift) ...[
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Remise :', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+                          const SizedBox(width: 6),
+                          SizedBox(
+                            width: 95,
+                            height: 34,
+                            child: TextFormField(
+                              initialValue: item.discount > 0 ? item.discount.toInt().toString() : '',
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                              decoration: InputDecoration(
+                                hintText: 'Max 50%',
+                                hintStyle: const TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.accentGold, width: 1.5)),
+                                suffixText: 'F',
+                                suffixStyle: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                              ),
+                              onChanged: (val) {
+                                double entered = double.tryParse(val.trim()) ?? 0.0;
+                                if (entered > maxDiscount) {
+                                  entered = maxDiscount;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: const Color(0xFFDC2626),
+                                      content: Text('La remise ne peut pas dépasser 50% (${AppTheme.formatFCFA(maxDiscount)}).'),
+                                      duration: const Duration(seconds: 1),
+                                    ),
+                                  );
+                                }
+                                setState(() {
+                                  item.discount = entered;
+                                  _amountBuffer = _calculatedTotal.toInt().toString();
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    // Total ligne
+                    Text(
+                      item.isGift ? '0 F CFA' : AppTheme.formatFCFA(item.total),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: item.isGift ? AppTheme.accentGold : AppTheme.primaryNavy,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+        const SizedBox(height: 10),
+
+        // Remise globale inline & Arrondir total
+        Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.discount_outlined, size: 16, color: AppTheme.accentGold),
+                    const SizedBox(width: 6),
+                    const Text('Remise ticket :', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: _globalDiscount > 0 ? _globalDiscount.toInt().toString() : '',
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                        decoration: const InputDecoration(
+                          hintText: '0',
+                          suffixText: 'F CFA',
+                          suffixStyle: TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onChanged: (val) {
                           setState(() {
-                            appState.updateCartQuantity(item, -1);
+                            _globalDiscount = double.tryParse(val.trim()) ?? 0.0;
                             _amountBuffer = _calculatedTotal.toInt().toString();
                           });
                         },
                       ),
-                      Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle, color: AppTheme.primaryNavy, size: 22),
-                        onPressed: () {
-                          final ok = appState.updateCartQuantity(item, 1);
-                          if (!ok) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                backgroundColor: const Color(0xFFDC2626),
-                                content: Text('Stock insuffisant ! Le stock disponible pour "${item.product.name}" est de ${item.product.stockForStore(appState.currentStore)}.'),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          } else {
-                            setState(() {
-                              _amountBuffer = _calculatedTotal.toInt().toString();
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      InkWell(
-                        onTap: () => _showProductDiscountDialog(context, item),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: item.discount > 0 ? const Color(0xFFFEF3C7) : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: item.discount > 0 ? AppTheme.accentGold : const Color(0xFFCBD5E1),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.discount_outlined,
-                                size: 14,
-                                color: item.discount > 0 ? const Color(0xFFB45309) : AppTheme.primaryNavy,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                item.discount > 0
-                                    ? 'Remise: -${AppTheme.formatFCFA(item.discount)}'
-                                    : '+ Remise sur ce produit',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: item.discount > 0 ? const Color(0xFFB45309) : AppTheme.primaryNavy,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'Ligne: ${AppTheme.formatFCFA(item.total)}',
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w900,
-                          color: AppTheme.primaryNavy,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            )),
-        const SizedBox(height: 10),
-
-        // Remise globale & Arrondir total
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primaryNavy,
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(vertical: 11),
-                ),
-                icon: const Icon(Icons.discount, size: 16, color: AppTheme.accentGold),
-                label: Text(
-                  _globalDiscount > 0 ? 'Remise globale: -${_globalDiscount.toInt()} F' : 'Remise globale',
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
-                ),
-                onPressed: () {
-                  final discountCtrl = TextEditingController(text: _globalDiscount > 0 ? _globalDiscount.toInt().toString() : '');
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      title: const Text('Remise globale (F CFA)', style: TextStyle(fontWeight: FontWeight.bold)),
-                      content: TextField(
-                        controller: discountCtrl,
-                        keyboardType: TextInputType.number,
-                        autofocus: true,
-                        decoration: const InputDecoration(
-                          hintText: 'Montant de remise',
-                          suffixText: 'F CFA',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      actions: [
-                        if (_globalDiscount > 0)
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _globalDiscount = 0.0;
-                                _amountBuffer = _calculatedTotal.toInt().toString();
-                              });
-                              Navigator.pop(ctx);
-                            },
-                            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
-                          ),
-                        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryNavy,
-                            foregroundColor: AppTheme.accentGold,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _globalDiscount = double.tryParse(discountCtrl.text.trim()) ?? 0.0;
-                              _amountBuffer = _calculatedTotal.toInt().toString();
-                            });
-                            Navigator.pop(ctx);
-                          },
-                          child: const Text('Appliquer', style: TextStyle(fontWeight: FontWeight.bold)),
-                        ),
-                      ],
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
+              flex: 2,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   border: Border.all(color: const Color(0xFFCBD5E1)),
                   borderRadius: BorderRadius.circular(10),
@@ -439,7 +500,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Arrondir', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    const Text('Arrondir', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
                     Switch(
                       value: _roundTotal,
                       activeThumbColor: AppTheme.accentGold,
@@ -458,39 +519,23 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         ),
         const SizedBox(height: 10),
 
-        // Date de la vente
-        InkWell(
-          onTap: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: _saleDate,
-              firstDate: DateTime(2020),
-              lastDate: DateTime(2030),
-            );
-            if (picked != null) setState(() => _saleDate = picked);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFCBD5E1)),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF64748B)),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Date : ${_saleDate.day.toString().padLeft(2, "0")}/${_saleDate.month.toString().padLeft(2, "0")}/${_saleDate.year}',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-                const Icon(Icons.edit_calendar_outlined, size: 16, color: AppTheme.accentGold),
-              ],
-            ),
+        // Date de la vente (Stricte, imposée à aujourd'hui sans modification)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.calendar_today_rounded, size: 16, color: Color(0xFF64748B)),
+              const SizedBox(width: 8),
+              Text(
+                'Date : ${DateTime.now().day.toString().padLeft(2, "0")}/${DateTime.now().month.toString().padLeft(2, "0")}/${DateTime.now().year} (Aujourd\'hui)',
+                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 14),
@@ -583,115 +628,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
     );
   }
 
-  void _showProductDiscountDialog(BuildContext context, CartItem item) {
-    bool isPercent = false;
-    final discountCtrl = TextEditingController(
-      text: item.discount > 0 ? item.discount.toInt().toString() : '',
-    );
 
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDlgState) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Row(
-              children: [
-                const Icon(Icons.discount, color: AppTheme.accentGold, size: 22),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Remise : ${item.product.name}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Sous-total ligne : ${AppTheme.formatFCFA(item.subtotal)} (${item.quantity} x ${AppTheme.formatFCFA(item.unitPrice)})',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Montant (F CFA)'),
-                      selected: !isPercent,
-                      selectedColor: AppTheme.accentGold.withValues(alpha: 0.25),
-                      onSelected: (val) {
-                        if (val) setDlgState(() => isPercent = false);
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text('Pourcentage (%)'),
-                      selected: isPercent,
-                      selectedColor: AppTheme.accentGold.withValues(alpha: 0.25),
-                      onSelected: (val) {
-                        if (val) setDlgState(() => isPercent = true);
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: discountCtrl,
-                  keyboardType: TextInputType.number,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    labelText: isPercent ? 'Remise en %' : 'Montant de remise (F CFA)',
-                    suffixText: isPercent ? '%' : 'F CFA',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              if (item.discount > 0)
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      item.discount = 0.0;
-                      _amountBuffer = _calculatedTotal.toInt().toString();
-                    });
-                    Navigator.pop(ctx);
-                  },
-                  child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
-                ),
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryNavy,
-                  foregroundColor: AppTheme.accentGold,
-                ),
-                onPressed: () {
-                  final inputVal = double.tryParse(discountCtrl.text.trim()) ?? 0.0;
-                  double calculatedItemDiscount = 0.0;
-                  if (isPercent) {
-                    calculatedItemDiscount = (item.subtotal * (inputVal / 100)).clamp(0.0, item.subtotal);
-                  } else {
-                    calculatedItemDiscount = inputVal.clamp(0.0, item.subtotal);
-                  }
-                  setState(() {
-                    item.discount = calculatedItemDiscount;
-                    _amountBuffer = _calculatedTotal.toInt().toString();
-                  });
-                  Navigator.pop(ctx);
-                },
-                child: const Text('Appliquer', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
 
   // ==========================================
   // ÉTAPE 2 : CLIENT

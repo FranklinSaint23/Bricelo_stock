@@ -47,6 +47,12 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Bricelo Stock a besoin d'accéder à votre appareil photo pour prendre les photos des produits et scanner les codes-barres.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Bricelo Stock a besoin d'accéder à vos photos pour sélectionner les images des produits.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Bricelo Stock a besoin du micro pour les fonctionnalités multimédia.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

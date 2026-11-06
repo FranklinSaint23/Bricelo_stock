@@ -42,6 +42,7 @@ export 'company/reset_data_screen.dart';
 export 'company/preferences_screen.dart';
 export 'finance/accounting_screen.dart';
 export 'finance/purchases_and_expenses_screen.dart';
+export 'finance/expenses_screen.dart';
 export 'finance/reports_screen.dart';
 export 'finance/depreciation_report_screen.dart';
 export 'finance/promotion_and_shop_screen.dart';

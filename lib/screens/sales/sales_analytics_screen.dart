@@ -27,19 +27,18 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
   final appState = AppState.instance;
 
   String _selectedStore = 'Toutes les boutiques';
-  String _selectedPeriod = '30j'; // 'Aujourd\'hui', 'Hier', '1 semaine', 'Semaine passée', '1 mois', 'Mois passé', '30j', '90j', 'L\'an passé', 'Personnalisé'
+  String _selectedPeriod = 'Ce mois';
   DateTimeRange? _customDateRange;
 
   final List<String> _periods = const [
     'Aujourd\'hui',
     'Hier',
-    '1 semaine',
+    'Cette semaine',
     'Semaine passée',
-    '1 mois',
-    'Mois passé',
-    '30j',
-    '90j',
-    'L\'an passé',
+    'Ce mois',
+    'Le mois passé',
+    'Cette année',
+    'L\'année dernière',
     'Personnalisé',
   ];
 
@@ -56,41 +55,36 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
         final yEnd = DateTime(yStart.year, yStart.month, yStart.day, 23, 59, 59, 999);
         return DateTimeRange(start: yStart, end: yEnd);
 
-      case '1 semaine':
-        return DateTimeRange(
-          start: todayStart.subtract(const Duration(days: 6)),
-          end: todayEnd,
-        );
+      case 'Cette semaine':
+        final weekday = now.weekday; // 1 = Lundi, 7 = Dimanche
+        final startMonday = todayStart.subtract(Duration(days: weekday - 1));
+        final endSunday = DateTime(startMonday.year, startMonday.month, startMonday.day + 6, 23, 59, 59, 999);
+        return DateTimeRange(start: startMonday, end: endSunday);
 
       case 'Semaine passée':
         final weekday = now.weekday; // 1 = Lundi, 7 = Dimanche
-        final thisMonday = todayStart.subtract(Duration(days: weekday - 1));
-        final lastMonday = thisMonday.subtract(const Duration(days: 7));
-        final lastSunday = lastMonday.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
-        return DateTimeRange(start: lastMonday, end: lastSunday);
+        final startLastMonday = todayStart.subtract(Duration(days: weekday - 1 + 7));
+        final endLastSunday = DateTime(startLastMonday.year, startLastMonday.month, startLastMonday.day + 6, 23, 59, 59, 999);
+        return DateTimeRange(start: startLastMonday, end: endLastSunday);
 
-      case '30j':
-      case '1 mois':
-        return DateTimeRange(
-          start: todayStart.subtract(const Duration(days: 29)),
-          end: todayEnd,
-        );
-
-      case 'Mois passé':
+      case 'Ce mois':
         final firstDayThisMonth = DateTime(now.year, now.month, 1);
-        final lastDayPrevMonth = firstDayThisMonth.subtract(const Duration(milliseconds: 1));
-        final firstDayPrevMonth = DateTime(lastDayPrevMonth.year, lastDayPrevMonth.month, 1);
+        final lastDayThisMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
+        return DateTimeRange(start: firstDayThisMonth, end: lastDayThisMonth);
+
+      case 'Le mois passé':
+        final firstDayPrevMonth = DateTime(now.year, now.month - 1, 1);
+        final lastDayPrevMonth = DateTime(now.year, now.month, 0, 23, 59, 59, 999);
         return DateTimeRange(start: firstDayPrevMonth, end: lastDayPrevMonth);
 
-      case '90j':
-        return DateTimeRange(
-          start: todayStart.subtract(const Duration(days: 89)),
-          end: todayEnd,
-        );
+      case 'Cette année':
+        final firstDayThisYear = DateTime(now.year, 1, 1);
+        final lastDayThisYear = DateTime(now.year, 12, 31, 23, 59, 59, 999);
+        return DateTimeRange(start: firstDayThisYear, end: lastDayThisYear);
 
-      case 'L\'an passé':
+      case 'L\'année dernière':
         final firstDayPrevYear = DateTime(now.year - 1, 1, 1);
-        final lastDayPrevYear = DateTime(now.year - 1, 12, 31, 23, 59, 59);
+        final lastDayPrevYear = DateTime(now.year - 1, 12, 31, 23, 59, 59, 999);
         return DateTimeRange(start: firstDayPrevYear, end: lastDayPrevYear);
 
       case 'Personnalisé':
@@ -204,8 +198,8 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
       }).toList();
     }
 
-    if (period == '1 semaine' || period == 'Semaine passée') {
-      // 7 jours
+    if (period == 'Cette semaine' || period == 'Semaine passée') {
+      // 7 jours (Lundi à Dimanche)
       final List<_ChartBucket> buckets = [];
       for (int i = 0; i < 7; i++) {
         final day = range.start.add(Duration(days: i));
@@ -220,7 +214,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
       return buckets;
     }
 
-    if (period == '30j' || period == '1 mois' || period == 'Mois passé') {
+    if (period == 'Ce mois' || period == 'Le mois passé') {
       // 6 tranches de 5 jours
       final List<_ChartBucket> buckets = [];
       for (int i = 0; i < 6; i++) {
@@ -236,23 +230,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
       return buckets;
     }
 
-    if (period == '90j') {
-      // 6 tranches de 15 jours
-      final List<_ChartBucket> buckets = [];
-      for (int i = 0; i < 6; i++) {
-        final startDay = range.start.add(Duration(days: i * 15));
-        final endDay = range.start.add(Duration(days: (i + 1) * 15 - 1));
-        final matches = filteredSales.where((sale) =>
-            sale.createdAt.isAfter(startDay.subtract(const Duration(milliseconds: 1))) &&
-            sale.createdAt.isBefore(endDay.add(const Duration(days: 1))));
-        final total = matches.fold(0.0, (sum, sale) => sum + sale.total);
-        final label = 'Q${i + 1}';
-        buckets.add(_ChartBucket(label: label, amount: total, count: matches.length));
-      }
-      return buckets;
-    }
-
-    if (period == 'L\'an passé') {
+    if (period == 'Cette année' || period == 'L\'année dernière') {
       // 12 mois
       final months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
       return List.generate(12, (idx) {
@@ -344,6 +322,14 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
           }
         }
         if (estimatedProfit < 0) estimatedProfit = 0;
+
+        // Charges / Dépenses sur la période pour calculer le Bénéfice net
+        final periodExpenses = appState.expenses.where((e) {
+          return e.createdAt.isAfter(range.start.subtract(const Duration(milliseconds: 1))) &&
+              e.createdAt.isBefore(range.end.add(const Duration(milliseconds: 1)));
+        }).fold(0.0, (sum, e) => sum + e.amount);
+
+        final netProfit = estimatedProfit - periodExpenses;
 
         // Produits les plus vendus calculés dynamiquement
         final Map<String, ({int quantity, double revenue, double unitPrice})> productStats = {};
@@ -525,6 +511,30 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                         subtitle: totalSales > 0
                             ? '${((estimatedProfit / totalSales) * 100).toStringAsFixed(1)}% de marge'
                             : '0% de marge',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildKpiBox(
+                        'Charges & Dépenses',
+                        AppTheme.formatFCFA(periodExpenses),
+                        const Color(0xFFDC2626),
+                        subtitle: 'Dépenses enregistrées',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildKpiBox(
+                        'Bénéfice net',
+                        AppTheme.formatFCFA(netProfit),
+                        netProfit >= 0 ? const Color(0xFF059669) : const Color(0xFFDC2626),
+                        subtitle: totalSales > 0
+                            ? '${((netProfit / totalSales) * 100).toStringAsFixed(1)}% net'
+                            : '0% net',
                       ),
                     ),
                   ],

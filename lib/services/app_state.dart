@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -928,10 +929,19 @@ class AppState extends ChangeNotifier {
   int get lowStockCount => products.where((p) => p.isLowStock).length;
   int get outOfStockCount => products.where((p) => p.isOutOfStock).length;
 
+  int getAvailableStockForProduct(Product product) {
+    if (product.productType == 'Service') return 999999;
+    if (currentStore == 'Toutes' || currentStore == 'Tous') {
+      return product.stock;
+    }
+    final sStock = product.stockForStore(currentStore);
+    return sStock < product.stock ? sStock : product.stock;
+  }
+
   // --- ACTIONS PANIER ---
   bool addToCart(Product product, {bool wholesale = false}) {
     final isPhysical = product.productType != 'Service';
-    final maxAvailable = product.stockForStore(currentStore);
+    final maxAvailable = getAvailableStockForProduct(product);
 
     final index = cart.indexWhere((item) => item.product.id == product.id && item.isWholesale == wholesale);
     if (index >= 0) {
@@ -961,7 +971,7 @@ class AppState extends ChangeNotifier {
 
   bool updateCartQuantity(CartItem item, int delta) {
     final isPhysical = item.product.productType != 'Service';
-    final maxAvailable = item.product.stockForStore(currentStore);
+    final maxAvailable = getAvailableStockForProduct(item.product);
     final newQty = item.quantity + delta;
     if (newQty <= 0) {
       cart.remove(item);
@@ -975,6 +985,14 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
+  void toggleCartItemGift(CartItem item) {
+    item.isGift = !item.isGift;
+    if (item.isGift) {
+      item.discount = 0.0;
+    }
+    notifyListeners();
+  }
+
   void toggleCartItemWholesale(CartItem item) {
     item.isWholesale = !item.isWholesale;
     item.unitPrice = item.isWholesale ? item.product.wholesalePrice : item.product.sellPrice;
@@ -982,7 +1000,8 @@ class AppState extends ChangeNotifier {
   }
 
   void setCartItemDiscount(CartItem item, double discount) {
-    item.discount = discount;
+    final maxAllowed = (item.unitPrice / 2) * item.quantity;
+    item.discount = discount.clamp(0.0, maxAllowed);
     notifyListeners();
   }
 
@@ -1028,7 +1047,8 @@ class AppState extends ChangeNotifier {
     double? globalDiscount,
     DateTime? saleDate,
   }) {
-    final now = saleDate ?? DateTime.now();
+    // Règle stricte : la date de la vente est obligatoirement celle du jour
+    final now = DateTime.now();
     final yyyy = now.year.toString();
     final mm = now.month.toString().padLeft(2, '0');
     final dd = now.day.toString().padLeft(2, '0');
@@ -1040,6 +1060,7 @@ class AppState extends ChangeNotifier {
               quantity: item.quantity,
               unitPrice: item.unitPrice,
               total: item.total,
+              isGift: item.isGift,
             ))
         .toList();
 
@@ -1050,8 +1071,9 @@ class AppState extends ChangeNotifier {
     final effectiveTotal = overrideTotal ?? ((cartTotal - (globalDiscount ?? 0.0)).clamp(0.0, double.infinity));
     final effectiveDiscountTotal = cart.fold(0.0, (sum, i) => sum + i.discount) + (globalDiscount ?? 0.0);
 
+    final storeForSale = (currentStore == 'Toutes' || currentStore == 'Tous') ? 'Boutique principale' : currentStore;
     final effectivePayment = (paymentMethod == 'Caisse 1' || paymentMethod.startsWith('Caisse 1') || paymentMethod == 'Caisse')
-        ? 'Caisse $currentStore'
+        ? 'Caisse $storeForSale'
         : paymentMethod;
 
     final sale = Sale(
@@ -1067,19 +1089,19 @@ class AppState extends ChangeNotifier {
       customerName: customerName.trim().isEmpty ? 'Client Comptoir' : customerName.trim(),
       customerPhone: customerPhone,
       cashierName: effectiveCashier,
-      storeName: currentStore,
+      storeName: storeForSale,
     );
 
     final sb = _supabase;
 
-    // Décrémenter le stock des produits et enregistrer les mouvements
+    // Décrémenter le stock des produits par boutique et globalement
     for (var item in cart) {
       final pIdx = products.indexWhere((prod) => prod.id == item.product.id);
       if (pIdx != -1) {
         final p = products[pIdx];
         if (p.productType != 'Service') {
-          p.stock -= item.quantity;
-          if (p.stock < 0) p.stock = 0;
+          final curStoreStock = p.stockForStore(storeForSale);
+          p.setStockForStore(storeForSale, (curStoreStock - item.quantity).clamp(0, 9999999));
         }
 
         final sm = StockMovement(
@@ -1105,6 +1127,18 @@ class AppState extends ChangeNotifier {
             'author': effectiveCashier,
           }).then((_) {}, onError: (_) {});
         }
+      }
+    }
+
+    // Créditer la caisse de la boutique qui a réalisé la vente (hors vente à crédit)
+    if (paymentMethod != 'À Crédit') {
+      final targetCaisseName = 'Caisse $storeForSale';
+      final caisse = cashDesks.firstWhereOrNull((c) =>
+          c.storeName.trim().toLowerCase() == storeForSale.trim().toLowerCase() ||
+          c.name.trim().toLowerCase() == targetCaisseName.toLowerCase()) ??
+          cashDesks.firstOrNull;
+      if (caisse != null) {
+        caisse.balance += effectiveTotal;
       }
     }
 
@@ -1333,21 +1367,51 @@ class AppState extends ChangeNotifier {
   }
 
   // --- ACTIONS DÉPENSES ---
+  final Map<String, double> lastExpenseAmountByCategory = {};
+
+  double getLastExpenseAmount(String category) {
+    if (lastExpenseAmountByCategory.containsKey(category)) {
+      return lastExpenseAmountByCategory[category]!;
+    }
+    final match = expenses.firstWhereOrNull((e) => e.category.toLowerCase() == category.toLowerCase());
+    return match?.amount ?? 0.0;
+  }
+
   void addExpense({
     required String category,
     required String description,
     required double amount,
     String? paidBy,
+    String? paidFromCaisse,
+    String? reference,
+    DateTime? createdAt,
   }) {
+    final expDate = createdAt ?? DateTime.now();
+    final effectiveCaisse = (paidFromCaisse != null && paidFromCaisse.isNotEmpty)
+        ? paidFromCaisse
+        : 'Caisse $currentStore';
+
     final exp = Expense(
-      id: 'e_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'e_${expDate.millisecondsSinceEpoch}',
       category: category,
       description: description,
       amount: amount,
-      createdAt: DateTime.now(),
+      createdAt: expDate,
       paidBy: paidBy ?? displayUserName,
+      paidFromCaisse: effectiveCaisse,
+      reference: reference,
     );
     expenses.insert(0, exp);
+    lastExpenseAmountByCategory[category] = amount;
+
+    // Déduire de la caisse correspondante
+    final caisse = cashDesks.firstWhereOrNull((c) =>
+        c.name.toLowerCase() == effectiveCaisse.toLowerCase() ||
+        c.storeName.toLowerCase() == currentStore.toLowerCase()) ?? cashDesks.firstOrNull;
+    if (caisse != null) {
+      caisse.balance -= amount;
+    }
+
     _saveToPrefs();
     notifyListeners();
 
@@ -1357,6 +1421,8 @@ class AppState extends ChangeNotifier {
       'category': exp.category,
       'amount': exp.amount,
       'beneficiary': exp.paidBy,
+      'paid_from_caisse': exp.paidFromCaisse,
+      'reference': exp.reference,
     }).then((_) {}, onError: (_) {});
   }
 
