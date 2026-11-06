@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:collection/collection.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/models/models.dart';
+import 'package:stock_prime/widgets/widgets.dart';
 import 'package:stock_prime/services/inventory_pdf_service.dart';
 
 class PhysicalInventoryScreen extends StatefulWidget {
@@ -372,15 +374,27 @@ class _PhysicalInventoryScreenState extends State<PhysicalInventoryScreen> {
                     final item = session.items[idx];
                     final hasDiff = item.difference != 0;
 
+                    final prod = appState.products.firstWhereOrNull(
+                      (p) => p.id == item.productId || p.name.trim().toLowerCase() == item.productName.trim().toLowerCase(),
+                    );
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(item.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              ProductImageWidget(
+                                imageUrl: prod?.imageUrl,
+                                size: 36,
+                                borderRadius: 6,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(item.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              ),
+                              const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
@@ -487,29 +501,7 @@ class _PhysicalInventoryScreenState extends State<PhysicalInventoryScreen> {
           ),
           body: Column(
             children: [
-              // 1. BOUTON : TÉLÉCHARGER L'INVENTAIRE DU JOUR EN PDF
-              Container(
-                width: double.infinity,
-                color: AppTheme.primaryNavy,
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.accentGold,
-                    foregroundColor: AppTheme.primaryNavy,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  icon: const Icon(Icons.picture_as_pdf, size: 18),
-                  label: const Text(
-                    'Télécharger l’inventaire du jour en PDF',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
-                  ),
-                  onPressed: () => InventoryPdfService.downloadDailyInventoryPdf(_selectedStore, products),
-                ),
-              ),
-
-              // 2. SEGMENTED BOUTON (SOUS LE HEADER) : [ NOUVEAU / EN COURS ] [ INVENTAIRES PASSÉS ]
+              // 1. SEGMENTED BOUTON (SOUS LE HEADER) : [ NOUVEAU / EN COURS ] [ INVENTAIRES PASSÉS ]
               Container(
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 height: 44,
@@ -730,8 +722,13 @@ class _PhysicalInventoryScreenState extends State<PhysicalInventoryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        ProductImageWidget(
+                          imageUrl: p.imageUrl,
+                          size: 36,
+                          borderRadius: 6,
+                        ),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/models/models.dart';
+import 'package:stock_prime/widgets/product_image_widget.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -545,27 +546,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 },
                 child: Row(
                   children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0D1B2E),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: (p.imageUrl != null && p.imageUrl!.isNotEmpty)
-                            ? Image.network(
-                                p.imageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Center(
-                                  child: Icon(Icons.inventory_2_rounded, color: AppTheme.accentGold, size: 24),
-                                ),
-                              )
-                            : const Center(
-                                child: Icon(Icons.inventory_2_rounded, color: AppTheme.accentGold, size: 24),
-                              ),
-                      ),
+                    ProductImageWidget(
+                      imageUrl: p.imageUrl,
+                      size: 48,
+                      borderRadius: 10,
+                      placeholderIcon: Icons.inventory_2_rounded,
                     ),
                     const SizedBox(width: 12),
                     Expanded(

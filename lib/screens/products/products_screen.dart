@@ -3,6 +3,7 @@ import 'package:stock_prime/screens/screens.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/widgets/product_image_widget.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -246,14 +247,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                     flex: 3,
                                     child: Row(
                                       children: [
-                                        Container(
-                                          width: 38,
-                                          height: 38,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFF1F5F9),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 20),
+                                        ProductImageWidget(
+                                          imageUrl: p.imageUrl,
+                                          size: 38,
+                                          borderRadius: 8,
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
@@ -669,16 +666,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Container(
-                                    width: 56,
-                                    height: 56,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0D1B2E),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Center(
-                                      child: Icon(Icons.inventory_2_rounded, color: AppTheme.accentGold, size: 28),
-                                    ),
+                                  ProductImageWidget(
+                                    imageUrl: p.imageUrl,
+                                    size: 56,
+                                    borderRadius: 12,
+                                    placeholderIcon: Icons.inventory_2_rounded,
                                   ),
                                   const SizedBox(width: 14),
                                   Expanded(

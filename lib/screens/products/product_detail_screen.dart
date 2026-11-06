@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/widgets/product_image_widget.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -21,6 +24,90 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return appState.products.firstWhere(
       (item) => item.id == widget.product.id,
       orElse: () => widget.product,
+    );
+  }
+
+  Future<void> _pickAndChangeProductPhoto(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 80, maxWidth: 800);
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        final p = _currentProduct;
+        p.imageUrl = base64Image;
+        appState.updateProduct(p);
+        setState(() {});
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFF059669),
+              content: Text('Photo du produit mise à jour avec succès !'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors du changement de photo: $e')),
+        );
+      }
+    }
+  }
+
+  void _showPhotoOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Text(
+                'Modifier la photo du produit',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFE2E8F0),
+                  child: Icon(Icons.camera_alt, color: AppTheme.primaryNavy),
+                ),
+                title: const Text('Prendre une photo'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickAndChangeProductPhoto(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFE2E8F0),
+                  child: Icon(Icons.photo_library, color: AppTheme.primaryNavy),
+                ),
+                title: const Text('Choisir dans la galerie'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickAndChangeProductPhoto(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -338,6 +425,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       minStockAlert: int.tryParse(minStockCtrl.text.trim()) ?? p.minStockAlert,
                       unit: p.unit,
                       productType: p.productType,
+                      imageUrl: p.imageUrl,
+                      supplierName: p.supplierName,
+                      stockByStore: p.stockByStore,
                     );
                     appState.updateProduct(updated);
                     Navigator.pop(ctx);
@@ -453,59 +543,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 1. HERO PHOTO DU PRODUIT
-                Container(
-                  width: double.infinity,
-                  height: 180,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D1B2E),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      const Icon(Icons.inventory_2_rounded, size: 64, color: AppTheme.accentGold),
-                      Positioned(
-                        bottom: 12,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white.withValues(alpha: 0.9),
-                                foregroundColor: AppTheme.primaryNavy,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              ),
-                              icon: const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF8B5CF6)),
-                              label: const Text('Améliorer IA', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Amélioration photo IA Bricelo activée')),
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white.withValues(alpha: 0.9),
-                                foregroundColor: AppTheme.primaryNavy,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              ),
-                              icon: const Icon(Icons.camera_alt_outlined, size: 14),
-                              label: const Text('Changer photo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Sélecteur de photo ouvert')),
-                                );
-                              },
-                            ),
-                          ],
+                GestureDetector(
+                  onTap: () => _showPhotoOptions(context),
+                  child: Container(
+                    width: double.infinity,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D1B2E),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ProductImageWidget(
+                          imageUrl: p.imageUrl,
+                          size: double.infinity,
+                          borderRadius: 16,
+                          placeholderIcon: Icons.inventory_2_rounded,
                         ),
-                      ),
-                    ],
+                        Positioned(
+                          bottom: 12,
+                          right: 12,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white.withValues(alpha: 0.92),
+                              foregroundColor: AppTheme.primaryNavy,
+                              elevation: 2,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            ),
+                            icon: const Icon(Icons.camera_alt_outlined, size: 16, color: AppTheme.primaryNavy),
+                            label: const Text('Changer photo', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+                            onPressed: () => _showPhotoOptions(context),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),

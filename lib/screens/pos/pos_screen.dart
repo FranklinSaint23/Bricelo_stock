@@ -233,13 +233,10 @@ class _PosScreenState extends State<PosScreen> {
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFF1F5F9),
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                            child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 22),
+                                          ProductImageWidget(
+                                            imageUrl: p.imageUrl,
+                                            size: 38,
+                                            borderRadius: 10,
                                           ),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

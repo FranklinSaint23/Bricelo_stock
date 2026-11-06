@@ -257,6 +257,12 @@ class _SupplyScreenState extends State<SupplyScreen> {
                                     children: [
                                       Row(
                                         children: [
+                                          ProductImageWidget(
+                                            imageUrl: p.imageUrl,
+                                            size: 42,
+                                            borderRadius: 8,
+                                          ),
+                                          const SizedBox(width: 10),
                                           Expanded(
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1002,6 +1008,12 @@ class _SupplyScreenState extends State<SupplyScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
+                                  ProductImageWidget(
+                                    imageUrl: item.product.imageUrl,
+                                    size: 38,
+                                    borderRadius: 8,
+                                  ),
+                                  const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
                                       item.product.name,

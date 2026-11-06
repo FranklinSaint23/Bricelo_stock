@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:collection/collection.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/widgets/widgets.dart';
 
 class _ChartBucket {
   final String label;
@@ -681,25 +683,35 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                             final entry = sortedProducts[idx];
                             final prodName = entry.key;
                             final stats = entry.value;
+                            final prod = appState.products.firstWhereOrNull(
+                              (p) => p.name.trim().toLowerCase() == prodName.trim().toLowerCase(),
+                            );
 
                             return ListTile(
-                              leading: Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: idx == 0 ? AppTheme.accentGold.withValues(alpha: 0.2) : const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '#${idx + 1}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: idx == 0 ? const Color(0xFFB45309) : const Color(0xFF64748B),
+                              leading: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  ProductImageWidget(
+                                    imageUrl: prod?.imageUrl,
+                                    size: 40,
+                                    borderRadius: 8,
+                                  ),
+                                  Positioned(
+                                    top: -4,
+                                    left: -4,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: idx == 0 ? AppTheme.accentGold : AppTheme.primaryNavy,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        '#${idx + 1}',
+                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
                               title: Text(
                                 prodName,

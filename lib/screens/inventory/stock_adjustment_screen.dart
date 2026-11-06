@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/models/models.dart';
+import 'package:stock_prime/widgets/widgets.dart';
 
 class StockAdjustmentScreen extends StatefulWidget {
   final Product? initialProduct;
@@ -212,14 +213,10 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                         ),
                         child: Row(
                           children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryNavy.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 20),
+                            ProductImageWidget(
+                              imageUrl: p.imageUrl,
+                              size: 40,
+                              borderRadius: 8,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -276,8 +273,13 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        ProductImageWidget(
+                          imageUrl: _selectedProduct!.imageUrl,
+                          size: 44,
+                          borderRadius: 10,
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

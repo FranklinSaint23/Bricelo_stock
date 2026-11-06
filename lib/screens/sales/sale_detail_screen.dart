@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:collection/collection.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/theme/app_theme.dart';
+import 'package:stock_prime/widgets/widgets.dart';
 import 'package:stock_prime/widgets/sale_receipt_dialog.dart';
 
 class SaleDetailScreen extends StatelessWidget {
@@ -171,38 +173,51 @@ class SaleDetailScreen extends StatelessWidget {
                     ],
                   ),
                   const Divider(height: 20),
-                  ...sale.items.map((it) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    it.productName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF0F172A)),
-                                  ),
-                                  Text(
-                                    '${AppTheme.formatFCFA(it.unitPrice)} / unité',
-                                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
-                                  ),
-                                ],
-                              ),
+                  ...sale.items.map((it) {
+                    final appState = AppState.instance;
+                    final prod = appState.products.firstWhereOrNull(
+                      (p) => p.name.trim().toLowerCase() == it.productName.trim().toLowerCase(),
+                    );
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          ProductImageWidget(
+                            imageUrl: prod?.imageUrl,
+                            size: 34,
+                            borderRadius: 6,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  it.productName,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF0F172A)),
+                                ),
+                                Text(
+                                  '${AppTheme.formatFCFA(it.unitPrice)} / unité',
+                                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                ),
+                              ],
                             ),
-                            Text(
-                              'x${it.quantity}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569)),
-                            ),
-                            const SizedBox(width: 16),
-                            Text(
-                              AppTheme.formatFCFA(it.total),
-                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppTheme.primaryNavy),
-                            ),
-                          ],
-                        ),
-                      )),
+                          ),
+                          Text(
+                            'x${it.quantity}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569)),
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            AppTheme.formatFCFA(it.total),
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppTheme.primaryNavy),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),

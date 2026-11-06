@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/models/models.dart';
+import 'package:stock_prime/widgets/widgets.dart';
 
 class NewTransferScreen extends StatefulWidget {
   const NewTransferScreen({super.key});
@@ -92,14 +93,10 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                               final currentSel = _selectedQuantities[p.id] ?? 0;
 
                               return ListTile(
-                                leading: Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryNavy.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryNavy, size: 20),
+                                leading: ProductImageWidget(
+                                  imageUrl: p.imageUrl,
+                                  size: 38,
+                                  borderRadius: 8,
                                 ),
                                 title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                 subtitle: Text('Dispo dans $_sourceStore : $available ${p.unit}(s)', style: const TextStyle(fontSize: 12)),
@@ -388,6 +385,11 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                     final p = appState.products.firstWhere((prod) => prod.id == pId);
 
                     return ListTile(
+                      leading: ProductImageWidget(
+                        imageUrl: p.imageUrl,
+                        size: 38,
+                        borderRadius: 8,
+                      ),
                       title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       subtitle: Text('Quantité à transférer : $qty ${p.unit}(s)', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                       trailing: IconButton(

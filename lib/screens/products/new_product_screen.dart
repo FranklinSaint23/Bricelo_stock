@@ -1,9 +1,10 @@
-import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/models/models.dart';
+import 'package:stock_prime/widgets/product_image_widget.dart';
 
 class NewProductScreen extends StatefulWidget {
   const NewProductScreen({super.key});
@@ -70,10 +71,12 @@ class _NewProductScreenState extends State<NewProductScreen> {
   Future<void> _pickImage(ImageSource source) async {
     try {
       final picker = ImagePicker();
-      final picked = await picker.pickImage(source: source, imageQuality: 85, maxWidth: 1200);
+      final picked = await picker.pickImage(source: source, imageQuality: 80, maxWidth: 800);
       if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
         setState(() {
-          _pickedImagePath = picked.path;
+          _pickedImagePath = base64Image;
         });
       }
     } catch (e) {
@@ -251,13 +254,14 @@ class _NewProductScreenState extends State<NewProductScreen> {
                       border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: _pickedImagePath != null && File(_pickedImagePath!).existsSync()
+                    child: _pickedImagePath != null && _pickedImagePath!.isNotEmpty
                         ? Stack(
                             fit: StackFit.expand,
                             children: [
-                              Image.file(
-                                File(_pickedImagePath!),
-                                fit: BoxFit.cover,
+                              ProductImageWidget(
+                                imageUrl: _pickedImagePath,
+                                size: double.infinity,
+                                borderRadius: 0,
                               ),
                               Positioned(
                                 bottom: 8,
@@ -265,7 +269,7 @@ class _NewProductScreenState extends State<NewProductScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.65),
+                                    color: Colors.black.withValues(alpha: 0.65),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: const Row(
