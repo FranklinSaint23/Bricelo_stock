@@ -196,9 +196,9 @@ class _PosScreenState extends State<PosScreen> {
                         : GridView.builder(
                             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                               maxCrossAxisExtent: 210,
-                              mainAxisSpacing: 14,
-                              crossAxisSpacing: 14,
-                              childAspectRatio: 0.85,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 1.15,
                             ),
                             itemCount: products.length,
                             itemBuilder: (context, idx) {
@@ -218,7 +218,7 @@ class _PosScreenState extends State<PosScreen> {
                                 },
                                 borderRadius: BorderRadius.circular(14),
                                 child: Container(
-                                  padding: const EdgeInsets.all(14),
+                                  padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(14),
@@ -229,13 +229,14 @@ class _PosScreenState extends State<PosScreen> {
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           ProductImageWidget(
                                             imageUrl: p.imageUrl,
-                                            size: 38,
+                                            size: 50,
                                             borderRadius: 10,
                                           ),
                                           Container(
@@ -690,12 +691,12 @@ class _PosScreenState extends State<PosScreen> {
                     ),
                   )
                 : GridView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.92,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 1.16,
                     ),
                     itemCount: products.length,
                     itemBuilder: (context, idx) {
@@ -743,29 +744,29 @@ class _PosScreenState extends State<PosScreen> {
                                         SnackBar(
                                           backgroundColor: const Color(0xFFDC2626),
                                           content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-                                    }
-                                  } else {
-                                    final ok = appState.addToCart(p);
-                                    if (!ok) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          backgroundColor: const Color(0xFFDC2626),
-                                          content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-                                    }
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
                                   }
-                                },
-                          borderRadius: BorderRadius.circular(16),
+                                } else {
+                                  final ok = appState.addToCart(p);
+                                  if (!ok) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: const Color(0xFFDC2626),
+                                        content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                          borderRadius: BorderRadius.circular(14),
                           child: Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                             decoration: BoxDecoration(
                               color: inCart ? const Color(0xFFFFFBEB) : Colors.white,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(14),
                               border: Border.all(
                                 color: inCart ? AppTheme.accentGold : const Color(0xFFE2E8F0),
                                 width: inCart ? 1.5 : 1,
@@ -773,24 +774,26 @@ class _PosScreenState extends State<PosScreen> {
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.03),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     ProductImageWidget(
                                       imageUrl: p.imageUrl,
-                                      size: 38,
+                                      size: 60,
                                       borderRadius: 10,
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
                                         color: isOutOfStock
                                             ? const Color(0xFFFEE2E2)
@@ -800,7 +803,7 @@ class _PosScreenState extends State<PosScreen> {
                                       child: Text(
                                         isOutOfStock ? 'Épuisé' : '$availStock $unitLabel',
                                         style: TextStyle(
-                                          fontSize: 10.5,
+                                          fontSize: 10,
                                           fontWeight: FontWeight.w800,
                                           color: isOutOfStock ? const Color(0xFFDC2626) : const Color(0xFFD97706),
                                         ),
@@ -808,18 +811,18 @@ class _PosScreenState extends State<PosScreen> {
                                     ),
                                   ],
                                 ),
-                                const Spacer(),
+                                const SizedBox(height: 4),
                                 Text(
                                   p.name,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 13.5,
+                                    fontSize: 13,
                                     color: Color(0xFF0F172A),
                                   ),
-                                  maxLines: 2,
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 2),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
@@ -828,7 +831,7 @@ class _PosScreenState extends State<PosScreen> {
                                         AppTheme.formatFCFA(p.sellPrice),
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w900,
-                                          fontSize: 13.5,
+                                          fontSize: 13,
                                           color: Color(0xFFD97706),
                                         ),
                                         overflow: TextOverflow.ellipsis,
