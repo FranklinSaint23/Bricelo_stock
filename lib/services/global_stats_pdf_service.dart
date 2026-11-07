@@ -593,7 +593,7 @@ class GlobalStatsPdfService {
             pw.SizedBox(height: 10),
             pw.Center(
               child: pw.Text(
-                'Rapport officiel certifié conforme • Bricelo Stock Pro',
+                'Rapport officiel certifié conforme • Bricelo Stock',
                 style: pw.TextStyle(font: fontRegular, fontSize: 7.5, color: graySub),
               ),
             ),

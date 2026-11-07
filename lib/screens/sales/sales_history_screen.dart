@@ -14,13 +14,22 @@ class SalesHistoryScreen extends StatefulWidget {
 
 class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   final appState = AppState.instance;
-  String _selectedPeriod = '30j';
+  String _selectedPeriod = 'Aujourd\'hui';
   String _statusFilter = 'Actives'; // Actives, Tout, Annulées, Remboursées
-  DateTime? _customStartDate;
-  DateTime? _customEndDate;
+  DateTimeRange? _customDateRange;
   final _searchCtrl = TextEditingController();
 
-  final List<String> _periods = ['Aujourd\'hui', '7j', '30j', '90j'];
+  final List<String> _periods = const [
+    'Aujourd\'hui',
+    'Hier',
+    'Cette semaine',
+    'Semaine passée',
+    'Ce mois',
+    'Le mois passé',
+    'Cette année',
+    'L\'année dernière',
+    'Personnalisé',
+  ];
 
   @override
   void dispose() {
@@ -28,9 +37,98 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     super.dispose();
   }
 
+  DateTimeRange _getDateRangeForPeriod(String period, DateTime now) {
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+
+    switch (period) {
+      case 'Aujourd\'hui':
+        return DateTimeRange(start: todayStart, end: todayEnd);
+
+      case 'Hier':
+        final yStart = todayStart.subtract(const Duration(days: 1));
+        final yEnd = DateTime(yStart.year, yStart.month, yStart.day, 23, 59, 59, 999);
+        return DateTimeRange(start: yStart, end: yEnd);
+
+      case 'Cette semaine':
+        final weekday = now.weekday; // 1 = Lundi, 7 = Dimanche
+        final startMonday = todayStart.subtract(Duration(days: weekday - 1));
+        final endSunday = DateTime(startMonday.year, startMonday.month, startMonday.day + 6, 23, 59, 59, 999);
+        return DateTimeRange(start: startMonday, end: endSunday);
+
+      case 'Semaine passée':
+        final weekday = now.weekday;
+        final startLastMonday = todayStart.subtract(Duration(days: weekday - 1 + 7));
+        final endLastSunday = DateTime(startLastMonday.year, startLastMonday.month, startLastMonday.day + 6, 23, 59, 59, 999);
+        return DateTimeRange(start: startLastMonday, end: endLastSunday);
+
+      case 'Ce mois':
+        final firstDayThisMonth = DateTime(now.year, now.month, 1);
+        final lastDayThisMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
+        return DateTimeRange(start: firstDayThisMonth, end: lastDayThisMonth);
+
+      case 'Le mois passé':
+        final firstDayPrevMonth = DateTime(now.year, now.month - 1, 1);
+        final lastDayPrevMonth = DateTime(now.year, now.month, 0, 23, 59, 59, 999);
+        return DateTimeRange(start: firstDayPrevMonth, end: lastDayPrevMonth);
+
+      case 'Cette année':
+        final firstDayThisYear = DateTime(now.year, 1, 1);
+        final lastDayThisYear = DateTime(now.year, 12, 31, 23, 59, 59, 999);
+        return DateTimeRange(start: firstDayThisYear, end: lastDayThisYear);
+
+      case 'L\'année dernière':
+        final firstDayPrevYear = DateTime(now.year - 1, 1, 1);
+        final lastDayPrevYear = DateTime(now.year - 1, 12, 31, 23, 59, 59, 999);
+        return DateTimeRange(start: firstDayPrevYear, end: lastDayPrevYear);
+
+      case 'Personnalisé':
+      default:
+        return _customDateRange ??
+            DateTimeRange(
+              start: todayStart.subtract(const Duration(days: 6)),
+              end: todayEnd,
+            );
+    }
+  }
+
+  Future<void> _pickCustomDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 2),
+      initialDateRange: _customDateRange ??
+          DateTimeRange(
+            start: now.subtract(const Duration(days: 7)),
+            end: now,
+          ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryNavy,
+              onPrimary: Colors.white,
+              secondary: AppTheme.accentGold,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _customDateRange = picked;
+        _selectedPeriod = 'Personnalisé';
+      });
+    }
+  }
+
   List<Sale> get _filteredSales {
     final now = DateTime.now();
     final q = _searchCtrl.text.trim().toLowerCase();
+    final range = _getDateRangeForPeriod(_selectedPeriod, now);
 
     return appState.sales.where((s) {
       if (q.isNotEmpty) {
@@ -48,26 +146,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         return false;
       }
 
-      if (_customStartDate != null && s.createdAt.isBefore(_customStartDate!)) {
-        return false;
-      }
-      if (_customEndDate != null && s.createdAt.isAfter(_customEndDate!.add(const Duration(days: 1)))) {
-        return false;
-      }
-
-      if (_customStartDate == null && _customEndDate == null) {
-        final diff = now.difference(s.createdAt);
-        if (_selectedPeriod == 'Aujourd\'hui') {
-          return s.createdAt.year == now.year && s.createdAt.month == now.month && s.createdAt.day == now.day;
-        } else if (_selectedPeriod == '7j') {
-          return diff.inDays <= 7;
-        } else if (_selectedPeriod == '30j') {
-          return diff.inDays <= 30;
-        } else if (_selectedPeriod == '90j') {
-          return diff.inDays <= 90;
-        }
-      }
-      return true;
+      return s.createdAt.isAfter(range.start.subtract(const Duration(milliseconds: 1))) &&
+          s.createdAt.isBefore(range.end.add(const Duration(milliseconds: 1)));
     }).toList();
   }
 
@@ -89,8 +169,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   void _showFilterBottomSheet() {
     String tempStatus = _statusFilter;
-    DateTime? tempStart = _customStartDate;
-    DateTime? tempEnd = _customEndDate;
+    DateTime? tempStart = _customDateRange?.start;
+    DateTime? tempEnd = _customDateRange?.end;
 
     showModalBottomSheet(
       context: context,
@@ -239,8 +319,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       onPressed: () {
                         setState(() {
                           _statusFilter = 'Actives';
-                          _customStartDate = null;
-                          _customEndDate = null;
+                          _customDateRange = null;
+                          _selectedPeriod = 'Aujourd\'hui';
                         });
                         Navigator.pop(ctx);
                       },
@@ -257,8 +337,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       onPressed: () {
                         setState(() {
                           _statusFilter = tempStatus;
-                          _customStartDate = tempStart;
-                          _customEndDate = tempEnd;
+                          if (tempStart != null && tempEnd != null) {
+                            _customDateRange = DateTimeRange(start: tempStart!, end: tempEnd!);
+                            _selectedPeriod = 'Personnalisé';
+                          } else {
+                            _customDateRange = null;
+                          }
                         });
                         Navigator.pop(ctx);
                       },
@@ -371,55 +455,54 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 ),
               ),
 
-              // 2. SÉLECTEUR DE PÉRIODES
+              // 2. SÉLECTEUR DE PÉRIODES CHRONOLOGIQUES (HORIZONTALE AVEC SCROLL)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Row(
-                  children: [
-                    ..._periods.map((p) {
-                      final isSelected = _selectedPeriod == p && _customStartDate == null;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: InkWell(
-                          onTap: () => setState(() {
-                            _selectedPeriod = p;
-                            _customStartDate = null;
-                            _customEndDate = null;
-                          }),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFFFED7AA) : const Color(0xFFE2E8F0),
-                              borderRadius: BorderRadius.circular(8),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: SizedBox(
+                  height: 38,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _periods.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (context, idx) {
+                      final p = _periods[idx];
+                      final isSelected = _selectedPeriod == p;
+                      return InkWell(
+                        onTap: () {
+                          if (p == 'Personnalisé') {
+                            _pickCustomDateRange();
+                          } else {
+                            setState(() {
+                              _selectedPeriod = p;
+                              _customDateRange = null;
+                            });
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppTheme.accentGold : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected ? AppTheme.accentGold : const Color(0xFFCBD5E1),
                             ),
+                          ),
+                          child: Center(
                             child: Text(
                               p,
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                color: isSelected ? const Color(0xFF9A3412) : const Color(0xFF334155),
+                                fontSize: 12.5,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                color: isSelected ? AppTheme.primaryNavy : const Color(0xFF475569),
                               ),
                             ),
                           ),
                         ),
                       );
-                    }),
-                    const Spacer(),
-                    InkWell(
-                      onTap: _showFilterBottomSheet,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: _customStartDate != null ? const Color(0xFFFED7AA) : Colors.white,
-                          border: Border.all(color: const Color(0xFFCBD5E1)),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF4B5563)),
-                      ),
-                    ),
-                  ],
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 10),

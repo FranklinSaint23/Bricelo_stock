@@ -12,7 +12,18 @@ class ExpensesScreen extends StatefulWidget {
 
 class _ExpensesScreenState extends State<ExpensesScreen> {
   final appState = AppState.instance;
-  String _selectedSegment = 'Ce mois'; // 'Ce mois', 'Mois passé', 'Toutes'
+  String _selectedSegment = 'Ce mois';
+  DateTimeRange? _customDateRange;
+
+  final List<String> _expensePeriods = const [
+    'Ce mois',
+    'Mois passé',
+    '3 derniers mois',
+    '6 derniers mois',
+    '9 derniers mois',
+    '12 derniers mois',
+    'Personnalisé',
+  ];
 
   final List<({String name, IconData icon})> _cameroonCategories = const [
     (name: 'Loyer', icon: Icons.apartment_rounded),
@@ -30,23 +41,88 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     (name: 'Divers', icon: Icons.more_horiz_rounded),
   ];
 
+  Future<void> _pickCustomDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 2),
+      initialDateRange: _customDateRange ??
+          DateTimeRange(
+            start: DateTime(now.year, now.month, 1),
+            end: now,
+          ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryNavy,
+              onPrimary: Colors.white,
+              secondary: AppTheme.accentGold,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _customDateRange = picked;
+        _selectedSegment = 'Personnalisé';
+      });
+    }
+  }
+
   List<Expense> _getFilteredExpenses() {
     final now = DateTime.now();
+    DateTime start;
+    DateTime end = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+
     switch (_selectedSegment) {
       case 'Ce mois':
-        final start = DateTime(now.year, now.month, 1);
-        final end = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
-        return appState.expenses.where((e) => e.createdAt.isAfter(start.subtract(const Duration(milliseconds: 1))) && e.createdAt.isBefore(end)).toList();
+        start = DateTime(now.year, now.month, 1);
+        end = DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
+        break;
 
       case 'Mois passé':
-        final start = DateTime(now.year, now.month - 1, 1);
-        final end = DateTime(now.year, now.month, 0, 23, 59, 59);
-        return appState.expenses.where((e) => e.createdAt.isAfter(start.subtract(const Duration(milliseconds: 1))) && e.createdAt.isBefore(end)).toList();
+        start = DateTime(now.year, now.month - 1, 1);
+        end = DateTime(now.year, now.month, 0, 23, 59, 59, 999);
+        break;
 
-      case 'Toutes':
+      case '3 derniers mois':
+        start = DateTime(now.year, now.month - 2, 1);
+        break;
+
+      case '6 derniers mois':
+        start = DateTime(now.year, now.month - 5, 1);
+        break;
+
+      case '9 derniers mois':
+        start = DateTime(now.year, now.month - 8, 1);
+        break;
+
+      case '12 derniers mois':
+        start = DateTime(now.year - 1, now.month, 1);
+        break;
+
+      case 'Personnalisé':
+        if (_customDateRange != null) {
+          start = DateTime(_customDateRange!.start.year, _customDateRange!.start.month, _customDateRange!.start.day);
+          end = DateTime(_customDateRange!.end.year, _customDateRange!.end.month, _customDateRange!.end.day, 23, 59, 59, 999);
+        } else {
+          start = DateTime(now.year, now.month, 1);
+        }
+        break;
+
       default:
-        return appState.expenses;
+        start = DateTime(now.year, now.month, 1);
     }
+
+    return appState.expenses.where((e) {
+      return e.createdAt.isAfter(start.subtract(const Duration(milliseconds: 1))) &&
+          e.createdAt.isBefore(end.add(const Duration(milliseconds: 1)));
+    }).toList();
   }
 
   void _showExpenseDetailModal(BuildContext context, Expense exp) {
@@ -338,7 +414,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _cameroonCategories.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
                         itemBuilder: (_, idx) {
                           final cat = _cameroonCategories[idx];
                           final isSelected = selectedCategory == cat.name;
@@ -557,42 +633,51 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           ),
           body: Column(
             children: [
-              // Segmented buttons en haut
+              // Périodes sous le header (scroll horizontal clair et accessible)
               Container(
-                color: AppTheme.primaryNavy,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.all(4),
-                  child: Row(
-                    children: ['Ce mois', 'Mois passé', 'Toutes'].map((seg) {
-                      final isSelected = _selectedSegment == seg;
-                      return Expanded(
-                        child: InkWell(
-                          onTap: () => setState(() => _selectedSegment = seg),
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.accentGold : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
+                color: isDark ? const Color(0xFF0F1A28) : Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: SizedBox(
+                  height: 38,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _expensePeriods.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (context, idx) {
+                      final p = _expensePeriods[idx];
+                      final isSelected = _selectedSegment == p;
+                      return InkWell(
+                        onTap: () {
+                          if (p == 'Personnalisé') {
+                            _pickCustomDateRange();
+                          } else {
+                            setState(() => _selectedSegment = p);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppTheme.accentGold : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                             ),
-                            alignment: Alignment.center,
+                          ),
+                          child: Center(
                             child: Text(
-                              seg,
+                              p,
                               style: TextStyle(
                                 fontSize: 12.5,
-                                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                                color: isSelected ? AppTheme.primaryNavy : Colors.white,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                color: isSelected ? AppTheme.primaryNavy : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
                               ),
                             ),
                           ),
                         ),
                       );
-                    }).toList(),
+                    },
                   ),
                 ),
               ),
@@ -661,7 +746,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: expensesList.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, idx) {
                           final exp = expensesList[idx];
                           final catMatch = _cameroonCategories.firstWhere(

@@ -1093,3 +1093,44 @@ class InventorySession {
         note: (j['note'] ?? '').toString(),
       );
 }
+
+class TeamMember {
+  final String id;
+  String name;
+  String phone;
+  String? email;
+  String role; // 'Propriétaire', 'Gérant', 'Caissier', 'Magasinier'
+  String storeName;
+  DateTime createdAt;
+
+  TeamMember({
+    required this.id,
+    required this.name,
+    required this.phone,
+    this.email,
+    required this.role,
+    this.storeName = 'Toutes les boutiques',
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'phone': phone,
+        'email': email,
+        'role': role,
+        'storeName': storeName,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+  factory TeamMember.fromJson(Map<String, dynamic> j) => TeamMember(
+        id: (j['id'] ?? '').toString(),
+        name: (j['name'] ?? '').toString(),
+        phone: (j['phone'] ?? '').toString(),
+        email: j['email']?.toString(),
+        role: (j['role'] ?? 'Caissier').toString(),
+        storeName: (j['storeName'] ?? 'Toutes les boutiques').toString(),
+        createdAt: DateTime.tryParse((j['createdAt'] ?? j['created_at'] ?? '').toString()) ?? DateTime.now(),
+      );
+}
+

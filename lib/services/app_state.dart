@@ -52,6 +52,7 @@ class AppState extends ChangeNotifier {
   List<StockMovement> stockMovements = [];
   List<StockTransfer> stockTransfers = [];
   List<InventorySession> inventorySessions = [];
+  List<TeamMember> teamMembers = [];
 
   // --- Getters d'affichage sécurisés ---
   String get language => currentLanguage;
@@ -208,6 +209,9 @@ class AppState extends ChangeNotifier {
         inventorySessions = (data['inventorySessions'] as List<dynamic>? ?? [])
             .map((e) => InventorySession.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
+        teamMembers = (data['teamMembers'] as List<dynamic>? ?? [])
+            .map((e) => TeamMember.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
         notifyListeners();
       }
     } catch (e) {
@@ -250,6 +254,7 @@ class AppState extends ChangeNotifier {
         'stockMovements': stockMovements.map((e) => e.toJson()).toList(),
         'stockTransfers': stockTransfers.map((e) => e.toJson()).toList(),
         'inventorySessions': inventorySessions.map((e) => e.toJson()).toList(),
+        'teamMembers': teamMembers.map((e) => e.toJson()).toList(),
       };
       await prefs.setString(_storageKey, jsonEncode(payload));
     } catch (e) {
@@ -529,6 +534,79 @@ class AppState extends ChangeNotifier {
       await _supabase?.auth.signOut();
     } catch (_) {}
     notifyListeners();
+  }
+
+  // --- GESTION DE L'ÉQUIPE (100% Dynamique & Réel) ---
+  List<TeamMember> get effectiveTeamMembers {
+    if (teamMembers.isEmpty) {
+      return [
+        TeamMember(
+          id: 'owner_primary',
+          name: displayUserName,
+          phone: userPhone.isNotEmpty ? userPhone : 'Non renseigné',
+          email: userEmail.isNotEmpty ? userEmail : null,
+          role: userRole.isNotEmpty ? userRole : 'Propriétaire',
+          storeName: currentStore.isNotEmpty ? currentStore : 'Toutes les boutiques',
+        )
+      ];
+    }
+    return teamMembers;
+  }
+
+  Future<void> addTeamMember({
+    required String name,
+    required String phone,
+    String? email,
+    required String role,
+    String storeName = 'Toutes les boutiques',
+  }) async {
+    if (teamMembers.isEmpty) {
+      teamMembers.add(TeamMember(
+        id: 'owner_primary',
+        name: displayUserName,
+        phone: userPhone.isNotEmpty ? userPhone : 'Non renseigné',
+        email: userEmail.isNotEmpty ? userEmail : null,
+        role: userRole.isNotEmpty ? userRole : 'Propriétaire',
+        storeName: currentStore.isNotEmpty ? currentStore : 'Toutes les boutiques',
+      ));
+    }
+    final member = TeamMember(
+      id: 'tm_${DateTime.now().millisecondsSinceEpoch}',
+      name: name.trim(),
+      phone: phone.trim(),
+      email: email?.trim().isNotEmpty == true ? email!.trim() : null,
+      role: role,
+      storeName: storeName,
+    );
+    teamMembers.add(member);
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> updateTeamMember({
+    required String id,
+    required String name,
+    required String phone,
+    String? email,
+    required String role,
+    required String storeName,
+  }) async {
+    final idx = teamMembers.indexWhere((m) => m.id == id);
+    if (idx != -1) {
+      teamMembers[idx].name = name.trim();
+      teamMembers[idx].phone = phone.trim();
+      teamMembers[idx].email = email?.trim().isNotEmpty == true ? email!.trim() : null;
+      teamMembers[idx].role = role;
+      teamMembers[idx].storeName = storeName;
+      notifyListeners();
+      await _saveToPrefs();
+    }
+  }
+
+  Future<void> removeTeamMember(String id) async {
+    teamMembers.removeWhere((m) => m.id == id);
+    notifyListeners();
+    await _saveToPrefs();
   }
 
   // --- GESTION DYNAMIQUE DES CATÉGORIES ---

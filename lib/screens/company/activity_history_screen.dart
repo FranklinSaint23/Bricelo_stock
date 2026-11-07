@@ -382,38 +382,41 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
           ),
           body: Column(
             children: [
-              // 1. BARRE DE FILTRES SEGMENTÉE (TOUT, VENTES, APPROV., DÉPENSES)
+              // 1. BARRE DE FILTRES DE TYPES (DIRECTEMENT SOUS LE HEADER, HORS DU HEADER)
               Container(
-                color: AppTheme.primaryNavy,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                color: isDark ? const Color(0xFF0F1A28) : Colors.white,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    ),
                   ),
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(3),
                   child: Row(
                     children: [
-                      _buildFilterTab(ActivityType.all, 'Tout'),
-                      _buildFilterTab(ActivityType.sale, 'Ventes'),
-                      _buildFilterTab(ActivityType.supply, 'Approv.'),
-                      _buildFilterTab(ActivityType.expense, 'Dépenses'),
+                      _buildFilterTab(ActivityType.all, 'Tout', isDark),
+                      _buildFilterTab(ActivityType.sale, 'Ventes', isDark),
+                      _buildFilterTab(ActivityType.supply, 'Approv.', isDark),
+                      _buildFilterTab(ActivityType.expense, 'Dépenses', isDark),
                     ],
                   ),
                 ),
               ),
 
-              // 1.5 SÉLECTEUR DE PÉRIODES CHRONOLOGIQUES
+              // 1.5 SÉLECTEUR DE PÉRIODES CHRONOLOGIQUES (APRÈS LES TYPES)
               Container(
                 color: isDark ? const Color(0xFF0F1A28) : Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.fromLTRB(0, 4, 0, 10),
                 child: SizedBox(
                   height: 38,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: _periods.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (context, idx) {
                       final p = _periods[idx];
                       final isSel = _selectedPeriod == p;
@@ -486,7 +489,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: activities.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final act = activities[index];
                           final dt = act['date'] as DateTime;
@@ -595,25 +598,27 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
     );
   }
 
-  Widget _buildFilterTab(ActivityType type, String label) {
+  Widget _buildFilterTab(ActivityType type, String label, bool isDark) {
     final isSelected = _selectedFilter == type;
     return Expanded(
       child: InkWell(
         onTap: () => setState(() => _selectedFilter = type),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(9),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isSelected ? AppTheme.accentGold : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(9),
           ),
           alignment: Alignment.center,
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-              color: isSelected ? AppTheme.primaryNavy : Colors.white,
+              color: isSelected
+                  ? AppTheme.primaryNavy
+                  : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
             ),
           ),
         ),
