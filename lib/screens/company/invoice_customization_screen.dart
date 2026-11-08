@@ -494,49 +494,69 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
                 ),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+
+              // 4 styles calligraphiques parfaitement équilibrés en grille 2x2
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 3.2,
                 children: [
-                  ChoiceChip(
-                    label: const Text('Bouclé Classique', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
-                    selected: _selectedSignatureStyle == 0,
-                    selectedColor: AppTheme.primaryNavy,
-                    labelStyle: TextStyle(
-                      color: _selectedSignatureStyle == 0 ? Colors.white : const Color(0xFF1E293B),
-                    ),
-                    onSelected: (val) {
-                      if (val) setState(() => _selectedSignatureStyle = 0);
-                    },
-                  ),
-                  ChoiceChip(
-                    label: const Text('Vague Moderne', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
-                    selected: _selectedSignatureStyle == 1,
-                    selectedColor: AppTheme.primaryNavy,
-                    labelStyle: TextStyle(
-                      color: _selectedSignatureStyle == 1 ? Colors.white : const Color(0xFF1E293B),
-                    ),
-                    onSelected: (val) {
-                      if (val) setState(() => _selectedSignatureStyle = 1);
-                    },
-                  ),
-                  ChoiceChip(
-                    label: const Text('Double Prestige', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
-                    selected: _selectedSignatureStyle == 2,
-                    selectedColor: AppTheme.primaryNavy,
-                    labelStyle: TextStyle(
-                      color: _selectedSignatureStyle == 2 ? Colors.white : const Color(0xFF1E293B),
-                    ),
-                    onSelected: (val) {
-                      if (val) setState(() => _selectedSignatureStyle = 2);
-                    },
-                  ),
+                  _buildStyleChip(0, 'Bouclé Élégant'),
+                  _buildStyleChip(1, 'Vague Moderne'),
+                  _buildStyleChip(2, 'Double Prestige'),
+                  _buildStyleChip(3, 'Plume & Paraphe'),
                 ],
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStyleChip(int styleIdx, String label) {
+    final isSelected = _selectedSignatureStyle == styleIdx;
+    return InkWell(
+      onTap: () => setState(() => _selectedSignatureStyle = styleIdx),
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryNavy : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryNavy : const Color(0xFFCBD5E1),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isSelected) ...[
+              const Icon(Icons.check_rounded, color: AppTheme.accentGold, size: 14),
+              const SizedBox(width: 4),
+            ],
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

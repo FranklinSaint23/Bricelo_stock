@@ -12,7 +12,7 @@ void main() {
 
   test('InvoiceSignatureHelper generates valid SVG for custom seller names', () {
     for (final name in ['Franklin', 'Ousmane Zongo', 'Pascal Ouédraogo', 'Amadou', 'Jean-Pierre']) {
-      for (int style = 0; style <= 2; style++) {
+      for (int style = 0; style <= 3; style++) {
         final svg = InvoiceSignatureHelper.generateSvg(text: name, styleIndex: style);
         expect(svg, contains('<svg'));
         expect(svg, contains('</svg>'));

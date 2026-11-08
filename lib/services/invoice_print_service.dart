@@ -745,18 +745,7 @@ class InvoiceSignatureHelper {
   }) {
     final cleanText = text.trim().isEmpty ? 'Bricelo' : text.trim();
 
-    // Si le nom demandé est "Bricelo" avec le style par défaut (0), on restitue la signature de référence exacte
-    if (cleanText.toLowerCase() == 'bricelo' && styleIndex == 0) {
-      return '''
-<svg viewBox="0 0 160 55" xmlns="http://www.w3.org/2000/svg">
-  <path d="$briceloSvgPath" fill="none" stroke="$colorHex" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="64" cy="20" r="1.5" fill="$colorHex"/>
-  <path d="$briceloUnderline" fill="$colorHex"/>
-</svg>
-''';
-    }
-
-    // Sinon, génération dynamique complète pour le nom personnalisé saisi
+    // Génération dynamique calligraphique uniforme pour tous les styles
     final model = _buildSignatureModel(cleanText, styleIndex);
     final width = model.totalWidth;
     const height = 55.0;
@@ -792,11 +781,6 @@ class InvoiceSignatureHelper {
     double strokeWidth = 2.0,
   }) {
     final cleanText = text.trim().isEmpty ? 'Bricelo' : text.trim();
-
-    if (cleanText.toLowerCase() == 'bricelo' && styleIndex == 0) {
-      _paintBriceloDefault(canvas, size, color, strokeWidth);
-      return;
-    }
 
     final model = _buildSignatureModel(cleanText, styleIndex);
     final refW = model.totalWidth;
@@ -940,15 +924,14 @@ class InvoiceSignatureHelper {
     final midX = (startX + endX) / 2;
 
     if (styleIndex == 0) {
-      // Style 0: Paraphe classique bouclé plein
-      svgUnderline = 'M $startX 48 Q $midX 52, $endX 43 Q ${endX + 8} 41, ${endX - 4} 49 Q $midX 54, ${startX + 12} 52 Z';
-      isUnderlineFilled = true;
+      // Style 0: Bouclé Élégant (Trait manuscrit avec boucle fine à droite)
+      svgUnderline = 'M $startX 48 Q $midX 51, $endX 44 C ${endX + 8} 41, ${endX + 6} 49, ${endX - 2} 49 Q $midX 53, ${startX + 14} 51';
+      isUnderlineFilled = false;
       flutterUnderline = Path()
         ..moveTo(startX, 48)
-        ..quadraticBezierTo(midX, 52, endX, 43)
-        ..quadraticBezierTo(endX + 8, 41, endX - 4, 49)
-        ..quadraticBezierTo(midX, 54, startX + 12, 52)
-        ..close();
+        ..quadraticBezierTo(midX, 51, endX, 44)
+        ..cubicTo(endX + 8, 41, endX + 6, 49, endX - 2, 49)
+        ..quadraticBezierTo(midX, 53, startX + 14, 51);
     } else if (styleIndex == 1) {
       // Style 1: Vague moderne élancée avec retour dynamique
       svgUnderline = 'M $startX 49 Q $midX 45, $endX 46 Q ${endX + 6} 46, $endX 49 L ${startX + 20} 52';
@@ -958,7 +941,7 @@ class InvoiceSignatureHelper {
         ..quadraticBezierTo(midX, 45, endX, 46)
         ..quadraticBezierTo(endX + 6, 46, endX, 49)
         ..lineTo(startX + 20, 52);
-    } else {
+    } else if (styleIndex == 2) {
       // Style 2: Double trait prestige
       svgUnderline = 'M $startX 47 Q $midX 50, $endX 45 M ${startX + 8} 51 Q $midX 54, ${endX - 10} 50';
       isUnderlineFilled = false;
@@ -967,6 +950,15 @@ class InvoiceSignatureHelper {
         ..quadraticBezierTo(midX, 50, endX, 45)
         ..moveTo(startX + 8, 51)
         ..quadraticBezierTo(midX, 54, endX - 10, 50);
+    } else {
+      // Style 3: Plume & Paraphe (Envolée vive avec point de signature)
+      svgUnderline = 'M $startX 47 Q ${startX + (midX - startX) * 0.6} 52, $midX 49 Q ${midX + (endX - midX) * 0.7} 46, ${endX + 4} 42';
+      isUnderlineFilled = false;
+      flutterUnderline = Path()
+        ..moveTo(startX, 47)
+        ..quadraticBezierTo(startX + (midX - startX) * 0.6, 52, midX, 49)
+        ..quadraticBezierTo(midX + (endX - midX) * 0.7, 46, endX + 4, 42);
+      dots.add(_Dot(endX + 9, 41, 1.8));
     }
 
     return _SignatureModel(
