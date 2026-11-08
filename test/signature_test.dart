@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stock_prime/services/invoice_signature_helper.dart';
+import 'package:stock_prime/services/invoice_print_service.dart';
 
 void main() {
   test('InvoiceSignatureHelper generates valid SVG for default Bricelo', () {

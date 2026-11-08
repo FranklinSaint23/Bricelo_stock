@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
-import 'package:stock_prime/services/invoice_signature_helper.dart';
+import 'package:stock_prime/services/invoice_print_service.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 
 class InvoiceCustomizationScreen extends StatefulWidget {

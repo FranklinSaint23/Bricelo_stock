@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
-import 'invoice_signature_helper.dart';
+import 'invoice_print_service.dart';
 
 class AppState extends ChangeNotifier {
   static const String _storageKey = 'bricelo_dynamic_state_v2';
