@@ -70,6 +70,7 @@ class AppState extends ChangeNotifier {
   List<StockDepreciation> stockDepreciations = [];
   String stockDestockingStrategy = 'FIFO'; // 'FIFO' or 'FEFO'
   int expiryAlertDays = 30;
+  List<Quote> quotes = [];
 
   // --- Getters d'affichage sécurisés ---
   String get language => currentLanguage;
@@ -248,6 +249,9 @@ class AppState extends ChangeNotifier {
         stockDepreciations = (data['stockDepreciations'] as List<dynamic>? ?? [])
             .map((e) => StockDepreciation.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
+        quotes = (data['quotes'] as List<dynamic>? ?? [])
+            .map((e) => Quote.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
         notifyListeners();
       }
     } catch (e) {
@@ -300,6 +304,7 @@ class AppState extends ChangeNotifier {
         'stockDestockingStrategy': stockDestockingStrategy,
         'expiryAlertDays': expiryAlertDays,
         'stockDepreciations': stockDepreciations.map((e) => e.toJson()).toList(),
+        'quotes': quotes.map((e) => e.toJson()).toList(),
       };
       await prefs.setString(_storageKey, jsonEncode(payload));
     } catch (e) {
@@ -1937,6 +1942,19 @@ class AppState extends ChangeNotifier {
     notifyListeners();
 
     _supabase?.from('products').update({'stock': p.stock}).eq('id', p.id).then((_) {}, onError: (_) {});
+  }
+
+  // --- GESTION DES DEVIS PRO-FORMA ---
+  void addQuote(Quote quote) {
+    quotes.insert(0, quote);
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void deleteQuote(String quoteId) {
+    quotes.removeWhere((q) => q.id == quoteId);
+    _saveToPrefs();
+    notifyListeners();
   }
 
   // --- PARAMÈTRES & BOUTIQUE ---

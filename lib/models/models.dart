@@ -660,6 +660,74 @@ class StockDepreciation {
       );
 }
 
+class QuoteItem {
+  final String name;
+  final int quantity;
+  final double price;
+  final double total;
+
+  QuoteItem({
+    required this.name,
+    required this.quantity,
+    required this.price,
+    required this.total,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'quantity': quantity,
+        'price': price,
+        'total': total,
+      };
+
+  factory QuoteItem.fromJson(Map<String, dynamic> j) => QuoteItem(
+        name: (j['name'] ?? '').toString(),
+        quantity: (j['quantity'] as num?)?.toInt() ?? 1,
+        price: (j['price'] as num?)?.toDouble() ?? 0.0,
+        total: (j['total'] as num?)?.toDouble() ?? 0.0,
+      );
+}
+
+class Quote {
+  final String id;
+  final String client;
+  final String phone;
+  final DateTime validUntil;
+  final List<QuoteItem> items;
+  final double total;
+  final DateTime createdAt;
+
+  Quote({
+    required this.id,
+    required this.client,
+    required this.phone,
+    required this.validUntil,
+    required this.items,
+    required this.total,
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'client': client,
+        'phone': phone,
+        'validUntil': validUntil.toIso8601String(),
+        'items': items.map((e) => e.toJson()).toList(),
+        'total': total,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+  factory Quote.fromJson(Map<String, dynamic> j) => Quote(
+        id: (j['id'] ?? '').toString(),
+        client: (j['client'] ?? '').toString(),
+        phone: (j['phone'] ?? '').toString(),
+        validUntil: DateTime.tryParse((j['validUntil'] ?? '').toString()) ?? DateTime.now().add(const Duration(days: 15)),
+        items: (j['items'] as List<dynamic>? ?? []).map((e) => QuoteItem.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
+        total: (j['total'] as num?)?.toDouble() ?? 0.0,
+        createdAt: DateTime.tryParse((j['createdAt'] ?? '').toString()) ?? DateTime.now(),
+      );
+}
+
 class Customer {
   final String id;
   final String name;
