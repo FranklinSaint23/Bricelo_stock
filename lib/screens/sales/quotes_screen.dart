@@ -791,31 +791,20 @@ class _QuotesScreenState extends State<QuotesScreen> {
               // LISTE DYNAMIQUE DES DEVIS
               Expanded(
                 child: quotes.isEmpty
-                    ? Center(
+                    ? const Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.description_outlined, size: 64, color: Color(0xFFCBD5E1)),
-                            const SizedBox(height: 14),
-                            const Text(
+                            Icon(Icons.description_outlined, size: 64, color: Color(0xFFCBD5E1)),
+                            SizedBox(height: 14),
+                            Text(
                               'Aucun devis enregistré',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
                             ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Touchez le bouton ci-dessous pour créer un devis.',
+                            SizedBox(height: 6),
+                            Text(
+                              'Touchez "+ Nouveau devis" pour créer un devis.',
                               style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                            ),
-                            const SizedBox(height: 18),
-                            ElevatedButton.icon(
-                              onPressed: _showNewQuoteModal,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0D1B2E),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text('Créer un devis'),
                             ),
                           ],
                         ),
