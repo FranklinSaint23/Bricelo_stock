@@ -29,6 +29,31 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
     _loadLines();
   }
 
+  String _getDefaultPlaceholder(String id, String label) {
+    final lowerLabel = label.toLowerCase();
+    if (id == 'line_1' || lowerLabel.contains('activité')) {
+      return appState.companyActivity.isNotEmpty
+          ? appState.companyActivity
+          : 'VENTE DE MATELAS, LITS, MOUSSES, MEUBLES ET ACCESSOIRES MENAGERS';
+    }
+    if (id == 'line_2' || lowerLabel.contains('localis') || lowerLabel.contains('adress')) {
+      return appState.companyAddress.isNotEmpty
+          ? appState.companyAddress
+          : 'Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)';
+    }
+    if (id == 'line_3' || lowerLabel.contains('tél') || lowerLabel.contains('phone')) {
+      return appState.userPhone.isNotEmpty
+          ? 'Tél: ${appState.userPhone}'
+          : 'Tél: +237 689 39 88 07';
+    }
+    if (id == 'line_4' || lowerLabel.contains('contrib') || lowerLabel.contains('tax')) {
+      return appState.taxNumber.isNotEmpty
+          ? appState.taxNumber
+          : 'N° Cont: P049616604139M';
+    }
+    return 'Ex: R.C.C.M. : RC/DLA/2020/B/123';
+  }
+
   void _loadLines() {
     _lines = appState.invoiceHeaderLines.map((l) {
       return InvoiceHeaderLine(id: l.id, label: l.label, value: l.value);
@@ -38,7 +63,13 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
     _valueControllers.clear();
     for (final l in _lines) {
       _labelControllers[l.id] = TextEditingController(text: l.label);
-      _valueControllers[l.id] = TextEditingController(text: l.value);
+      final placeholder = _getDefaultPlaceholder(l.id, l.label);
+      // Si la valeur actuelle est identique au placeholder par défaut,
+      // on laisse le champ vide pour que le texte apparaisse en placeholder/hintText
+      final isDefaultValue = l.value.trim() == placeholder.trim();
+      _valueControllers[l.id] = TextEditingController(
+        text: isDefaultValue ? '' : l.value,
+      );
     }
   }
 
@@ -59,10 +90,10 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
     final newLine = InvoiceHeaderLine(
       id: newId,
       label: 'Info suppl.',
-      value: 'Nouvelle information',
+      value: '',
     );
     _labelControllers[newId] = TextEditingController(text: newLine.label);
-    _valueControllers[newId] = TextEditingController(text: newLine.value);
+    _valueControllers[newId] = TextEditingController(text: '');
     setState(() {
       _lines.add(newLine);
     });
@@ -89,7 +120,15 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
     setState(() {
       _signatureController.text = 'Bricelo';
       _selectedSignatureStyle = 0;
-      _loadLines();
+      _lines = appState.invoiceHeaderLines.map((l) {
+        return InvoiceHeaderLine(id: l.id, label: l.label, value: '');
+      }).toList();
+      _labelControllers.clear();
+      _valueControllers.clear();
+      for (final l in _lines) {
+        _labelControllers[l.id] = TextEditingController(text: l.label);
+        _valueControllers[l.id] = TextEditingController(text: '');
+      }
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Facture et signature réinitialisées aux valeurs par défaut (Bricelo).')),
@@ -100,7 +139,9 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
     // Synchroniser les valeurs depuis les controllers
     for (final l in _lines) {
       l.label = _labelControllers[l.id]?.text.trim() ?? l.label;
-      l.value = _valueControllers[l.id]?.text.trim() ?? l.value;
+      final typed = _valueControllers[l.id]?.text.trim() ?? '';
+      // Si l'utilisateur n'a rien saisi, on sauvegarde le placeholder pour que l'impression fonctionne
+      l.value = typed.isNotEmpty ? typed : _getDefaultPlaceholder(l.id, l.label);
     }
 
     await appState.saveInvoiceHeaderLines(_lines);
@@ -207,6 +248,7 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
             final line = entry.value;
             final labelCtrl = _labelControllers[line.id]!;
             final valCtrl = _valueControllers[line.id]!;
+            final placeholder = _getDefaultPlaceholder(line.id, labelCtrl.text);
 
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
@@ -266,7 +308,9 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       labelText: 'Texte affiché sur la facture *',
-                      hintText: 'Ex: Situé à FOURGEROLE...',
+                      hintText: placeholder,
+                      hintMaxLines: 2,
+                      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic),
                       labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -605,7 +649,9 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: _lines.map((l) {
-                  final text = _valueControllers[l.id]?.text.trim() ?? l.value;
+                  final typed = _valueControllers[l.id]?.text.trim() ?? '';
+                  final placeholder = _getDefaultPlaceholder(l.id, _labelControllers[l.id]?.text ?? l.label);
+                  final text = typed.isNotEmpty ? typed : placeholder;
                   final isActivity = l.label.toLowerCase().contains('activité') || l.id == 'line_1';
                   final isPhone = l.label.toLowerCase().contains('tél');
 

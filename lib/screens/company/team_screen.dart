@@ -92,7 +92,7 @@ class _TeamScreenState extends State<TeamScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // RÔLE * (Gérant / Caissier / Magasinier / Vendeur)
+                // RÔLE * (Propriétaire / Gérant / Caissier / Magasinier / Vendeur)
                 DropdownButtonFormField<String>(
                   initialValue: role,
                   decoration: InputDecoration(
@@ -102,30 +102,63 @@ class _TeamScreenState extends State<TeamScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   items: const [
+                    DropdownMenuItem(value: 'Propriétaire', child: Text('Propriétaire')),
                     DropdownMenuItem(value: 'Gérant', child: Text('Gérant')),
                     DropdownMenuItem(value: 'Caissier', child: Text('Caissier')),
                     DropdownMenuItem(value: 'Magasinier', child: Text('Magasinier')),
                     DropdownMenuItem(value: 'Vendeur', child: Text('Vendeur')),
                   ],
-                  onChanged: (v) => setDlgState(() => role = v ?? 'Caissier'),
+                  onChanged: (v) {
+                    setDlgState(() {
+                      role = v ?? 'Caissier';
+                      if (role == 'Propriétaire') {
+                        assignedStore = 'Toutes les boutiques';
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(height: 12),
 
-                // BOUTIQUE ASSIGNÉE
-                DropdownButtonFormField<String>(
-                  initialValue: assignedStore,
-                  decoration: InputDecoration(
-                    labelText: 'Boutique assignée',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                // Si Propriétaire alors il gère tout : le champ Boutique assignée n'a pas sa place
+                if (role == 'Propriétaire') ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.all_inclusive_rounded, color: Color(0xFF92400E), size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Le Propriétaire gère l\'ensemble des boutiques et stocks.',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  items: [
-                    const DropdownMenuItem(value: 'Toutes les boutiques', child: Text('Toutes les boutiques')),
-                    ...appState.availableStores.map((s) => DropdownMenuItem(value: s, child: Text(s))),
-                  ],
-                  onChanged: (v) => setDlgState(() => assignedStore = v ?? 'Toutes les boutiques'),
-                ),
+                ] else ...[
+                  // BOUTIQUE ASSIGNÉE (pour les autres rôles)
+                  DropdownButtonFormField<String>(
+                    initialValue: assignedStore,
+                    decoration: InputDecoration(
+                      labelText: 'Boutique assignée',
+                      labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: 'Toutes les boutiques', child: Text('Toutes les boutiques')),
+                      ...appState.availableStores.map((s) => DropdownMenuItem(value: s, child: Text(s))),
+                    ],
+                    onChanged: (v) => setDlgState(() => assignedStore = v ?? 'Toutes les boutiques'),
+                  ),
+                ],
               ],
             ),
           ),
@@ -174,7 +207,7 @@ class _TeamScreenState extends State<TeamScreen> {
                           phone: phone,
                           email: emailCtrl.text.trim().isNotEmpty ? emailCtrl.text.trim() : null,
                           role: role,
-                          storeName: assignedStore,
+                          storeName: role == 'Propriétaire' ? 'Toutes les boutiques' : assignedStore,
                         );
 
                         Navigator.pop(ctx);
@@ -279,23 +312,57 @@ class _TeamScreenState extends State<TeamScreen> {
                     DropdownMenuItem(value: 'Magasinier', child: Text('Magasinier')),
                     DropdownMenuItem(value: 'Vendeur', child: Text('Vendeur')),
                   ],
-                  onChanged: (v) => setDlgState(() => role = v ?? 'Caissier'),
+                  onChanged: (v) {
+                    setDlgState(() {
+                      role = v ?? 'Caissier';
+                      if (role == 'Propriétaire') {
+                        assignedStore = 'Toutes les boutiques';
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: assignedStore.isNotEmpty ? assignedStore : 'Toutes les boutiques',
-                  decoration: InputDecoration(
-                    labelText: 'Boutique assignée',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+
+                // Si Propriétaire alors il gère tout : le champ Boutique assignée n'a pas sa place
+                if (role == 'Propriétaire') ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.all_inclusive_rounded, color: Color(0xFF92400E), size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Le Propriétaire gère l\'ensemble des boutiques et stocks.',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  items: [
-                    const DropdownMenuItem(value: 'Toutes les boutiques', child: Text('Toutes les boutiques')),
-                    ...appState.availableStores.map((s) => DropdownMenuItem(value: s, child: Text(s))),
-                  ],
-                  onChanged: (v) => setDlgState(() => assignedStore = v ?? 'Toutes les boutiques'),
-                ),
+                ] else ...[
+                  // BOUTIQUE ASSIGNÉE (pour les autres rôles)
+                  DropdownButtonFormField<String>(
+                    initialValue: assignedStore.isNotEmpty ? assignedStore : 'Toutes les boutiques',
+                    decoration: InputDecoration(
+                      labelText: 'Boutique assignée',
+                      labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: 'Toutes les boutiques', child: Text('Toutes les boutiques')),
+                      ...appState.availableStores.map((s) => DropdownMenuItem(value: s, child: Text(s))),
+                    ],
+                    onChanged: (v) => setDlgState(() => assignedStore = v ?? 'Toutes les boutiques'),
+                  ),
+                ],
               ],
             ),
           ),
@@ -345,7 +412,7 @@ class _TeamScreenState extends State<TeamScreen> {
                           phone: phone,
                           email: emailCtrl.text.trim().isNotEmpty ? emailCtrl.text.trim() : null,
                           role: role,
-                          storeName: assignedStore,
+                          storeName: role == 'Propriétaire' ? 'Toutes les boutiques' : assignedStore,
                         );
 
                         Navigator.pop(ctx);
@@ -473,8 +540,10 @@ class _TeamScreenState extends State<TeamScreen> {
                       _buildDetailRow('Téléphone', member.phone),
                       const Divider(height: 14, color: Color(0xFFE2E8F0)),
                       _buildDetailRow('Email', member.email?.isNotEmpty == true ? member.email! : 'Non renseigné'),
-                      const Divider(height: 14, color: Color(0xFFE2E8F0)),
-                      _buildDetailRow('Boutique assignée', member.storeName),
+                      if (!isOwner) ...[
+                        const Divider(height: 14, color: Color(0xFFE2E8F0)),
+                        _buildDetailRow('Boutique assignée', member.storeName),
+                      ],
                       const Divider(height: 14, color: Color(0xFFE2E8F0)),
                       _buildDetailRow('Performance ventes', '${memberSales.length} transaction(s) • ${AppTheme.formatFCFA(totalRevenue)}'),
                     ],
