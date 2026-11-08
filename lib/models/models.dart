@@ -93,6 +93,9 @@ class Product {
     }
   }
 
+  double get price => sellPrice;
+  set price(double val) => sellPrice = val;
+
   double get margin => sellPrice - buyPrice;
   double get marginPercent => buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice) * 100 : 0;
   double get wholesaleMargin => wholesalePrice - buyPrice;
@@ -381,6 +384,7 @@ class DebtPayment {
 
 class CustomerDebt {
   final String id;
+  final String? saleId;
   final String customerName;
   final String customerPhone;
   final String customerCity;
@@ -388,22 +392,34 @@ class CustomerDebt {
   double paidAmount;
   final DateTime createdAt;
   DateTime lastPaymentDate;
+  final DateTime? dueDate;
   final List<String> itemsSummary;
   final List<DebtPayment> payments;
 
   CustomerDebt({
     required this.id,
+    this.saleId,
     required this.customerName,
     required this.customerPhone,
     this.customerCity = '',
-    required this.initialDebt,
+    double? initialDebt,
+    double? originalDebt,
+    double? remainingDebt,
     this.paidAmount = 0,
-    required this.createdAt,
-    required this.lastPaymentDate,
-    required this.itemsSummary,
+    DateTime? createdAt,
+    DateTime? saleDate,
+    DateTime? lastPaymentDate,
+    this.dueDate,
+    List<String>? itemsSummary,
     List<DebtPayment>? payments,
-  }) : payments = payments ?? [];
+  })  : initialDebt = initialDebt ?? originalDebt ?? remainingDebt ?? 0.0,
+        createdAt = createdAt ?? saleDate ?? DateTime.now(),
+        lastPaymentDate = lastPaymentDate ?? createdAt ?? saleDate ?? DateTime.now(),
+        itemsSummary = itemsSummary ?? (saleId != null ? [saleId] : ['Créance']),
+        payments = payments ?? [];
 
+  double get originalDebt => initialDebt;
+  DateTime get saleDate => createdAt;
   double get remainingDebt => initialDebt - paidAmount;
   bool get isSettled => remainingDebt <= 0;
 

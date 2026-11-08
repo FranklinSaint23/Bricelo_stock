@@ -17,9 +17,8 @@ class _DebtsScreenState extends State<DebtsScreen> {
   final _searchCtrl = TextEditingController();
 
   @override
-  void dispose() {
+  void disposeWidget() {
     _searchCtrl.dispose();
-    super.dispose();
   }
 
   void _showRecordPaymentModal(CustomerDebt debt) {
@@ -217,13 +216,20 @@ class _DebtsScreenState extends State<DebtsScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez renseigner le client et le montant.')));
                       return;
                     }
-                    appState.addManualDebt(
-                      customerName: name,
-                      customerPhone: phoneCtrl.text.trim(),
-                      customerCity: '',
-                      amount: amt,
-                      description: 'Créance directe',
+                    appState.debts.insert(
+                      0,
+                      CustomerDebt(
+                        id: 'debt_${DateTime.now().millisecondsSinceEpoch}',
+                        saleId: 'crédit_direct',
+                        customerName: name,
+                        customerPhone: phoneCtrl.text.trim(),
+                        originalDebt: amt,
+                        remainingDebt: amt,
+                        saleDate: DateTime.now(),
+                        dueDate: dueDate,
+                      ),
                     );
+                    appState.notifyListeners();
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Dette enregistrée pour $name.')));
                   },
@@ -408,8 +414,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
                         itemCount: displayedDebts.length,
                         itemBuilder: (context, idx) {
                           final d = displayedDebts[idx];
-                          final dueDate = d.createdAt.add(const Duration(days: 30));
-                          final isOverdue = !d.isSettled && dueDate.isBefore(DateTime.now());
+                          final isOverdue = !d.isSettled && (d.dueDate != null && d.dueDate!.isBefore(DateTime.now()));
 
                           return Card(
                             elevation: 1,
@@ -450,7 +455,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text('Dette initiale : ${d.initialDebt.toInt()} F CFA', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                      Text('Dette initiale : ${d.originalDebt.toInt()} F', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                                       Text(
                                         'Reste : ${d.remainingDebt.toInt()} F CFA',
                                         style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: d.isSettled ? const Color(0xFF16A34A) : const Color(0xFFDC2626)),

@@ -118,7 +118,7 @@ class AboutScreen extends StatelessWidget {
             subtitle: 'Historique des versions et annonces',
             trailing: const Icon(Icons.chevron_right, size: 20, color: Color(0xFF4B5563)),
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const AnnouncementsScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => AnnouncementsScreen()));
             },
           ),
           const SizedBox(height: 14),
