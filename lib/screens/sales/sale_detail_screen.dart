@@ -46,7 +46,7 @@ class SaleDetailScreen extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
             ),
             Text(
-              sale.ticketNumber,
+              sale.historyReference,
               style: const TextStyle(fontSize: 12, color: AppTheme.accentGold, fontWeight: FontWeight.w600),
             ),
           ],
@@ -280,7 +280,7 @@ class SaleDetailScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
-                label: const Text('Imprimer le reçu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                label: const Text('Imprimer la facture (A6)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 onPressed: () => SaleReceiptDialog.show(context, sale),
               ),
             ),
@@ -298,7 +298,7 @@ class SaleDetailScreen extends StatelessWidget {
                     icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
                     label: const Text('WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     onPressed: () {
-                      Clipboard.setData(ClipboardData(text: 'Reçu ${sale.ticketNumber} • Total: ${AppTheme.formatFCFA(sale.total)}'));
+                      Clipboard.setData(ClipboardData(text: 'Reçu ${sale.historyReference} • Total: ${AppTheme.formatFCFA(sale.total)}'));
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Reçu copié pour WhatsApp !')),
                       );
@@ -315,7 +315,7 @@ class SaleDetailScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     icon: const Icon(Icons.receipt_outlined, size: 18),
-                    label: const Text('Facture A4', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    label: const Text('Partager PDF (A6)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     onPressed: () async {
                       try {
                         await InvoicePrintService.shareSale(sale);

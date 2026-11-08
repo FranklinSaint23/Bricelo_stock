@@ -132,7 +132,10 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
     return appState.sales.where((s) {
       if (q.isNotEmpty) {
-        final matchId = s.ticketNumber.toLowerCase().contains(q) || s.id.toLowerCase().contains(q);
+        final matchId = s.ticketNumber.toLowerCase().contains(q) ||
+            s.historyReference.toLowerCase().contains(q) ||
+            s.formattedInvoiceNumber.contains(q) ||
+            s.id.toLowerCase().contains(q);
         final matchCustomer = s.customerName.toLowerCase().contains(q);
         final matchItem = s.items.any((i) => i.productName.toLowerCase().contains(q));
         if (!matchId && !matchCustomer && !matchItem) return false;
@@ -620,7 +623,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              sale.ticketNumber,
+                                              sale.historyReference,
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.w900,
                                                 fontSize: 14,

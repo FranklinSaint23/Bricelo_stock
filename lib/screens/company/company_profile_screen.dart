@@ -143,7 +143,7 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                     child: (_logoBase64 != null && _logoBase64!.trim().isNotEmpty)
                         ? Image.memory(
                             base64Decode(_logoBase64!.contains(',') ? _logoBase64!.split(',').last : _logoBase64!),
-                            fit: BoxFit.contain,
+                            fit: BoxFit.fill,
                             errorBuilder: (_, _, _) => _buildLogoPlaceholder(),
                           )
                         : _buildLogoPlaceholder(),

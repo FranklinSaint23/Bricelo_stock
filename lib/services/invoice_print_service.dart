@@ -96,7 +96,20 @@ class InvoicePrintService {
   }
 
   // =========================================================================
-  // NOUVELLE FACTURE PRO CONFORME AU MODÈLE (BRICELO CONFORT)
+  // SIGNATURE CURSIVE VECTORIELLE "BRICELO" (GENERÉE ET PLAQUÉE SUR LE PDF)
+  // =========================================================================
+  static const String briceloSignatureSvg = '''
+<svg viewBox="0 0 160 55" xmlns="http://www.w3.org/2000/svg">
+  <!-- Signature manuscrite fluide et élégante Bricelo -->
+  <path d="M 14 38 C 12 25, 20 8, 28 8 C 36 8, 40 18, 34 27 C 32 30, 27 33, 21 33 C 30 33, 40 33, 42 43 C 44 49, 34 49, 24 47 C 17 45, 14 39, 20 35 M 34 32 C 40 28, 46 26, 50 28 C 54 30, 51 36, 48 40 M 52 36 C 56 28, 60 28, 64 28 C 68 28, 66 40, 66 40 M 70 32 C 76 28, 82 30, 88 32 C 94 34, 92 40, 86 42 M 90 36 C 96 30, 102 32, 108 34 C 114 36, 110 42, 106 42 M 110 32 C 114 20, 118 10, 122 8 C 126 6, 124 30, 122 40 M 126 34 C 132 28, 140 30, 146 32 C 152 34, 150 42, 142 42 C 134 42, 136 34, 144 34" fill="none" stroke="#1E3A8A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="64" cy="20" r="1.5" fill="#1E3A8A"/>
+  <!-- Paraphe de soulignement dynamique avec boucle -->
+  <path d="M 20 48 Q 80 51, 148 43 Q 158 41, 144 49 Q 88 54, 36 52" fill="#1E3A8A"/>
+</svg>
+''';
+
+  // =========================================================================
+  // NOUVELLE FACTURE PRO AU FORMAT A6 CONFORME AU MODÈLE (BRICELO CONFORT)
   // =========================================================================
   static Future<Uint8List> generateInvoicePdf(Sale sale) async {
     final pdf = pw.Document();
@@ -124,15 +137,16 @@ class InvoicePrintService {
       } catch (_) {}
     }
 
+    // FACTURE STRICTEMENT AU FORMAT A6
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.symmetric(horizontal: 32, vertical: 26),
+        pageFormat: PdfPageFormat.a6,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         build: (pw.Context context) {
-          final borderBold = pw.BorderSide(color: inkBlue, width: 1.3);
-          final borderThin = pw.BorderSide(color: inkBlue, width: 0.8);
+          final borderBold = pw.BorderSide(color: inkBlue, width: 1.1);
+          final borderThin = pw.BorderSide(color: inkBlue, width: 0.6);
 
-          const minTableRows = 8;
+          const minTableRows = 5;
           final emptyRowsCount = (minTableRows - sale.items.length).clamp(0, minTableRows);
 
           return pw.Column(
@@ -140,35 +154,38 @@ class InvoicePrintService {
             children: [
               // 1. RECTANGLE EN HAUT AVEC DOUBLE BORDURE BLEUE
               pw.Container(
-                padding: const pw.EdgeInsets.all(3),
+                padding: const pw.EdgeInsets.all(2),
                 decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: inkBlue, width: 2),
+                  border: pw.Border.all(color: inkBlue, width: 1.5),
                 ),
                 child: pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                   decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: inkBlue, width: 1),
+                    border: pw.Border.all(color: inkBlue, width: 0.8),
                   ),
                   child: pw.Row(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      // LOGO RECTANGLE EXACT (FORMAT RECTANGULAIRE STRICT)
+                      // LOGO RECTANGLE EXACT (S'ÉTIRANT PEU IMPORTE LA TAILLE POUR REMPLIR LE CADRE)
                       pw.Container(
-                        width: 140,
-                        height: 65, // Exactement rectangle
+                        width: 88,
+                        height: 38, // Format rectangle exact
                         decoration: pw.BoxDecoration(
-                          color: primaryNavy,
-                          borderRadius: pw.BorderRadius.circular(2),
+                          color: const PdfColor(0.04, 0.31, 0.61), // Bleu vif officiel
+                          borderRadius: pw.BorderRadius.circular(1.5),
                         ),
                         child: logoBytes != null
                             ? pw.ClipRRect(
-                                horizontalRadius: 2,
-                                verticalRadius: 2,
-                                child: pw.Image(pw.MemoryImage(logoBytes), fit: pw.BoxFit.contain),
+                                horizontalRadius: 1.5,
+                                verticalRadius: 1.5,
+                                child: pw.Image(
+                                  pw.MemoryImage(logoBytes),
+                                  fit: pw.BoxFit.fill, // S'étire nettement pour remplir le cadre
+                                ),
                               )
                             : _buildDefaultLogo(fontBold, fontItalic),
                       ),
-                      pw.SizedBox(width: 12),
+                      pw.SizedBox(width: 6),
 
                       // INFORMATIONS DE LA BOUTIQUE (MODIFIABLES DANS PERSONNALISATION FACTURE)
                       pw.Expanded(
@@ -180,15 +197,15 @@ class InvoicePrintService {
                             final isPhone = line.label.toLowerCase().contains('tél') || line.value.toLowerCase().contains('tél');
 
                             return pw.Padding(
-                              padding: const pw.EdgeInsets.symmetric(vertical: 1.2),
+                              padding: const pw.EdgeInsets.symmetric(vertical: 0.6),
                               child: pw.Text(
                                 line.value,
                                 textAlign: pw.TextAlign.center,
                                 style: pw.TextStyle(
                                   font: fontBold,
-                                  fontSize: isFirst ? 9.5 : (isPhone ? 11 : 8.5),
+                                  fontSize: isFirst ? 6.2 : (isPhone ? 7.6 : 5.4),
                                   color: inkBlue,
-                                  letterSpacing: isFirst ? 0.3 : 0,
+                                  letterSpacing: isFirst ? 0.2 : 0,
                                 ),
                               ),
                             );
@@ -200,23 +217,23 @@ class InvoicePrintService {
                 ),
               ),
 
-              pw.SizedBox(height: 12),
+              pw.SizedBox(height: 5),
 
               // 2. LIGNE DATE (DATE + HEURE JUSQU'AUX SECONDES)
               pw.Row(
                 children: [
                   pw.Text(
                     'Date: ',
-                    style: pw.TextStyle(font: fontBold, fontSize: 11, color: inkBlue),
+                    style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: inkBlue),
                   ),
                   pw.Text(
                     dateFormatted,
-                    style: pw.TextStyle(font: fontBold, fontSize: 11, color: inkBlue),
+                    style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: inkBlue),
                   ),
                   pw.Expanded(
                     child: pw.Text(
-                      ' ........................................................................................................................................................................',
-                      style: pw.TextStyle(font: fontRegular, fontSize: 10, color: inkBlue),
+                      ' ...................................................................................................................................................',
+                      style: pw.TextStyle(font: fontRegular, fontSize: 6, color: inkBlue),
                       maxLines: 1,
                       overflow: pw.TextOverflow.clip,
                     ),
@@ -224,7 +241,7 @@ class InvoicePrintService {
                 ],
               ),
 
-              pw.SizedBox(height: 8),
+              pw.SizedBox(height: 4),
 
               // 3. PILULE FACTURE + NUMÉRO EN ROUGE
               pw.Center(
@@ -233,81 +250,81 @@ class InvoicePrintService {
                   crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
                     pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 4.5),
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 2.2),
                       decoration: pw.BoxDecoration(
                         color: inkBlue,
-                        borderRadius: pw.BorderRadius.circular(20),
+                        borderRadius: pw.BorderRadius.circular(12),
                       ),
                       child: pw.Text(
                         'FACTURE:',
                         style: pw.TextStyle(
                           font: fontBold,
-                          fontSize: 14.5,
+                          fontSize: 9,
                           color: PdfColors.white,
-                          letterSpacing: 1.2,
+                          letterSpacing: 0.8,
                         ),
                       ),
                     ),
-                    pw.SizedBox(width: 10),
+                    pw.SizedBox(width: 8),
                     pw.Text(
                       sale.formattedInvoiceNumber,
                       style: pw.TextStyle(
                         font: fontBold,
-                        fontSize: 22,
+                        fontSize: 14.5,
                         color: accentRed, // Rouge tampon comme sur l'image
-                        letterSpacing: 2.0,
+                        letterSpacing: 1.5,
                       ),
                     ),
                     pw.Text(
                       ' •',
-                      style: pw.TextStyle(font: fontBold, fontSize: 15, color: accentRed),
+                      style: pw.TextStyle(font: fontBold, fontSize: 10, color: accentRed),
                     ),
                   ],
                 ),
               ),
 
-              pw.SizedBox(height: 10),
+              pw.SizedBox(height: 4),
 
               // 4. LIGNE CLIENT ET TÉLÉPHONE
               pw.Row(
                 children: [
                   pw.Text(
                     'Client: ',
-                    style: pw.TextStyle(font: fontBold, fontSize: 11.5, color: inkBlue),
+                    style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: inkBlue),
                   ),
                   if (sale.customerName.isNotEmpty && sale.customerName != 'Client Comptoir') ...[
                     pw.Text(
                       sale.customerName,
-                      style: pw.TextStyle(font: fontBold, fontSize: 11, color: inkBlue),
+                      style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: inkBlue),
                     ),
-                    pw.SizedBox(width: 4),
+                    pw.SizedBox(width: 3),
                   ],
                   pw.Expanded(
                     flex: 3,
                     child: pw.Text(
-                      ' .....................................................................................................',
-                      style: pw.TextStyle(font: fontRegular, fontSize: 10, color: inkBlue),
+                      ' ...................................................................................',
+                      style: pw.TextStyle(font: fontRegular, fontSize: 6, color: inkBlue),
                       maxLines: 1,
                       overflow: pw.TextOverflow.clip,
                     ),
                   ),
-                  pw.SizedBox(width: 8),
+                  pw.SizedBox(width: 5),
                   pw.Text(
                     'Tél: ',
-                    style: pw.TextStyle(font: fontBold, fontSize: 11.5, color: inkBlue),
+                    style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: inkBlue),
                   ),
                   if (sale.customerPhone.isNotEmpty) ...[
                     pw.Text(
                       sale.customerPhone,
-                      style: pw.TextStyle(font: fontBold, fontSize: 11, color: inkBlue),
+                      style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: inkBlue),
                     ),
-                    pw.SizedBox(width: 4),
+                    pw.SizedBox(width: 3),
                   ],
                   pw.Expanded(
                     flex: 2,
                     child: pw.Text(
-                      ' .....................................................................................................',
-                      style: pw.TextStyle(font: fontRegular, fontSize: 10, color: inkBlue),
+                      ' ...................................................................................',
+                      style: pw.TextStyle(font: fontRegular, fontSize: 6, color: inkBlue),
                       maxLines: 1,
                       overflow: pw.TextOverflow.clip,
                     ),
@@ -315,7 +332,7 @@ class InvoicePrintService {
                 ],
               ),
 
-              pw.SizedBox(height: 10),
+              pw.SizedBox(height: 5),
 
               // 5. TABLEAU DES ARTICLES (Qtés | Désignations | P.U | P.Total)
               pw.Table(
@@ -328,10 +345,10 @@ class InvoicePrintService {
                   horizontalInside: borderThin,
                 ),
                 columnWidths: const {
-                  0: pw.FixedColumnWidth(55),
+                  0: pw.FixedColumnWidth(28),
                   1: pw.FlexColumnWidth(3),
-                  2: pw.FixedColumnWidth(95),
-                  3: pw.FixedColumnWidth(110),
+                  2: pw.FixedColumnWidth(48),
+                  3: pw.FixedColumnWidth(58),
                 },
                 children: [
                   // En-tête des colonnes
@@ -339,24 +356,24 @@ class InvoicePrintService {
                     decoration: const pw.BoxDecoration(color: PdfColors.white),
                     children: [
                       pw.Container(
-                        padding: const pw.EdgeInsets.symmetric(vertical: 5.5),
+                        padding: const pw.EdgeInsets.symmetric(vertical: 3),
                         alignment: pw.Alignment.center,
-                        child: pw.Text('Qtés', style: pw.TextStyle(font: fontBold, fontSize: 11.5, color: inkBlue)),
+                        child: pw.Text('Qtés', style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: inkBlue)),
                       ),
                       pw.Container(
-                        padding: const pw.EdgeInsets.symmetric(vertical: 5.5, horizontal: 8),
+                        padding: const pw.EdgeInsets.symmetric(vertical: 3, horizontal: 4),
                         alignment: pw.Alignment.center,
-                        child: pw.Text('Désignations', style: pw.TextStyle(font: fontBold, fontSize: 11.5, color: inkBlue)),
+                        child: pw.Text('Désignations', style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: inkBlue)),
                       ),
                       pw.Container(
-                        padding: const pw.EdgeInsets.symmetric(vertical: 5.5),
+                        padding: const pw.EdgeInsets.symmetric(vertical: 3),
                         alignment: pw.Alignment.center,
-                        child: pw.Text('P.U', style: pw.TextStyle(font: fontBold, fontSize: 11.5, color: inkBlue)),
+                        child: pw.Text('P.U', style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: inkBlue)),
                       ),
                       pw.Container(
-                        padding: const pw.EdgeInsets.symmetric(vertical: 5.5),
+                        padding: const pw.EdgeInsets.symmetric(vertical: 3),
                         alignment: pw.Alignment.center,
-                        child: pw.Text('P.Total', style: pw.TextStyle(font: fontBold, fontSize: 11.5, color: inkBlue)),
+                        child: pw.Text('P.Total', style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: inkBlue)),
                       ),
                     ],
                   ),
@@ -366,24 +383,24 @@ class InvoicePrintService {
                     return pw.TableRow(
                       children: [
                         pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(vertical: 5),
+                          padding: const pw.EdgeInsets.symmetric(vertical: 2.5),
                           alignment: pw.Alignment.center,
-                          child: pw.Text('${item.quantity}', style: pw.TextStyle(font: fontBold, fontSize: 10, color: inkBlue)),
+                          child: pw.Text('${item.quantity}', style: pw.TextStyle(font: fontBold, fontSize: 6.2, color: inkBlue)),
                         ),
                         pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 8),
+                          padding: const pw.EdgeInsets.symmetric(vertical: 2.5, horizontal: 4),
                           alignment: pw.Alignment.centerLeft,
-                          child: pw.Text(item.productName, style: pw.TextStyle(font: fontRegular, fontSize: 9.5, color: inkBlue)),
+                          child: pw.Text(item.productName, style: pw.TextStyle(font: fontRegular, fontSize: 6, color: inkBlue), maxLines: 1),
                         ),
                         pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 8),
+                          padding: const pw.EdgeInsets.symmetric(vertical: 2.5, horizontal: 4),
                           alignment: pw.Alignment.centerRight,
-                          child: pw.Text(formatter.format(item.unitPrice.round()), style: pw.TextStyle(font: fontRegular, fontSize: 9.5, color: inkBlue)),
+                          child: pw.Text(formatter.format(item.unitPrice.round()), style: pw.TextStyle(font: fontRegular, fontSize: 6, color: inkBlue)),
                         ),
                         pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 8),
+                          padding: const pw.EdgeInsets.symmetric(vertical: 2.5, horizontal: 4),
                           alignment: pw.Alignment.centerRight,
-                          child: pw.Text(formatter.format(item.total.round()), style: pw.TextStyle(font: fontBold, fontSize: 9.5, color: inkBlue)),
+                          child: pw.Text(formatter.format(item.total.round()), style: pw.TextStyle(font: fontBold, fontSize: 6, color: inkBlue)),
                         ),
                       ],
                     );
@@ -393,10 +410,10 @@ class InvoicePrintService {
                   ...List.generate(emptyRowsCount, (_) {
                     return pw.TableRow(
                       children: [
-                        pw.Container(height: 22),
-                        pw.Container(height: 22),
-                        pw.Container(height: 22),
-                        pw.Container(height: 22),
+                        pw.Container(height: 12),
+                        pw.Container(height: 12),
+                        pw.Container(height: 12),
+                        pw.Container(height: 12),
                       ],
                     );
                   }),
@@ -412,34 +429,34 @@ class InvoicePrintService {
                     bottom: borderBold,
                   ),
                 ),
-                padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                padding: const pw.EdgeInsets.symmetric(vertical: 3.5, horizontal: 6),
                 child: pw.Row(
                   children: [
                     pw.Expanded(
                       child: pw.Text(
                         'TOTAL',
                         textAlign: pw.TextAlign.center,
-                        style: pw.TextStyle(font: fontBold, fontSize: 14, color: inkBlue, letterSpacing: 1.5),
+                        style: pw.TextStyle(font: fontBold, fontSize: 8.5, color: inkBlue, letterSpacing: 1),
                       ),
                     ),
                     pw.Container(
-                      width: 205,
+                      width: 120,
                       alignment: pw.Alignment.center,
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                       decoration: pw.BoxDecoration(
                         color: PdfColor.fromInt(0xFF60A5FA), // Pilule bleue exacte comme sur l'image
-                        borderRadius: pw.BorderRadius.circular(16),
+                        borderRadius: pw.BorderRadius.circular(10),
                       ),
                       child: pw.Text(
                         '${formatter.format(sale.total.round())} F CFA',
-                        style: pw.TextStyle(font: fontBold, fontSize: 12, color: primaryNavy),
+                        style: pw.TextStyle(font: fontBold, fontSize: 7.8, color: primaryNavy),
                       ),
                     ),
                   ],
                 ),
               ),
 
-              pw.SizedBox(height: 12),
+              pw.SizedBox(height: 5),
 
               // 7. ARRÊTÉ LA PRÉSENTE FACTURE À LA SOMME DE (EN LETTRES)
               pw.Column(
@@ -450,76 +467,58 @@ class InvoicePrintService {
                       children: [
                         pw.TextSpan(
                           text: 'Arrêté la présente facture à la somme de: ',
-                          style: pw.TextStyle(font: fontBold, fontSize: 10.5, color: inkBlue),
+                          style: pw.TextStyle(font: fontBold, fontSize: 6.2, color: inkBlue),
                         ),
                         pw.TextSpan(
                           text: totalInWords,
-                          style: pw.TextStyle(font: fontBold, fontSize: 10.5, color: inkBlue),
+                          style: pw.TextStyle(font: fontBold, fontSize: 6.2, color: inkBlue),
                         ),
                       ],
                     ),
                   ),
-                  pw.SizedBox(height: 2),
+                  pw.SizedBox(height: 1),
                   pw.Text(
-                    '........................................................................................................................................................................................................................................',
-                    style: pw.TextStyle(font: fontRegular, fontSize: 9.5, color: inkBlue),
+                    '........................................................................................................................................................................................................',
+                    style: pw.TextStyle(font: fontRegular, fontSize: 5.5, color: inkBlue),
                     maxLines: 1,
                     overflow: pw.TextOverflow.clip,
                   ),
                 ],
               ),
 
-              pw.SizedBox(height: 22),
+              pw.SizedBox(height: 8),
 
-              // 8. SIGNATURES (LE CLIENT & CAISSE AVEC SIGNATURE BRICELO PAR DÉFAUT)
+              // 8. SIGNATURES (LE CLIENT & CAISSE AVEC SIGNATURE BRICELO VECTORIELLE)
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   // Le Client:
                   pw.Padding(
-                    padding: const pw.EdgeInsets.only(left: 12),
+                    padding: const pw.EdgeInsets.only(left: 8),
                     child: pw.Text(
                       'Le Client:',
-                      style: pw.TextStyle(font: fontBold, fontSize: 11.5, color: inkBlue),
+                      style: pw.TextStyle(font: fontBold, fontSize: 7.2, color: inkBlue),
                     ),
                   ),
 
-                  // Caisse avec signature Bricelo systématique
+                  // Caisse avec signature Bricelo générée systématiquement
                   pw.Padding(
-                    padding: const pw.EdgeInsets.only(right: 24),
+                    padding: const pw.EdgeInsets.only(right: 12),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.center,
                       children: [
                         pw.Text(
                           'Caisse',
-                          style: pw.TextStyle(font: fontBold, fontSize: 12, color: inkBlue),
+                          style: pw.TextStyle(font: fontBold, fontSize: 7.2, color: inkBlue),
                         ),
-                        pw.SizedBox(height: 4),
-                        // Signature par défaut Bricelo stylisée
-                        pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 3),
-                          decoration: pw.BoxDecoration(
-                            border: pw.Border.all(color: PdfColor.fromInt(0xFF93C5FD), width: 0.8),
-                            borderRadius: pw.BorderRadius.circular(6),
-                          ),
-                          child: pw.Column(
-                            children: [
-                              pw.Text(
-                                'Bricelo',
-                                style: pw.TextStyle(
-                                  font: fontBold,
-                                  fontSize: 16,
-                                  color: inkBlue,
-                                  fontStyle: pw.FontStyle.italic,
-                                ),
-                              ),
-                              pw.Text(
-                                '(Signature certifiée)',
-                                style: pw.TextStyle(font: fontRegular, fontSize: 7, color: PdfColors.grey700),
-                              ),
-                            ],
-                          ),
+                        pw.SizedBox(height: 1),
+                        // Signature manuscrite vectorielle Bricelo
+                        pw.SvgImage(
+                          svg: briceloSignatureSvg,
+                          width: 65,
+                          height: 22,
+                          fit: pw.BoxFit.contain,
                         ),
                       ],
                     ),
@@ -537,24 +536,48 @@ class InvoicePrintService {
 
   static pw.Widget _buildDefaultLogo(pw.Font fontBold, pw.Font fontItalic) {
     return pw.Container(
-      padding: const pw.EdgeInsets.all(6),
-      color: PdfColor.fromInt(0xFF0D1B2E),
-      child: pw.Column(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      color: const PdfColor(0.04, 0.31, 0.61), // Bleu vif officiel
+      child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.center,
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
-          pw.Text(
-            'BRICELO',
-            style: pw.TextStyle(font: fontBold, fontSize: 13, color: PdfColors.white, letterSpacing: 1),
+          // Icône stylisée maison / literie
+          pw.Container(
+            width: 20,
+            height: 20,
+            child: pw.SvgImage(
+              svg: '''
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 4 16 L 16 5 L 28 16 L 25 16 L 25 28 L 7 28 L 7 16 Z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="10" y="15" width="12" height="4" rx="1" fill="#FFFFFF"/>
+  <rect x="10" y="21" width="12" height="2" rx="0.5" fill="#FFFFFF"/>
+</svg>
+''',
+              fit: pw.BoxFit.contain,
+            ),
           ),
-          pw.Text(
-            'CONFORT',
-            style: pw.TextStyle(font: fontBold, fontSize: 10.5, color: PdfColor.fromInt(0xFFFBBF24), letterSpacing: 1.2),
-          ),
-          pw.SizedBox(height: 2),
-          pw.Text(
-            'Juste le confort, tout simplement !',
-            style: pw.TextStyle(font: fontItalic, fontSize: 6.5, color: PdfColors.white),
+          pw.SizedBox(width: 4),
+          pw.Expanded(
+            child: pw.Column(
+              mainAxisAlignment: pw.MainAxisAlignment.center,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'BRICELO',
+                  style: pw.TextStyle(font: fontBold, fontSize: 6.8, color: PdfColors.white, letterSpacing: 0.5),
+                ),
+                pw.Text(
+                  'CONFORT',
+                  style: pw.TextStyle(font: fontBold, fontSize: 5.8, color: PdfColors.white, letterSpacing: 0.5),
+                ),
+                pw.Text(
+                  'Juste le confort, tout simplement !',
+                  style: pw.TextStyle(font: fontItalic, fontSize: 3.5, color: PdfColors.white),
+                  maxLines: 1,
+                ),
+              ],
+            ),
           ),
         ],
       ),

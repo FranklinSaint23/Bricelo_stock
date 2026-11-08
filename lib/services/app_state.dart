@@ -1252,7 +1252,13 @@ class AppState extends ChangeNotifier {
   }) {
     // Règle stricte : la date de la vente est obligatoirement celle du jour
     final now = DateTime.now();
-    final ticketNumber = generateNextInvoiceNumber();
+    final yyyy = now.year.toString();
+    final mm = now.month.toString().padLeft(2, '0');
+    final dd = now.day.toString().padLeft(2, '0');
+    final nextInvoiceNum = generateNextInvoiceNumber();
+    final seqVal = int.tryParse(nextInvoiceNum) ?? 1;
+    final seq4 = seqVal.toString().padLeft(4, '0');
+    final ticketNumber = 'BS-VTE-$yyyy$mm$dd-$seq4';
     final itemsSummary = cart
         .map((item) => SaleItemSummary(
               productName: item.product.name,

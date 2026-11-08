@@ -30,7 +30,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   // Step 1: Recap data
   double _globalDiscount = 0.0;
   bool _roundTotal = false;
-  DateTime _saleDate = DateTime.now();
+  final DateTime _saleDate = DateTime.now();
   final _noteCtrl = TextEditingController();
 
   // Step 2: Client data
@@ -1053,7 +1053,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Réf : ${sale.ticketNumber}',
+          'Réf : ${sale.historyReference}',
           style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -1063,7 +1063,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         ),
         const SizedBox(height: 28),
 
-        // 1. Imprimer le reçu
+        // 1. Imprimer la facture A6
         SizedBox(
           width: double.infinity,
           height: 48,
@@ -1075,7 +1075,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
-            label: const Text('Imprimer le reçu', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+            label: const Text('Imprimer la facture (A6)', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
             onPressed: () => SaleReceiptDialog.show(context, sale),
           ),
         ),

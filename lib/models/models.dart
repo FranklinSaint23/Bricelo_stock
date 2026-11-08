@@ -258,6 +258,19 @@ class Sale {
 
   double get subtotal => total + discountTotal;
 
+  String get historyReference {
+    if (ticketNumber.startsWith('BS-VTE-')) {
+      return ticketNumber;
+    }
+    final yyyy = createdAt.year.toString();
+    final mm = createdAt.month.toString().padLeft(2, '0');
+    final dd = createdAt.day.toString().padLeft(2, '0');
+    final lastDigits = formattedInvoiceNumber.replaceAll(RegExp(r'\D'), '');
+    final numVal = int.tryParse(lastDigits) ?? 1;
+    final seq = numVal.toString().padLeft(4, '0');
+    return 'BS-VTE-$yyyy$mm$dd-$seq';
+  }
+
   String get formattedInvoiceNumber {
     final regex = RegExp(r'(\d+)');
     final matches = regex.allMatches(ticketNumber);

@@ -314,7 +314,7 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
                       borderRadius: BorderRadius.circular(4),
                       child: Image.memory(
                         base64Decode(logo.contains(',') ? logo.split(',').last : logo),
-                        fit: BoxFit.contain,
+                        fit: BoxFit.fill,
                         errorBuilder: (_, _, _) => _defaultLogoPreview(),
                       ),
                     )
