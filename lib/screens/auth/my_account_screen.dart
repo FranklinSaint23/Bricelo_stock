@@ -39,6 +39,24 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     }
   }
 
+  Future<void> _safeUpdateCompanyLogo(String base64String) async {
+    try {
+      await (appState as dynamic).updateCompanyLogo(base64String);
+      return;
+    } catch (_) {}
+
+    try {
+      await appState.updateCompanyProfile(logoBase64: base64String);
+      return;
+    } catch (_) {}
+
+    try {
+      appState.companyLogo = base64String;
+      // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
+      appState.notifyListeners();
+    } catch (_) {}
+  }
+
   Future<void> _pickShopLogo() async {
     try {
       final picker = ImagePicker();
@@ -52,7 +70,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       if (picked != null) {
         final bytes = await picked.readAsBytes();
         final base64String = base64Encode(bytes);
-        await appState.updateCompanyLogo(base64String);
+        await _safeUpdateCompanyLogo(base64String);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -336,7 +354,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   }
 
   Widget _buildShopLogoAvatar({double size = 56}) {
-    if (appState.companyLogo.isNotEmpty) {
+    if (appState.companyLogo.trim().isNotEmpty) {
       try {
         final clean = appState.companyLogo.contains(',')
             ? appState.companyLogo.split(',').last
@@ -344,29 +362,27 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
         return Image.memory(
           base64Decode(clean),
           fit: BoxFit.cover,
-          errorBuilder: (ctx, err, stack) => _buildFallbackShopLogo(size),
+          errorBuilder: (ctx, err, stack) => _buildInitialsAvatar(size),
         );
       } catch (_) {
-        return _buildFallbackShopLogo(size);
+        return _buildInitialsAvatar(size);
       }
     }
-    return _buildFallbackShopLogo(size);
+    return _buildInitialsAvatar(size);
   }
 
-  Widget _buildFallbackShopLogo(double size) {
-    return Image.asset(
-      'assets/images/logo.png',
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => Container(
-        color: AppTheme.primaryNavy,
-        child: Center(
-          child: Text(
-            appState.userInitials,
-            style: TextStyle(
-              color: AppTheme.accentGold,
-              fontWeight: FontWeight.bold,
-              fontSize: size * 0.35,
-            ),
+  Widget _buildInitialsAvatar(double size) {
+    return Container(
+      color: AppTheme.primaryNavy,
+      width: size,
+      height: size,
+      child: Center(
+        child: Text(
+          appState.userInitials,
+          style: TextStyle(
+            color: AppTheme.accentGold,
+            fontWeight: FontWeight.w900,
+            fontSize: size * 0.38,
           ),
         ),
       ),

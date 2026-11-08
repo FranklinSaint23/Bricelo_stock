@@ -16,7 +16,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _activeFilter = "Aujourd'hui"; // "Aujourd'hui", "En attente", "Stock faible", "Terminé"
 
   Widget _buildShopLogoAvatar(AppState appState, double size) {
-    if (appState.companyLogo.isNotEmpty) {
+    if (appState.companyLogo.trim().isNotEmpty) {
       try {
         final clean = appState.companyLogo.contains(',')
             ? appState.companyLogo.split(',').last
@@ -24,29 +24,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return Image.memory(
           base64Decode(clean),
           fit: BoxFit.cover,
-          errorBuilder: (ctx, err, stack) => _buildFallbackLogo(appState, size),
+          errorBuilder: (ctx, err, stack) => _buildInitialsAvatar(appState, size),
         );
       } catch (_) {
-        return _buildFallbackLogo(appState, size);
+        return _buildInitialsAvatar(appState, size);
       }
     }
-    return _buildFallbackLogo(appState, size);
+    return _buildInitialsAvatar(appState, size);
   }
 
-  Widget _buildFallbackLogo(AppState appState, double size) {
-    return Image.asset(
-      'assets/images/logo.png',
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => Container(
-        color: AppTheme.primaryNavy,
-        child: Center(
-          child: Text(
-            appState.userInitials,
-            style: TextStyle(
-              color: AppTheme.accentGold,
-              fontWeight: FontWeight.bold,
-              fontSize: size * 0.36,
-            ),
+  Widget _buildInitialsAvatar(AppState appState, double size) {
+    return Container(
+      color: AppTheme.primaryNavy,
+      width: size,
+      height: size,
+      child: Center(
+        child: Text(
+          appState.userInitials,
+          style: TextStyle(
+            color: AppTheme.accentGold,
+            fontWeight: FontWeight.w900,
+            fontSize: size * 0.38,
           ),
         ),
       ),
@@ -610,30 +608,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
         centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.6), width: 1.2),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: _buildShopLogoAvatar(appState, 26),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              appState.displayCompanyName.isNotEmpty ? appState.displayCompanyName : 'Bricelo Stock',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ],
+        title: const Text(
+          'Bricelo Stock',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.3,
+          ),
         ),
       ),
       body: SafeArea(
