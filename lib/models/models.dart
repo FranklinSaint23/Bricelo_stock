@@ -258,6 +258,18 @@ class Sale {
 
   double get subtotal => total + discountTotal;
 
+  String get formattedInvoiceNumber {
+    final regex = RegExp(r'(\d+)');
+    final matches = regex.allMatches(ticketNumber);
+    if (matches.isNotEmpty) {
+      final lastNum = int.tryParse(matches.last.group(0) ?? '');
+      if (lastNum != null) {
+        return lastNum.toString().padLeft(5, '0');
+      }
+    }
+    return '00651';
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'ticketNumber': ticketNumber,
@@ -1133,4 +1145,29 @@ class TeamMember {
         createdAt: DateTime.tryParse((j['createdAt'] ?? j['created_at'] ?? '').toString()) ?? DateTime.now(),
       );
 }
+
+class InvoiceHeaderLine {
+  String id;
+  String label;
+  String value;
+
+  InvoiceHeaderLine({
+    required this.id,
+    required this.label,
+    required this.value,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'label': label,
+        'value': value,
+      };
+
+  factory InvoiceHeaderLine.fromJson(Map<String, dynamic> j) => InvoiceHeaderLine(
+        id: (j['id'] ?? '').toString(),
+        label: (j['label'] ?? '').toString(),
+        value: (j['value'] ?? '').toString(),
+      );
+}
+
 

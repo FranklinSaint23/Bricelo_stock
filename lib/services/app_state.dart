@@ -27,6 +27,20 @@ class AppState extends ChangeNotifier {
   String userPhone = '';
   String userRole = 'Propriétaire';
 
+  // --- Profil Entreprise & Facturation Dynamique ---
+  String companyLogo = '';
+  String companyAddress = 'Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)';
+  String companyActivity = 'VENTE DE MATELAS, LITS, MOUSSES, MEUBLES ET ACCESSOIRES MENAGERS';
+  String taxNumber = 'N° Cont: P049616604139M';
+  String rccmNumber = '';
+
+  List<InvoiceHeaderLine> invoiceHeaderLines = [
+    InvoiceHeaderLine(id: 'line_1', label: 'Activité', value: 'VENTE DE MATELAS, LITS, MOUSSES, MEUBLES ET ACCESSOIRES MENAGERS'),
+    InvoiceHeaderLine(id: 'line_2', label: 'Localisation', value: 'Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)'),
+    InvoiceHeaderLine(id: 'line_3', label: 'Téléphone', value: 'Tél: +237 689 39 88 07'),
+    InvoiceHeaderLine(id: 'line_4', label: 'N° Contribuable', value: 'N° Cont: P049616604139M'),
+  ];
+
   // --- Boutique Active & Liste des Boutiques ---
   bool isBossMode = true;
   String currentStore = 'Boutique Principale';
@@ -95,6 +109,20 @@ class AppState extends ChangeNotifier {
         userEmail = (data['userEmail'] ?? '').toString();
         userPhone = (data['userPhone'] ?? '').toString();
         userRole = (data['userRole'] ?? 'Propriétaire').toString();
+        companyLogo = (data['companyLogo'] ?? '').toString();
+        companyAddress = (data['companyAddress'] ?? 'Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)').toString();
+        companyActivity = (data['companyActivity'] ?? 'VENTE DE MATELAS, LITS, MOUSSES, MEUBLES ET ACCESSOIRES MENAGERS').toString();
+        taxNumber = (data['taxNumber'] ?? 'N° Cont: P049616604139M').toString();
+        rccmNumber = (data['rccmNumber'] ?? '').toString();
+
+        if (data['invoiceHeaderLines'] != null) {
+          final rawLines = data['invoiceHeaderLines'] as List<dynamic>;
+          if (rawLines.isNotEmpty) {
+            invoiceHeaderLines = rawLines
+                .map((e) => InvoiceHeaderLine.fromJson(Map<String, dynamic>.from(e as Map)))
+                .toList();
+          }
+        }
         currentStore = (data['currentStore'] ?? (companyName.isNotEmpty ? companyName : 'Boutique Principale')).toString();
         openingCash = (data['openingCash'] as num?)?.toDouble() ?? 0.0;
 
@@ -237,6 +265,12 @@ class AppState extends ChangeNotifier {
         'userEmail': userEmail,
         'userPhone': userPhone,
         'userRole': userRole,
+        'companyLogo': companyLogo,
+        'companyAddress': companyAddress,
+        'companyActivity': companyActivity,
+        'taxNumber': taxNumber,
+        'rccmNumber': rccmNumber,
+        'invoiceHeaderLines': invoiceHeaderLines.map((e) => e.toJson()).toList(),
         'currentStore': currentStore,
         'availableStores': availableStores,
         'outlets': outlets.map((e) => e.toJson()).toList(),
@@ -607,6 +641,63 @@ class AppState extends ChangeNotifier {
     teamMembers.removeWhere((m) => m.id == id);
     notifyListeners();
     await _saveToPrefs();
+  }
+
+  // --- GESTION DU PROFIL ENTREPRISE & FACTURATION ---
+  Future<void> updateCompanyProfile({
+    String? name,
+    String? phone,
+    String? email,
+    String? address,
+    String? activity,
+    String? taxNo,
+    String? rccmNo,
+    String? logoBase64,
+  }) async {
+    if (name != null && name.isNotEmpty) companyName = name.trim();
+    if (phone != null) userPhone = phone.trim();
+    if (email != null) userEmail = email.trim();
+    if (address != null) companyAddress = address.trim();
+    if (activity != null) companyActivity = activity.trim();
+    if (taxNo != null) taxNumber = taxNo.trim();
+    if (rccmNo != null) rccmNumber = rccmNo.trim();
+    if (logoBase64 != null) companyLogo = logoBase64;
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> saveInvoiceHeaderLines(List<InvoiceHeaderLine> lines) async {
+    invoiceHeaderLines = List.from(lines);
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  void resetInvoiceHeaderLinesToDefault() {
+    invoiceHeaderLines = [
+      InvoiceHeaderLine(id: 'line_1', label: 'Activité', value: companyActivity.isNotEmpty ? companyActivity : 'VENTE DE MATELAS, LITS, MOUSSES, MEUBLES ET ACCESSOIRES MENAGERS'),
+      InvoiceHeaderLine(id: 'line_2', label: 'Localisation', value: companyAddress.isNotEmpty ? companyAddress : 'Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)'),
+      InvoiceHeaderLine(id: 'line_3', label: 'Téléphone', value: userPhone.isNotEmpty ? 'Tél: $userPhone' : 'Tél: +237 689 39 88 07'),
+      InvoiceHeaderLine(id: 'line_4', label: 'N° Contribuable', value: taxNumber.isNotEmpty ? taxNumber : 'N° Cont: P049616604139M'),
+    ];
+    notifyListeners();
+    _saveToPrefs();
+  }
+
+  String generateNextInvoiceNumber() {
+    int maxNum = 0;
+    final regex = RegExp(r'(\d+)');
+    for (final s in sales) {
+      final matches = regex.allMatches(s.ticketNumber);
+      if (matches.isNotEmpty) {
+        final last = int.tryParse(matches.last.group(0) ?? '') ?? 0;
+        if (last > maxNum) maxNum = last;
+      }
+    }
+    if (maxNum == 0) {
+      maxNum = sales.isNotEmpty ? sales.length : 650;
+    }
+    final next = maxNum + 1;
+    return next.toString().padLeft(5, '0');
   }
 
   // --- GESTION DYNAMIQUE DES CATÉGORIES ---
@@ -1161,11 +1252,7 @@ class AppState extends ChangeNotifier {
   }) {
     // Règle stricte : la date de la vente est obligatoirement celle du jour
     final now = DateTime.now();
-    final yyyy = now.year.toString();
-    final mm = now.month.toString().padLeft(2, '0');
-    final dd = now.day.toString().padLeft(2, '0');
-    final count = (sales.length + 1).toString().padLeft(4, '0');
-    final ticketNumber = 'BS-VTE-$yyyy$mm$dd-$count';
+    final ticketNumber = generateNextInvoiceNumber();
     final itemsSummary = cart
         .map((item) => SaleItemSummary(
               productName: item.product.name,
@@ -1746,7 +1833,7 @@ class AppState extends ChangeNotifier {
             type: item.difference > 0 ? 'INVENTAIRE (+)' : 'INVENTAIRE (-)',
             quantity: item.difference.abs(),
             newStock: prod.stockForStore(session.storeName),
-            reason: '${session.reference} (${session.storeName}) ${item.discrepancyReason.isNotEmpty ? "- " + item.discrepancyReason : ""}',
+            reason: '${session.reference} (${session.storeName}) ${item.discrepancyReason.isNotEmpty ? "- ${item.discrepancyReason}" : ""}',
             date: session.completedAt,
           );
           stockMovements.insert(0, sm);

@@ -6,6 +6,7 @@ import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 import 'package:stock_prime/widgets/sale_receipt_dialog.dart';
+import 'package:stock_prime/services/invoice_print_service.dart';
 
 class SaleDetailScreen extends StatelessWidget {
   final Sale sale;
@@ -315,10 +316,15 @@ class SaleDetailScreen extends StatelessWidget {
                     ),
                     icon: const Icon(Icons.receipt_outlined, size: 18),
                     label: const Text('Facture A4', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Facture format A4 générée (${sale.ticketNumber})')),
-                      );
+                    onPressed: () async {
+                      try {
+                        await InvoicePrintService.shareSale(sale);
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Erreur génération facture: $e')),
+                        );
+                      }
                     },
                   ),
                 ),

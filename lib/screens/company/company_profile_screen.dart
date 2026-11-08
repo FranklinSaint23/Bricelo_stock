@@ -1,5 +1,8 @@
-import 'package:stock_prime/services/app_state.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/theme/app_theme.dart';
 
 class CompanyProfileScreen extends StatefulWidget {
   const CompanyProfileScreen({super.key});
@@ -9,68 +12,93 @@ class CompanyProfileScreen extends StatefulWidget {
 }
 
 class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
+  final appState = AppState.instance;
+
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _emailController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _activityController;
+  late final TextEditingController _taxIdController;
+  late final TextEditingController _rccmController;
+
+  String? _logoBase64;
+  String _selectedCountry = 'Cameroun';
+  final List<String> _countries = ['Cameroun', 'Gabon', 'Congo', 'Côte d\'Ivoire', 'Sénégal', 'France'];
 
   @override
   void initState() {
     super.initState();
-    final appState = AppState.instance;
-    _nameController = TextEditingController(text: appState.displayCompanyName);
+    _nameController = TextEditingController(text: appState.companyName.isNotEmpty ? appState.companyName : appState.displayCompanyName);
     _phoneController = TextEditingController(text: appState.userPhone);
     _emailController = TextEditingController(text: appState.userEmail);
+    _addressController = TextEditingController(text: appState.companyAddress);
+    _activityController = TextEditingController(text: appState.companyActivity);
+    _taxIdController = TextEditingController(text: appState.taxNumber);
+    _rccmController = TextEditingController(text: appState.rccmNumber);
+    _logoBase64 = appState.companyLogo.isNotEmpty ? appState.companyLogo : null;
   }
-  final _addressController = TextEditingController();
-  final _taxLabelController = TextEditingController(text: 'NIU');
-  final _taxIdController = TextEditingController();
-  final _rccmController = TextEditingController();
 
-  String _selectedCountry = 'Cameroun';
-  String _selectedActivity = 'Non défini';
-  String _selectedTaxRegime = 'Non déclaré / je ne sais pas';
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
+    _activityController.dispose();
+    _taxIdController.dispose();
+    _rccmController.dispose();
+    super.dispose();
+  }
 
-  final List<String> _countries = ['Cameroun', 'Gabon', 'Congo', 'Côte d\'Ivoire', 'Sénégal', 'France'];
-  final List<String> _activities = [
-    'Non défini',
-    'Commerce général / Alimentation',
-    'Boutique de vêtements / Chaussures',
-    'Quincaillerie / Bricolage',
-    'Pharmacie / Parapharmacie',
-    'Électronique / Informatique',
-    'Restaurant / Bar / Café',
-    'Autre',
-  ];
-  final List<String> _taxRegimes = [
-    'Non déclaré / je ne sais pas',
-    'Régime de l\'impôt libératoire',
-    'Régime simplifié',
-    'Régime réel (assujetti TVA)',
-  ];
+  Future<void> _pickLogo() async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 400,
+        imageQuality: 85,
+      );
 
-  void _showTaxHelp() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Fiscalité et facturation', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: const Text(
-          'Indiquez votre régime fiscal au Cameroun. Si vous êtes au régime réel, la TVA (19,25%) pourra être appliquée automatiquement sur vos factures.',
-          style: TextStyle(fontSize: 14, height: 1.4),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fermer')),
-        ],
-      ),
-    );
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        final base64String = base64Encode(bytes);
+        setState(() {
+          _logoBase64 = base64String;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFF059669),
+              content: Text('Logo sélectionné. Cliquez sur Enregistrer pour confirmer.'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(backgroundColor: const Color(0xFFDC2626), content: Text('Erreur sélection image: $e')),
+        );
+      }
+    }
+  }
+
+  void _removeLogo() {
+    setState(() {
+      _logoBase64 = '';
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = appState.isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
         centerTitle: true,
         leading: Padding(
@@ -79,129 +107,195 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
             onTap: () => Navigator.pop(context),
             borderRadius: BorderRadius.circular(20),
             child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF3F4F6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF111827), size: 16),
+              child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
             ),
           ),
         ),
         title: const Text(
           'Profil de l\'entreprise',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF111827)),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         children: [
-          // LOGO SECTION
+          // 1. SECTION LOGO (FORMAT RECTANGLE STRICT)
           Center(
-            child: Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                  width: 1.5,
+            child: Column(
+              children: [
+                Container(
+                  width: 220,
+                  height: 100, // Exact rectangle (ratio 2.2:1)
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.accentGold,
+                      width: 1.8,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: (_logoBase64 != null && _logoBase64!.trim().isNotEmpty)
+                        ? Image.memory(
+                            base64Decode(_logoBase64!.contains(',') ? _logoBase64!.split(',').last : _logoBase64!),
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) => _buildLogoPlaceholder(),
+                          )
+                        : _buildLogoPlaceholder(),
+                  ),
                 ),
-              ),
-              child: const Center(
-                child: Text(
-                  'Aucun logo',
-                  style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.primaryNavy, width: 1.2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      ),
+                      onPressed: _pickLogo,
+                      icon: const Icon(Icons.photo_library_outlined, size: 18, color: AppTheme.primaryNavy),
+                      label: Text(
+                        (_logoBase64 != null && _logoBase64!.isNotEmpty) ? 'Changer le logo' : 'Ajouter un logo',
+                        style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                    if (_logoBase64 != null && _logoBase64!.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: 'Supprimer le logo',
+                        icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626)),
+                        onPressed: _removeLogo,
+                      ),
+                    ],
+                  ],
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Center(
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF0D1B2E), width: 1.2),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Sélectionnez une image de logo')),
-                );
-              },
-              icon: const Icon(Icons.camera_alt_outlined, size: 18, color: Color(0xFF0D1B2E)),
-              label: const Text(
-                'Ajouter un logo',
-                style: TextStyle(color: Color(0xFF0D1B2E), fontWeight: FontWeight.bold, fontSize: 13),
-              ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Format rectangle recommandé pour l\'en-tête de facture',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
-          const Divider(color: Color(0xFFF3F4F6), height: 1),
+          const Divider(height: 1),
           const SizedBox(height: 20),
 
-          // NOM DE L'ENTREPRISE
+          // 2. NOM DE L'ENTREPRISE
           TextField(
             controller: _nameController,
             decoration: InputDecoration(
-              labelText: 'Nom de l\'entreprise',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              labelText: 'Nom de l\'entreprise *',
+              hintText: 'Ex: Bricelo Confort',
+              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13, fontWeight: FontWeight.bold),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             ),
           ),
           const SizedBox(height: 14),
 
-          // TÉLÉPHONE
+          // 3. ACTIVITÉ / SLOGAN
+          TextField(
+            controller: _activityController,
+            maxLines: 2,
+            decoration: InputDecoration(
+              labelText: 'Activité principale / Slogan',
+              hintText: 'Ex: VENTE DE MATELAS, LITS, MOUSSES, MEUBLES ET ACCESSOIRES MENAGERS',
+              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13, fontWeight: FontWeight.bold),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 4. ADRESSE / SITUATION GÉOGRAPHIQUE
+          TextField(
+            controller: _addressController,
+            decoration: InputDecoration(
+              labelText: 'Adresse / Localisation',
+              hintText: 'Ex: Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)',
+              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13, fontWeight: FontWeight.bold),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 5. TÉLÉPHONE
           TextField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(
-              labelText: 'Téléphone',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              labelText: 'Téléphone *',
+              hintText: 'Ex: +237 689 39 88 07',
+              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13, fontWeight: FontWeight.bold),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             ),
           ),
           const SizedBox(height: 14),
 
-          // EMAIL
+          // 6. EMAIL
           TextField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               labelText: 'Email',
+              hintText: 'contact@bricelo.com',
               labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // 7. INFORMATIONS LÉGALES & FISCALES
+          const Text(
+            'Informations légales & fiscales',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+          ),
+          const SizedBox(height: 10),
+
+          // N° CONTRIBUABLE (NIU)
+          TextField(
+            controller: _taxIdController,
+            decoration: InputDecoration(
+              labelText: 'N° de Contribuable (NIU)',
+              hintText: 'Ex: N° Cont: P049616604139M',
+              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // RCCM
+          TextField(
+            controller: _rccmController,
+            decoration: InputDecoration(
+              labelText: 'Registre du commerce (RCCM)',
+              hintText: 'Ex: RC/DLA/2026/B/1234',
+              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             ),
           ),
           const SizedBox(height: 14),
 
-          // ADRESSE
-          TextField(
-            controller: _addressController,
-            decoration: InputDecoration(
-              labelText: 'Adresse',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // SECTION: PAYS & DEVISE
-          const Text(
-            'Pays & devise',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
-          ),
-          const SizedBox(height: 12),
+          // PAYS
           DropdownButtonFormField<String>(
             initialValue: _selectedCountry,
             decoration: InputDecoration(
               labelText: 'Pays',
               labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             ),
             items: _countries.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
@@ -209,150 +303,68 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
               if (val != null) setState(() => _selectedCountry = val);
             },
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'Devise : XAF (définie par le pays)',
-            style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 30),
 
-          // TYPE D'ACTIVITÉ
-          DropdownButtonFormField<String>(
-            initialValue: _selectedActivity,
-            decoration: InputDecoration(
-              labelText: 'Type d\'activité',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-            items: _activities.map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedActivity = val);
-            },
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Nous aide à adapter StockPlus à votre métier. Facultatif — ne change rien dans l\'application.',
-            style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-          ),
-          const SizedBox(height: 24),
-
-          // SECTION: FISCALITÉ
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Fiscalité',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
-              ),
-              InkWell(
-                onTap: _showTaxHelp,
-                child: const Icon(Icons.help_outline, size: 20, color: Color(0xFF4B5563)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedTaxRegime,
-            decoration: InputDecoration(
-              labelText: 'Régime fiscal',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-            items: _taxRegimes.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedTaxRegime = val);
-            },
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Détermine si vous facturez la TVA.',
-            style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-          ),
-          const SizedBox(height: 14),
-
-          // LIBELLÉ & IDENTIFIANT FISCAL
-          Row(
-            children: [
-              SizedBox(
-                width: 100,
-                child: TextField(
-                  controller: _taxLabelController,
-                  decoration: InputDecoration(
-                    labelText: 'Libellé',
-                    labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                  controller: _taxIdController,
-                  decoration: InputDecoration(
-                    hintText: 'Identifiant fiscal (NIU)',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // RCCM
-          TextField(
-            controller: _rccmController,
-            decoration: InputDecoration(
-              labelText: 'RCCM (optionnel)',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // ACTIONS
+          // BOUTON ENREGISTRER
           SizedBox(
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF0D1B2E),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                backgroundColor: AppTheme.primaryNavy,
+                foregroundColor: AppTheme.accentGold,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
               onPressed: () async {
-                await AppState.instance.updateUserProfile(
-                  company: _nameController.text.trim(),
+                final name = _nameController.text.trim();
+                if (name.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Le nom de l\'entreprise est obligatoire.'), backgroundColor: Color(0xFFDC2626)),
+                  );
+                  return;
+                }
+
+                await appState.updateCompanyProfile(
+                  name: name,
                   phone: _phoneController.text.trim(),
                   email: _emailController.text.trim(),
+                  address: _addressController.text.trim(),
+                  activity: _activityController.text.trim(),
+                  taxNo: _taxIdController.text.trim(),
+                  rccmNo: _rccmController.text.trim(),
+                  logoBase64: _logoBase64 ?? '',
                 );
+
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Profil d\'entreprise enregistré avec succès'),
-                    backgroundColor: Color(0xFF0D1B2E),
+                    content: Text('Profil d\'entreprise et logo enregistrés avec succès !'),
+                    backgroundColor: Color(0xFF059669),
                   ),
                 );
                 Navigator.pop(context);
               },
-              child: const Text('Enregistrer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+              child: const Text('Enregistrer le profil', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
             ),
           ),
-          const SizedBox(height: 12),
-          Center(
-            child: TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Annuler',
-                style: TextStyle(color: Color(0xFF0D1B2E), fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-            ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoPlaceholder() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.storefront_rounded, size: 36, color: AppTheme.accentGold),
+          const SizedBox(height: 4),
+          const Text(
+            'Logo de l\'entreprise',
+            style: TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 20),
         ],
       ),
     );
