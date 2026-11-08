@@ -17,8 +17,9 @@ class _DebtsScreenState extends State<DebtsScreen> {
   final _searchCtrl = TextEditingController();
 
   @override
-  void disposeWidget() {
+  void dispose() {
     _searchCtrl.dispose();
+    super.dispose();
   }
 
   void _showRecordPaymentModal(CustomerDebt debt) {
@@ -216,8 +217,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez renseigner le client et le montant.')));
                       return;
                     }
-                    appState.debts.insert(
-                      0,
+                    appState.addCustomerDebt(
                       CustomerDebt(
                         id: 'debt_${DateTime.now().millisecondsSinceEpoch}',
                         saleId: 'crédit_direct',
@@ -229,7 +229,6 @@ class _DebtsScreenState extends State<DebtsScreen> {
                         dueDate: dueDate,
                       ),
                     );
-                    appState.notifyListeners();
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Dette enregistrée pour $name.')));
                   },

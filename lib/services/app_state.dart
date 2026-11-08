@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
+import 'invoice_signature_helper.dart';
 
 class AppState extends ChangeNotifier {
   static const String _storageKey = 'bricelo_dynamic_state_v2';
@@ -40,6 +41,10 @@ class AppState extends ChangeNotifier {
     InvoiceHeaderLine(id: 'line_3', label: 'Téléphone', value: 'Tél: +237 689 39 88 07'),
     InvoiceHeaderLine(id: 'line_4', label: 'N° Contribuable', value: 'N° Cont: P049616604139M'),
   ];
+
+  // Signature personnalisée de la caisse apposée sur les factures
+  String invoiceSignatureText = 'Bricelo';
+  int invoiceSignatureStyle = 0; // 0: Bouclé classique, 1: Vague moderne, 2: Double paraphe
 
   // --- Boutique Active & Liste des Boutiques ---
   bool isBossMode = true;
@@ -127,6 +132,9 @@ class AppState extends ChangeNotifier {
                 .toList();
           }
         }
+        invoiceSignatureText = (data['invoiceSignatureText'] ?? 'Bricelo').toString();
+        if (invoiceSignatureText.trim().isEmpty) invoiceSignatureText = 'Bricelo';
+        invoiceSignatureStyle = (data['invoiceSignatureStyle'] as num?)?.toInt() ?? 0;
         currentStore = (data['currentStore'] ?? (companyName.isNotEmpty ? companyName : 'Boutique Principale')).toString();
         openingCash = (data['openingCash'] as num?)?.toDouble() ?? 0.0;
 
@@ -283,6 +291,8 @@ class AppState extends ChangeNotifier {
         'taxNumber': taxNumber,
         'rccmNumber': rccmNumber,
         'invoiceHeaderLines': invoiceHeaderLines.map((e) => e.toJson()).toList(),
+        'invoiceSignatureText': invoiceSignatureText,
+        'invoiceSignatureStyle': invoiceSignatureStyle,
         'currentStore': currentStore,
         'availableStores': availableStores,
         'outlets': outlets.map((e) => e.toJson()).toList(),
@@ -697,6 +707,34 @@ class AppState extends ChangeNotifier {
     ];
     notifyListeners();
     _saveToPrefs();
+  }
+
+  // --- GESTION DE LA SIGNATURE DE CAISSE SUR LES FACTURES ---
+  Future<void> updateInvoiceSignature({
+    required String text,
+    int? style,
+  }) async {
+    invoiceSignatureText = text.trim().isNotEmpty ? text.trim() : 'Bricelo';
+    if (style != null) {
+      invoiceSignatureStyle = style;
+    }
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  void resetInvoiceSignature() {
+    invoiceSignatureText = 'Bricelo';
+    invoiceSignatureStyle = 0;
+    notifyListeners();
+    _saveToPrefs();
+  }
+
+  String getInvoiceSignatureSvg({String? colorHex}) {
+    return InvoiceSignatureHelper.generateSvg(
+      text: invoiceSignatureText,
+      styleIndex: invoiceSignatureStyle,
+      colorHex: colorHex ?? '#1E3A8A',
+    );
   }
 
   String generateNextInvoiceNumber() {
@@ -1522,6 +1560,12 @@ class AppState extends ChangeNotifier {
       'remaining_amount': debt.remainingDebt,
       'store_name': currentStore,
     }).then((_) {}, onError: (_) {});
+  }
+
+  void addCustomerDebt(CustomerDebt debt) {
+    debts.insert(0, debt);
+    _saveToPrefs();
+    notifyListeners();
   }
 
   // --- ACTIONS DETTES FOURNISSEURS ---

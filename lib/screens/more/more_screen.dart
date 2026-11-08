@@ -9,7 +9,6 @@ import 'package:stock_prime/screens/sales/sales_and_customers_screen.dart';
 import 'package:stock_prime/screens/finance/promotion_and_shop_screen.dart';
 import 'package:stock_prime/screens/inventory/stock_sub_menu_screen.dart';
 import 'package:stock_prime/screens/finance/purchases_and_expenses_screen.dart';
-import 'package:stock_prime/screens/finance/depreciation_report_screen.dart';
 import 'package:stock_prime/screens/finance/accounting_screen.dart';
 import 'package:stock_prime/screens/finance/global_stats_screen.dart';
 import 'package:stock_prime/screens/finance/activity_reports_screen.dart';
@@ -29,14 +28,12 @@ class _OriginalMenuItem {
   final IconData icon;
   final String title;
   final void Function(BuildContext context) onTap;
-  final Widget? badge;
   final List<String> keywords;
 
   const _OriginalMenuItem({
     required this.icon,
     required this.title,
     required this.onTap,
-    this.badge,
     this.keywords = const [],
   });
 }
@@ -631,12 +628,6 @@ class _MoreScreenState extends State<MoreScreen> {
                         ),
                       ),
                     ),
-                    if (item.badge != null)
-                      Positioned(
-                        top: -6,
-                        right: -18,
-                        child: item.badge!,
-                      ),
                   ],
                 ),
                 const SizedBox(height: 10),

@@ -508,7 +508,7 @@ class InvoicePrintService {
                     ),
                   ),
 
-                  // Caisse avec signature Bricelo générée systématiquement
+                  // Caisse avec signature manuscrite vectorielle personnalisée
                   pw.Padding(
                     padding: const pw.EdgeInsets.only(right: 12),
                     child: pw.Column(
@@ -519,9 +519,9 @@ class InvoicePrintService {
                           style: pw.TextStyle(font: fontBold, fontSize: 7.2, color: inkBlue),
                         ),
                         pw.SizedBox(height: 1),
-                        // Signature manuscrite vectorielle Bricelo
+                        // Signature manuscrite vectorielle dynamique (personnalisable)
                         pw.SvgImage(
-                          svg: briceloSignatureSvg,
+                          svg: appState.getInvoiceSignatureSvg(),
                           width: 65,
                           height: 22,
                           fit: pw.BoxFit.contain,

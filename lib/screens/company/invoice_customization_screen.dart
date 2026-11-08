@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/services/invoice_signature_helper.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 
 class InvoiceCustomizationScreen extends StatefulWidget {
@@ -17,9 +18,14 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
   final Map<String, TextEditingController> _labelControllers = {};
   final Map<String, TextEditingController> _valueControllers = {};
 
+  late TextEditingController _signatureController;
+  int _selectedSignatureStyle = 0;
+
   @override
   void initState() {
     super.initState();
+    _signatureController = TextEditingController(text: appState.invoiceSignatureText);
+    _selectedSignatureStyle = appState.invoiceSignatureStyle;
     _loadLines();
   }
 
@@ -38,6 +44,7 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
 
   @override
   void dispose() {
+    _signatureController.dispose();
     for (final c in _labelControllers.values) {
       c.dispose();
     }
@@ -78,11 +85,14 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
 
   void _resetToDefault() {
     appState.resetInvoiceHeaderLinesToDefault();
+    appState.resetInvoiceSignature();
     setState(() {
+      _signatureController.text = 'Bricelo';
+      _selectedSignatureStyle = 0;
       _loadLines();
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Lignes d\'en-tête réinitialisées aux valeurs par défaut.')),
+      const SnackBar(content: Text('Facture et signature réinitialisées aux valeurs par défaut (Bricelo).')),
     );
   }
 
@@ -94,11 +104,15 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
     }
 
     await appState.saveInvoiceHeaderLines(_lines);
+    await appState.updateInvoiceSignature(
+      text: _signatureController.text,
+      style: _selectedSignatureStyle,
+    );
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('En-tête de facture personnalisé enregistré avec succès !'),
+        content: Text('Personnalisation de la facture enregistrée avec succès !'),
         backgroundColor: Color(0xFF059669),
       ),
     );
@@ -261,8 +275,15 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
           }),
 
           const SizedBox(height: 20),
+          const Divider(height: 1),
+          const SizedBox(height: 16),
 
-          // 3. BOUTON ENREGISTRER
+          // 3. PERSONNALISATION DE LA SIGNATURE DE CAISSE
+          _buildSignatureCustomizationSection(isDark),
+
+          const SizedBox(height: 24),
+
+          // 4. BOUTON ENREGISTRER
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -280,6 +301,225 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
           const SizedBox(height: 30),
         ],
       ),
+    );
+  }
+
+  // Widget de personnalisation de la signature de caisse
+  Widget _buildSignatureCustomizationSection(bool isDark) {
+    final signatureText = _signatureController.text.trim().isEmpty
+        ? 'Bricelo'
+        : _signatureController.text.trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.draw_rounded, size: 19, color: AppTheme.accentGold),
+                    SizedBox(width: 6),
+                    Text(
+                      'Signature de caisse (Facture)',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Générez automatiquement la signature apposée sur la facture',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+              ],
+            ),
+            if (_signatureController.text.trim().toLowerCase() != 'bricelo' || _selectedSignatureStyle != 0)
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF2563EB),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _signatureController.text = 'Bricelo';
+                    _selectedSignatureStyle = 0;
+                  });
+                },
+                child: const Text('Rétablir Bricelo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Carte d'aperçu en direct de la signature générée
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? AppTheme.darkSurface : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(color: Color(0x04000000), blurRadius: 4, offset: Offset(0, 2)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.remove_red_eye_rounded, size: 12, color: Color(0xFF2563EB)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Aperçu sur la facture (Zone Caisse)',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    'Plaqué sur PDF & Reçu',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Simulation fidèle du cadre "Caisse" de la facture A6
+              Container(
+                width: 170,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Caisse',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: Color(0xFF1E3A8A),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 140,
+                      height: 46,
+                      child: CustomPaint(
+                        painter: InvoiceSignaturePainter(
+                          text: signatureText,
+                          styleIndex: _selectedSignatureStyle,
+                          color: const Color(0xFF1E3A8A),
+                          strokeWidth: 2.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Champ texte du nom/vendeur
+              TextField(
+                controller: _signatureController,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  labelText: 'Nom à signer à la caisse *',
+                  hintText: 'Ex: Bricelo, Franklin, Ousmane, Gérant...',
+                  helperText: 'Chaque lettre est convertie en calligraphie vectorielle avec paraphe',
+                  helperStyle: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  prefixIcon: const Icon(Icons.edit_rounded, color: AppTheme.accentGold, size: 20),
+                  suffixIcon: _signatureController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded, size: 18),
+                          onPressed: () {
+                            _signatureController.clear();
+                            setState(() {});
+                          },
+                        )
+                      : null,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // Sélecteur de style de calligraphie
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Style de calligraphie :',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('Bouclé Classique', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                    selected: _selectedSignatureStyle == 0,
+                    selectedColor: AppTheme.primaryNavy,
+                    labelStyle: TextStyle(
+                      color: _selectedSignatureStyle == 0 ? Colors.white : const Color(0xFF1E293B),
+                    ),
+                    onSelected: (val) {
+                      if (val) setState(() => _selectedSignatureStyle = 0);
+                    },
+                  ),
+                  ChoiceChip(
+                    label: const Text('Vague Moderne', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                    selected: _selectedSignatureStyle == 1,
+                    selectedColor: AppTheme.primaryNavy,
+                    labelStyle: TextStyle(
+                      color: _selectedSignatureStyle == 1 ? Colors.white : const Color(0xFF1E293B),
+                    ),
+                    onSelected: (val) {
+                      if (val) setState(() => _selectedSignatureStyle = 1);
+                    },
+                  ),
+                  ChoiceChip(
+                    label: const Text('Double Prestige', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                    selected: _selectedSignatureStyle == 2,
+                    selectedColor: AppTheme.primaryNavy,
+                    labelStyle: TextStyle(
+                      color: _selectedSignatureStyle == 2 ? Colors.white : const Color(0xFF1E293B),
+                    ),
+                    onSelected: (val) {
+                      if (val) setState(() => _selectedSignatureStyle = 2);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

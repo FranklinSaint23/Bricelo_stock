@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/services/invoice_print_service.dart';
+import 'package:stock_prime/services/invoice_signature_helper.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 
 // =========================================================================
@@ -144,7 +145,7 @@ class SaleReceiptDialog extends StatelessWidget {
     buffer.writeln('--------------------------------');
     buffer.writeln('TOTAL : ${sale.total.toInt()} F CFA');
     buffer.writeln('Arrêté à : ${FrenchNumberToWords.convert(sale.total.round())} Francs CFA');
-    buffer.writeln('Signature : Bricelo (Caisse)');
+    buffer.writeln('Signature : ${appState.invoiceSignatureText} (Caisse)');
     buffer.writeln('--------------------------------');
     return buffer.toString();
   }
@@ -589,12 +590,17 @@ class SaleReceiptDialog extends StatelessWidget {
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 9, color: inkBlue),
                             ),
                             const SizedBox(height: 2),
-                            // Signature manuscrite vectorielle Bricelo
+                            // Signature manuscrite vectorielle personnalisée
                             SizedBox(
                               width: 75,
                               height: 26,
                               child: CustomPaint(
-                                painter: const BriceloSignaturePainter(color: inkBlue, strokeWidth: 1.8),
+                                painter: InvoiceSignaturePainter(
+                                  text: appState.invoiceSignatureText,
+                                  styleIndex: appState.invoiceSignatureStyle,
+                                  color: inkBlue,
+                                  strokeWidth: 1.8,
+                                ),
                               ),
                             ),
                           ],
