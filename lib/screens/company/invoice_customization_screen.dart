@@ -175,20 +175,23 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Informations sur la facture',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Modifiez les lignes affichées à côté du logo',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                  ),
-                ],
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Informations sur la facture',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Modifiez les lignes affichées à côté du logo',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               TextButton.icon(
                 style: TextButton.styleFrom(foregroundColor: AppTheme.accentGold),
                 icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
@@ -314,33 +317,40 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.draw_rounded, size: 19, color: AppTheme.accentGold),
-                    SizedBox(width: 6),
-                    Text(
-                      'Signature de caisse (Facture)',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Générez automatiquement la signature apposée sur la facture',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                ),
-              ],
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.draw_rounded, size: 19, color: AppTheme.accentGold),
+                      SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Signature de caisse (Facture)',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Générez automatiquement la signature apposée sur la facture',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
             ),
-            if (_signatureController.text.trim().toLowerCase() != 'bricelo' || _selectedSignatureStyle != 0)
+            if (_signatureController.text.trim().toLowerCase() != 'bricelo' || _selectedSignatureStyle != 0) ...[
+              const SizedBox(width: 6),
               TextButton(
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFF2563EB),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 onPressed: () {
                   setState(() {
@@ -350,6 +360,7 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
                 },
                 child: const Text('Rétablir Bricelo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
+            ],
           ],
         ),
         const SizedBox(height: 12),
@@ -372,25 +383,31 @@ class _InvoiceCustomizationScreenState extends State<InvoiceCustomizationScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.remove_red_eye_rounded, size: 12, color: Color(0xFF2563EB)),
-                        SizedBox(width: 4),
-                        Text(
-                          'Aperçu sur la facture (Zone Caisse)',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF)),
-                        ),
-                      ],
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.remove_red_eye_rounded, size: 12, color: Color(0xFF2563EB)),
+                          SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              'Aperçu sur la facture (Zone Caisse)',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 6),
                   Text(
                     'Plaqué sur PDF & Reçu',
                     style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
