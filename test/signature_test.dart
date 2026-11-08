@@ -44,3 +44,4 @@ void main() {
     expect(find.byType(CustomPaint), findsWidgets);
   });
 }
+

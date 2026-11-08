@@ -28,12 +28,15 @@ class _OriginalMenuItem {
   final IconData icon;
   final String title;
   final void Function(BuildContext context) onTap;
+  final Widget? badge;
   final List<String> keywords;
 
   const _OriginalMenuItem({
     required this.icon,
     required this.title,
     required this.onTap,
+    // ignore: unused_element_parameter
+    this.badge,
     this.keywords = const [],
   });
 }
@@ -628,6 +631,12 @@ class _MoreScreenState extends State<MoreScreen> {
                         ),
                       ),
                     ),
+                    if (item.badge != null)
+                      Positioned(
+                        top: -6,
+                        right: -18,
+                        child: item.badge!,
+                      ),
                   ],
                 ),
                 const SizedBox(height: 10),

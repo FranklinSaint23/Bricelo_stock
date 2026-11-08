@@ -1002,3 +1002,4 @@ class InvoiceSignaturePainter extends CustomPainter {
         oldDelegate.strokeWidth != strokeWidth;
   }
 }
+
