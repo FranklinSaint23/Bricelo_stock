@@ -15,6 +15,30 @@ class MyAccountScreen extends StatefulWidget {
 class _MyAccountScreenState extends State<MyAccountScreen> {
   final appState = AppState.instance;
 
+  bool _isEmailVerified(AppState state) {
+    try {
+      return (state as dynamic).isEmailVerified == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String _getSubscriptionPlan(AppState state) {
+    try {
+      return (state as dynamic).subscriptionPlan?.toString() ?? 'Gratuit';
+    } catch (_) {
+      return 'Gratuit';
+    }
+  }
+
+  String _getSubscriptionBilling(AppState state) {
+    try {
+      return (state as dynamic).subscriptionBilling?.toString() ?? 'mensuel';
+    } catch (_) {
+      return 'mensuel';
+    }
+  }
+
   Future<void> _pickShopLogo() async {
     try {
       final picker = ImagePicker();
@@ -524,7 +548,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                             ),
                           ),
                           // BADGE ÉTAT DE VÉRIFICATION EMAIL
-                          if (appState.isEmailVerified)
+                          if (_isEmailVerified(appState))
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
@@ -721,7 +745,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                               Row(
                                 children: [
                                   Text(
-                                    'Formule : ${appState.subscriptionPlan}',
+                                    'Formule : ${_getSubscriptionPlan(appState)}',
                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
                                   ),
                                   const SizedBox(width: 8),
@@ -740,9 +764,9 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                appState.subscriptionPlan == 'Gratuit'
+                                _getSubscriptionPlan(appState) == 'Gratuit'
                                     ? 'Découverte — touchez pour passer à Pro'
-                                    : (appState.subscriptionBilling == 'annuel' ? 'Facturation annuelle active' : 'Facturation mensuelle active'),
+                                    : (_getSubscriptionBilling(appState) == 'annuel' ? 'Facturation annuelle active' : 'Facturation mensuelle active'),
                                 style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                               ),
                             ],

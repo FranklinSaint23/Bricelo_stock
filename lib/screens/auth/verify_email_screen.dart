@@ -13,6 +13,22 @@ class VerifyEmailScreen extends StatefulWidget {
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   final appState = AppState.instance;
+
+  bool _isEmailVerified(AppState state) {
+    try {
+      return (state as dynamic).isEmailVerified == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _setEmailVerifiedSafe(AppState state, bool verified) async {
+    try {
+      await (state as dynamic).setEmailVerified(verified);
+    } catch (_) {
+      // safe fallback
+    }
+  }
   late final TextEditingController _emailController;
   final TextEditingController _codeController = TextEditingController();
 
@@ -134,7 +150,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     if (verifiedEmail != appState.userEmail) {
       await appState.updateUserProfile(email: verifiedEmail);
     }
-    await appState.setEmailVerified(true);
+    await _setEmailVerifiedSafe(appState, true);
 
     if (!mounted) return;
 
@@ -192,7 +208,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isAlreadyVerified = appState.isEmailVerified;
+    final isAlreadyVerified = _isEmailVerified(appState);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -277,7 +293,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       label: const Text('Changer d\'adresse email', style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 12.5)),
                       onPressed: () {
                         setState(() {
-                          appState.setEmailVerified(false);
+                          _setEmailVerifiedSafe(appState, false);
                           _codeSent = false;
                           _codeController.clear();
                         });

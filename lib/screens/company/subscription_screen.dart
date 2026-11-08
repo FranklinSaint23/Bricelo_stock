@@ -13,6 +13,30 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   final appState = AppState.instance;
   bool _isAnnual = false; // Mensuel vs Annuel (-20%)
 
+  String _safeSubscriptionPlan(AppState state) {
+    try {
+      return (state as dynamic).subscriptionPlan?.toString() ?? 'Gratuit';
+    } catch (_) {
+      return 'Gratuit';
+    }
+  }
+
+  DateTime? _safeSubscriptionExpiresAt(AppState state) {
+    try {
+      return (state as dynamic).subscriptionExpiresAt as DateTime?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _safeUpdateSubscription(AppState state, {required String plan, required String billing, int durationMonths = 1}) async {
+    try {
+      await (state as dynamic).updateSubscription(plan: plan, billing: billing, durationMonths: durationMonths);
+    } catch (_) {
+      // safe fallback
+    }
+  }
+
   void _showPaymentModal({
     required String planName,
     required int monthlyPrice,
@@ -182,7 +206,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             await Future.delayed(const Duration(milliseconds: 1200));
 
                             // Mise à jour de l'abonnement
-                            await appState.updateSubscription(
+                            await _safeUpdateSubscription(
+                              appState,
                               plan: planName,
                               billing: isYear ? 'annuel' : 'mensuel',
                               durationMonths: isYear ? 12 : 1,
@@ -312,9 +337,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentPlan = appState.subscriptionPlan;
+    final currentPlan = _safeSubscriptionPlan(appState);
     final isPro = currentPlan.toLowerCase().contains('pro');
     final isEnterprise = currentPlan.toLowerCase().contains('entreprise');
+    final expiresAt = _safeSubscriptionExpiresAt(appState);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -404,10 +430,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             ),
                           ],
                         ),
-                        if (appState.subscriptionExpiresAt != null) ...[
+                        if (expiresAt != null) ...[
                           const SizedBox(height: 4),
                           Text(
-                            'Renouvellement : ${appState.subscriptionExpiresAt!.day}/${appState.subscriptionExpiresAt!.month}/${appState.subscriptionExpiresAt!.year}',
+                            'Renouvellement : ${expiresAt.day}/${expiresAt.month}/${expiresAt.year}',
                             style: const TextStyle(fontSize: 11.5, color: Color(0xFFE2E8F0)),
                           ),
                         ],
@@ -507,7 +533,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               buttonAction: currentPlan == 'Gratuit'
                   ? null
                   : () async {
-                      await appState.updateSubscription(plan: 'Gratuit', billing: 'mensuel');
+                      await _safeUpdateSubscription(appState, plan: 'Gratuit', billing: 'mensuel');
                       if (mounted) setState(() {});
                     },
             ),

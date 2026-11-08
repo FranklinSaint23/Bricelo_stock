@@ -25,15 +25,38 @@ class AppState extends ChangeNotifier {
   String userName = '';
   String companyName = '';
   String userEmail = '';
-  bool isEmailVerified = false;
+  static bool _globalEmailVerified = false;
+  bool get isEmailVerified => _globalEmailVerified;
+  set isEmailVerified(bool value) {
+    _globalEmailVerified = value;
+  }
   String userPhone = '';
   String userRole = 'Propriétaire';
 
   // --- Abonnement Bricelo SaaS ---
-  String subscriptionPlan = 'Gratuit'; // 'Gratuit', 'Pro', 'Entreprise'
-  String subscriptionBilling = 'mensuel'; // 'mensuel' or 'annuel'
-  String subscriptionStatus = 'Actif';
-  DateTime? subscriptionExpiresAt;
+  static String _globalSubscriptionPlan = 'Gratuit'; // 'Gratuit', 'Pro', 'Entreprise'
+  String get subscriptionPlan => _globalSubscriptionPlan;
+  set subscriptionPlan(String value) {
+    _globalSubscriptionPlan = value;
+  }
+
+  static String _globalSubscriptionBilling = 'mensuel'; // 'mensuel' or 'annuel'
+  String get subscriptionBilling => _globalSubscriptionBilling;
+  set subscriptionBilling(String value) {
+    _globalSubscriptionBilling = value;
+  }
+
+  static String _globalSubscriptionStatus = 'Actif';
+  String get subscriptionStatus => _globalSubscriptionStatus;
+  set subscriptionStatus(String value) {
+    _globalSubscriptionStatus = value;
+  }
+
+  static DateTime? _globalSubscriptionExpiresAt;
+  DateTime? get subscriptionExpiresAt => _globalSubscriptionExpiresAt;
+  set subscriptionExpiresAt(DateTime? value) {
+    _globalSubscriptionExpiresAt = value;
+  }
 
   // --- Profil Entreprise & Facturation Dynamique ---
   String companyLogo = '';
