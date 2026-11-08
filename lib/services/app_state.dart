@@ -67,6 +67,9 @@ class AppState extends ChangeNotifier {
   List<StockTransfer> stockTransfers = [];
   List<InventorySession> inventorySessions = [];
   List<TeamMember> teamMembers = [];
+  List<StockDepreciation> stockDepreciations = [];
+  String stockDestockingStrategy = 'FIFO'; // 'FIFO' or 'FEFO'
+  int expiryAlertDays = 30;
 
   // --- Getters d'affichage sécurisés ---
   String get language => currentLanguage;
@@ -240,6 +243,11 @@ class AppState extends ChangeNotifier {
         teamMembers = (data['teamMembers'] as List<dynamic>? ?? [])
             .map((e) => TeamMember.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
+        stockDestockingStrategy = (data['stockDestockingStrategy'] ?? 'FIFO').toString();
+        expiryAlertDays = (data['expiryAlertDays'] as num?)?.toInt() ?? 30;
+        stockDepreciations = (data['stockDepreciations'] as List<dynamic>? ?? [])
+            .map((e) => StockDepreciation.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
         notifyListeners();
       }
     } catch (e) {
@@ -289,6 +297,9 @@ class AppState extends ChangeNotifier {
         'stockTransfers': stockTransfers.map((e) => e.toJson()).toList(),
         'inventorySessions': inventorySessions.map((e) => e.toJson()).toList(),
         'teamMembers': teamMembers.map((e) => e.toJson()).toList(),
+        'stockDestockingStrategy': stockDestockingStrategy,
+        'expiryAlertDays': expiryAlertDays,
+        'stockDepreciations': stockDepreciations.map((e) => e.toJson()).toList(),
       };
       await prefs.setString(_storageKey, jsonEncode(payload));
     } catch (e) {
@@ -1849,6 +1860,83 @@ class AppState extends ChangeNotifier {
 
     _saveToPrefs();
     notifyListeners();
+  }
+
+  // --- GESTION DE LA DÉPRÉCIATION DE STOCK & PÉREMPTION ---
+  void setStockDestockingStrategy(String strategy) {
+    stockDestockingStrategy = strategy;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void setExpiryAlertDays(int days) {
+    expiryAlertDays = days;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void updateProductExpiry(String productId, DateTime? expiryDate, {String? lotNumber}) {
+    final idx = products.indexWhere((p) => p.id == productId);
+    if (idx != -1) {
+      products[idx].expiryDate = expiryDate;
+      if (lotNumber != null) {
+        products[idx].lotNumber = lotNumber;
+      }
+      _saveToPrefs();
+      notifyListeners();
+    }
+  }
+
+  void recordStockDepreciation({
+    required String productId,
+    required int quantity,
+    required String reason,
+    String notes = '',
+    String? storeName,
+  }) {
+    final idx = products.indexWhere((prod) => prod.id == productId);
+    if (idx == -1) return;
+    final p = products[idx];
+    final targetStore = (storeName != null && storeName.isNotEmpty && storeName != 'Tous')
+        ? storeName
+        : currentStore;
+    final oldStoreStock = p.stockForStore(targetStore);
+    final newStock = (oldStoreStock - quantity).clamp(0, 9999999);
+    p.setStockForStore(targetStore, newStock);
+
+    final unitCost = p.buyPrice > 0 ? p.buyPrice : (p.sellPrice * 0.7);
+    final totalLoss = unitCost * quantity;
+
+    final dep = StockDepreciation(
+      id: 'dep_${DateTime.now().millisecondsSinceEpoch}',
+      productId: p.id,
+      productName: p.name,
+      quantity: quantity,
+      unitCost: unitCost,
+      totalLoss: totalLoss,
+      reason: reason,
+      notes: notes,
+      storeName: targetStore,
+      date: DateTime.now(),
+    );
+    stockDepreciations.insert(0, dep);
+
+    final sm = StockMovement(
+      id: 'sm_${DateTime.now().millisecondsSinceEpoch}_${p.id}',
+      productId: p.id,
+      productName: p.name,
+      type: 'DÉPRÉCIATION (-)',
+      quantity: quantity,
+      newStock: p.stockForStore(targetStore),
+      reason: 'Dépréciation: $reason ($targetStore)${notes.isNotEmpty ? " - $notes" : ""}',
+      date: DateTime.now(),
+    );
+    stockMovements.insert(0, sm);
+
+    _saveToPrefs();
+    notifyListeners();
+
+    _supabase?.from('products').update({'stock': p.stock}).eq('id', p.id).then((_) {}, onError: (_) {});
   }
 
   // --- PARAMÈTRES & BOUTIQUE ---

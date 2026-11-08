@@ -1,6 +1,7 @@
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/widgets/widgets.dart';
+import 'package:stock_prime/screens/company/announcements_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -116,15 +117,21 @@ class AboutScreen extends StatelessWidget {
             title: 'Mises à jour',
             subtitle: 'Historique des versions et annonces',
             trailing: const Icon(Icons.chevron_right, size: 20, color: Color(0xFF4B5563)),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const AnnouncementsScreen()));
+            },
           ),
           const SizedBox(height: 14),
           _buildRow(
-            icon: Icons.apple,
-            title: 'Voir sur le store',
-            subtitle: 'App Store',
-            trailing: const Icon(Icons.open_in_new, size: 18, color: Color(0xFF4B5563)),
-            onTap: () {},
+            icon: Icons.store_rounded,
+            title: 'Disponibilité',
+            subtitle: 'Application mobile & Web Bricelo',
+            trailing: const Icon(Icons.check_circle_outline_rounded, size: 18, color: Color(0xFF16A34A)),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Bricelo Stock Version Pro Connectée.')),
+              );
+            },
           ),
           const SizedBox(height: 14),
           _buildRow(
@@ -137,17 +144,21 @@ class AboutScreen extends StatelessWidget {
               ),
               child: const Icon(Icons.play_arrow, color: Colors.white, size: 16),
             ),
-            title: 'Chaîne YouTube',
-            subtitle: '@stckpls',
+            title: 'Tutoriels Vidéo',
+            subtitle: '@bricelo_stock',
             trailing: const Icon(Icons.open_in_new, size: 18, color: Color(0xFF4B5563)),
-            onTap: () {},
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Accès aux tutoriels Bricelo Stock')),
+              );
+            },
           ),
           const SizedBox(height: 36),
 
           // 6. COPYRIGHT PIED DE PAGE
           const Center(
             child: Text(
-              '© 2026 StockPlus',
+              '© 2026 Bricelo Stock · Tous droits réservés',
               style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
             ),
           ),

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/models/models.dart';
@@ -90,6 +94,63 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               end: todayEnd,
             );
     }
+  }
+
+  Future<void> _shareSalesJournalPdf(List<Sale> salesToShare, double totalEncaisse) async {
+    final pdf = pw.Document();
+    final fontBold = await PdfGoogleFonts.openSansBold();
+    final fontRegular = await PdfGoogleFonts.openSansRegular();
+    final formatter = NumberFormat('#,###', 'fr_FR');
+    final navy = PdfColor.fromInt(0xFF0D1B2E);
+    final gold = PdfColor.fromInt(0xFFD97706);
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(24),
+        build: (context) => [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('JOURNAL DES VENTES', style: pw.TextStyle(font: fontBold, fontSize: 18, color: navy)),
+                  pw.Text('Bricelo Stock · ${appState.currentStore}', style: pw.TextStyle(font: fontRegular, fontSize: 11, color: PdfColors.grey700)),
+                  pw.Text('Période: $_selectedPeriod', style: pw.TextStyle(font: fontBold, fontSize: 11, color: gold)),
+                ],
+              ),
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.end,
+                children: [
+                  pw.Text('${salesToShare.length} vente(s)', style: pw.TextStyle(font: fontBold, fontSize: 12, color: navy)),
+                  pw.Text('Total : ${formatter.format(totalEncaisse.round())} F CFA', style: pw.TextStyle(font: fontBold, fontSize: 14, color: navy)),
+                ],
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 16),
+          pw.TableHelper.fromTextArray(
+            headers: ['Réf / Ticket', 'Date & Heure', 'Client', 'Mode de paiement', 'Montant'],
+            data: salesToShare.map((s) => [
+              s.historyReference,
+              _formatDateTime(s.createdAt),
+              s.customerName,
+              s.paymentMethod,
+              '${formatter.format(s.total.round())} F CFA',
+            ]).toList(),
+            headerStyle: pw.TextStyle(font: fontBold, fontSize: 9, color: PdfColors.white),
+            headerDecoration: pw.BoxDecoration(color: navy),
+            cellStyle: pw.TextStyle(font: fontRegular, fontSize: 8.5),
+            cellAlignment: pw.Alignment.centerLeft,
+            cellAlignments: {4: pw.Alignment.centerRight},
+          ),
+        ],
+      ),
+    );
+
+    final bytes = await pdf.save();
+    await Printing.sharePdf(bytes: bytes, filename: 'Journal_Ventes_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.pdf');
   }
 
   Future<void> _pickCustomDateRange() async {
@@ -407,10 +468,15 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   ),
                   icon: const Icon(Icons.share_outlined, size: 16),
                   label: const Text('Partager', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Rapport (${sales.length} ventes) prêt à partager')),
-                    );
+                  onPressed: () async {
+                    try {
+                      await _shareSalesJournalPdf(sales, totalEncaisse);
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erreur partage: $e')),
+                      );
+                    }
                   },
                 ),
               ),

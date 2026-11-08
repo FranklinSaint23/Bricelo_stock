@@ -124,7 +124,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: const [
                                   Text(
-                                    'Nouvelle version de Stockplus: 2.3.0',
+                                    'Nouvelle version de Bricelo Stock: 2.5.1',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,

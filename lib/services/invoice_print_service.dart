@@ -19,14 +19,14 @@ class FrenchNumberToWords {
   ];
 
   static String convert(int n) {
-    if (n == 0) return 'Zéro Franc CFA';
+    if (n == 0) return 'Zéro';
     if (n < 0) return 'Moins ${convert(-n)}';
 
     String words = _convertChunk(n).trim();
     if (words.isNotEmpty) {
       words = words[0].toUpperCase() + words.substring(1);
     }
-    return '$words Francs CFA';
+    return words;
   }
 
   static String _convertChunk(int n) {
@@ -470,18 +470,24 @@ class InvoicePrintService {
                           style: pw.TextStyle(font: fontBold, fontSize: 6.2, color: inkBlue),
                         ),
                         pw.TextSpan(
-                          text: totalInWords,
+                          text: '$totalInWords Francs CFA',
                           style: pw.TextStyle(font: fontBold, fontSize: 6.2, color: inkBlue),
                         ),
                       ],
                     ),
                   ),
                   pw.SizedBox(height: 1),
-                  pw.Text(
-                    '........................................................................................................................................................................................................',
-                    style: pw.TextStyle(font: fontRegular, fontSize: 5.5, color: inkBlue),
-                    maxLines: 1,
-                    overflow: pw.TextOverflow.clip,
+                  pw.Row(
+                    children: [
+                      pw.Expanded(
+                        child: pw.Text(
+                          '....................................................................................................................................................................................................................',
+                          style: pw.TextStyle(font: fontRegular, fontSize: 6, color: inkBlue),
+                          maxLines: 1,
+                          overflow: pw.TextOverflow.clip,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -9,7 +9,6 @@ import 'package:stock_prime/screens/sales/sales_and_customers_screen.dart';
 import 'package:stock_prime/screens/finance/promotion_and_shop_screen.dart';
 import 'package:stock_prime/screens/inventory/stock_sub_menu_screen.dart';
 import 'package:stock_prime/screens/finance/purchases_and_expenses_screen.dart';
-import 'package:stock_prime/screens/finance/depreciation_report_screen.dart';
 import 'package:stock_prime/screens/finance/accounting_screen.dart';
 import 'package:stock_prime/screens/finance/global_stats_screen.dart';
 import 'package:stock_prime/screens/finance/activity_reports_screen.dart';
@@ -83,50 +82,32 @@ class _MoreScreenState extends State<MoreScreen> {
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const PurchasesAndExpensesScreen())),
         keywords: ['achat', 'achats', 'dépense', 'depense', 'dépenses', 'fournisseur', 'fournisseurs', 'charge', 'bon d\'achat', 'bons d\'achat', 'dette fournisseur', 'dettes fournisseurs'],
       ),
-      // 5. Pertes & dépréciations
-      _OriginalMenuItem(
-        icon: Icons.remove_shopping_cart_rounded,
-        title: 'Pertes & dépréciations'.tr,
-        onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const DepreciationReportScreen())),
-        keywords: ['perte', 'pertes', 'dépréciation', 'depreciation', 'casse', 'avarie', 'rapport'],
-      ),
-      // 6. Comptabilité & trésorerie
+      // 5. Comptabilité & trésorerie
       _OriginalMenuItem(
         icon: Icons.calculate_rounded,
         title: 'Comptabilité & trésorerie'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const AccountingScreen())),
         keywords: ['comptabilité', 'comptabilite', 'trésorerie', 'tresorerie', 'banque', 'caisse', 'finance', 'bilan'],
       ),
-      // 7. Statistiques (globales)
+      // 6. Statistiques (globales)
       _OriginalMenuItem(
         icon: Icons.bar_chart_rounded,
         title: 'Statistiques (globales)'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const GlobalStatsScreen())),
         keywords: ['statistique', 'statistiques', 'stat', 'stats', 'globale', 'globales', 'analyse', 'graphique', 'chiffre'],
       ),
-      // 8. Rapports
+      // 7. Rapports
       _OriginalMenuItem(
         icon: Icons.assessment_rounded,
         title: 'Rapports'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const ActivityReportsScreen())),
         keywords: ['rapport', 'rapports', 'activité', 'activite', 'période', 'periode', 'bilan', 'export', 'pdf'],
       ),
-      // 7. Entreprise & équipe (avec badge À compléter)
+      // 8. Entreprise & équipe
       _OriginalMenuItem(
         icon: Icons.corporate_fare_rounded,
         title: 'Entreprise & équipe'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const CompanyAndTeamScreen())),
-        badge: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-          decoration: BoxDecoration(
-            color: AppTheme.badgeOrange,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            'À compléter'.tr,
-            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-          ),
-        ),
         keywords: ['entreprise', 'équipe', 'equipe', 'employé', 'employe', 'utilisateur', 'rôle', 'role', 'société'],
       ),
       // 8. Préférences

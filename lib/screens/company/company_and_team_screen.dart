@@ -54,7 +54,6 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 _buildRow(
                   icon: Icons.business_center_rounded,
                   title: 'Profil de l\'entreprise',
-                  badge: 'À compléter',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyProfileScreen()));
                   },
@@ -71,7 +70,6 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 _buildRow(
                   icon: Icons.credit_card_rounded,
                   title: 'Moyens de paiement',
-                  badge: 'À compléter',
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentMethodsScreen()));
                   },

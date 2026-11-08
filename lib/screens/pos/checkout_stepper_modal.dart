@@ -1063,7 +1063,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         ),
         const SizedBox(height: 28),
 
-        // 1. Imprimer la facture A6
+        // 1. Imprimer la facture
         SizedBox(
           width: double.infinity,
           height: 48,
@@ -1075,7 +1075,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
-            label: const Text('Imprimer la facture (A6)', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+            label: const Text('Imprimer la facture', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
             onPressed: () => SaleReceiptDialog.show(context, sale),
           ),
         ),

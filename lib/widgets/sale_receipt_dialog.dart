@@ -190,7 +190,7 @@ class SaleReceiptDialog extends StatelessWidget {
                   Icon(Icons.visibility_rounded, color: AppTheme.accentGold, size: 16),
                   SizedBox(width: 6),
                   Text(
-                    'Aperçu de la Facture (Format A6)',
+                    'Aperçu de la Facture',
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ],
@@ -625,7 +625,7 @@ class SaleReceiptDialog extends StatelessWidget {
                             elevation: 0,
                           ),
                           icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
-                          label: const Text('Imprimer (A6)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          label: const Text('Imprimer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           onPressed: () async {
                             try {
                               await InvoicePrintService.printSale(sale);
@@ -649,7 +649,7 @@ class SaleReceiptDialog extends StatelessWidget {
                             elevation: 0,
                           ),
                           icon: const Icon(Icons.share_rounded, size: 18, color: AppTheme.accentGold),
-                          label: const Text('Partager PDF (A6)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          label: const Text('Partager PDF', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           onPressed: () async {
                             try {
                               await InvoicePrintService.shareSale(sale);

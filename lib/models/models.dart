@@ -47,6 +47,8 @@ class Product {
   bool isSyncedToBricelo;
   String? supplierName;
   String? imageUrl;
+  DateTime? expiryDate;
+  String? lotNumber;
 
   Map<String, int> stockByStore;
 
@@ -65,6 +67,8 @@ class Product {
     this.isSyncedToBricelo = true,
     this.supplierName,
     this.imageUrl,
+    this.expiryDate,
+    this.lotNumber,
     Map<String, int>? stockByStore,
   })  : wholesalePrice = wholesalePrice ?? (sellPrice * 0.9),
         stockByStore = stockByStore ?? {};
@@ -95,6 +99,19 @@ class Product {
   bool get isLowStock => productType != 'Service' && stock <= minStockAlert && stock > 0;
   bool get isOutOfStock => productType != 'Service' && stock <= 0;
 
+  bool get hasExpiry => expiryDate != null;
+  bool isExpired() => expiryDate != null && expiryDate!.isBefore(DateTime.now());
+  bool isExpiringSoon(int alertDays) {
+    if (expiryDate == null) return false;
+    final now = DateTime.now();
+    final diff = expiryDate!.difference(now).inDays;
+    return diff >= 0 && diff <= alertDays;
+  }
+  int? daysUntilExpiry() {
+    if (expiryDate == null) return null;
+    return expiryDate!.difference(DateTime.now()).inDays;
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
@@ -110,6 +127,8 @@ class Product {
         'isSyncedToBricelo': isSyncedToBricelo,
         'supplierName': supplierName,
         'imageUrl': imageUrl,
+        'expiryDate': expiryDate?.toIso8601String(),
+        'lotNumber': lotNumber,
         'stockByStore': stockByStore,
       };
 
@@ -139,6 +158,10 @@ class Product {
       isSyncedToBricelo: j['isSyncedToBricelo'] as bool? ?? true,
       supplierName: j['supplierName']?.toString(),
       imageUrl: j['imageUrl']?.toString() ?? j['image_url']?.toString(),
+      expiryDate: j['expiryDate'] != null
+          ? DateTime.tryParse(j['expiryDate'].toString())
+          : (j['expiry_date'] != null ? DateTime.tryParse(j['expiry_date'].toString()) : null),
+      lotNumber: j['lotNumber']?.toString() ?? j['lot_number']?.toString(),
       stockByStore: sMap,
     );
   }
@@ -566,6 +589,58 @@ class StockMovement {
         newStock: (j['newStock'] as num?)?.toInt() ?? 0,
         reason: (j['reason'] ?? '').toString(),
         date: DateTime.tryParse((j['date'] ?? j['movement_date'] ?? '').toString()) ?? DateTime.now(),
+      );
+}
+
+class StockDepreciation {
+  final String id;
+  final String productId;
+  final String productName;
+  final int quantity;
+  final double unitCost;
+  final double totalLoss;
+  final String reason;
+  final String notes;
+  final String storeName;
+  final DateTime date;
+
+  StockDepreciation({
+    required this.id,
+    required this.productId,
+    required this.productName,
+    required this.quantity,
+    required this.unitCost,
+    required this.totalLoss,
+    required this.reason,
+    this.notes = '',
+    required this.storeName,
+    required this.date,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'productId': productId,
+        'productName': productName,
+        'quantity': quantity,
+        'unitCost': unitCost,
+        'totalLoss': totalLoss,
+        'reason': reason,
+        'notes': notes,
+        'storeName': storeName,
+        'date': date.toIso8601String(),
+      };
+
+  factory StockDepreciation.fromJson(Map<String, dynamic> j) => StockDepreciation(
+        id: (j['id'] ?? '').toString(),
+        productId: (j['productId'] ?? '').toString(),
+        productName: (j['productName'] ?? '').toString(),
+        quantity: (j['quantity'] as num?)?.toInt() ?? 0,
+        unitCost: (j['unitCost'] as num?)?.toDouble() ?? 0.0,
+        totalLoss: (j['totalLoss'] as num?)?.toDouble() ?? 0.0,
+        reason: (j['reason'] ?? 'Casse / Dommage').toString(),
+        notes: (j['notes'] ?? '').toString(),
+        storeName: (j['storeName'] ?? '').toString(),
+        date: DateTime.tryParse((j['date'] ?? '').toString()) ?? DateTime.now(),
       );
 }
 

@@ -280,7 +280,7 @@ class SaleDetailScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
-                label: const Text('Imprimer la facture (A6)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                label: const Text('Imprimer la facture', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 onPressed: () => SaleReceiptDialog.show(context, sale),
               ),
             ),
@@ -315,7 +315,7 @@ class SaleDetailScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     icon: const Icon(Icons.receipt_outlined, size: 18),
-                    label: const Text('Partager PDF (A6)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    label: const Text('Partager PDF', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     onPressed: () async {
                       try {
                         await InvoicePrintService.shareSale(sale);
