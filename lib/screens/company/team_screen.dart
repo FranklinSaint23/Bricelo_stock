@@ -232,6 +232,7 @@ class _TeamScreenState extends State<TeamScreen> {
   }
 
   void _showEditMemberDialog(BuildContext context, TeamMember member) {
+    final isOwner = member.role.toLowerCase().contains('propriétaire') || member.id == 'owner_primary';
     final nameParts = member.name.split(' ');
     final prenomCtrl = TextEditingController(text: nameParts.first);
     final nomCtrl = TextEditingController(text: nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '');
@@ -297,30 +298,64 @@ class _TeamScreenState extends State<TeamScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: ['Propriétaire', 'Gérant', 'Caissier', 'Magasinier', 'Vendeur'].contains(role) ? role : 'Caissier',
-                  decoration: InputDecoration(
-                    labelText: 'Rôle *',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+
+                // RÔLE
+                if (isOwner) ...[
+                  // Rôle verrouillé pour le Propriétaire (Non modifiable)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Rôle (Non modifiable)',
+                              style: TextStyle(color: Color(0xFF6B7280), fontSize: 11.5, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Propriétaire',
+                              style: TextStyle(color: Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        Icon(Icons.lock_rounded, size: 18, color: Color(0xFF64748B)),
+                      ],
+                    ),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'Propriétaire', child: Text('Propriétaire')),
-                    DropdownMenuItem(value: 'Gérant', child: Text('Gérant')),
-                    DropdownMenuItem(value: 'Caissier', child: Text('Caissier')),
-                    DropdownMenuItem(value: 'Magasinier', child: Text('Magasinier')),
-                    DropdownMenuItem(value: 'Vendeur', child: Text('Vendeur')),
-                  ],
-                  onChanged: (v) {
-                    setDlgState(() {
-                      role = v ?? 'Caissier';
-                      if (role == 'Propriétaire') {
-                        assignedStore = 'Toutes les boutiques';
-                      }
-                    });
-                  },
-                ),
+                ] else ...[
+                  DropdownButtonFormField<String>(
+                    initialValue: ['Gérant', 'Caissier', 'Magasinier', 'Vendeur'].contains(role) ? role : 'Caissier',
+                    decoration: InputDecoration(
+                      labelText: 'Rôle *',
+                      labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'Gérant', child: Text('Gérant')),
+                      DropdownMenuItem(value: 'Caissier', child: Text('Caissier')),
+                      DropdownMenuItem(value: 'Magasinier', child: Text('Magasinier')),
+                      DropdownMenuItem(value: 'Vendeur', child: Text('Vendeur')),
+                    ],
+                    onChanged: (v) {
+                      setDlgState(() {
+                        role = v ?? 'Caissier';
+                        if (role == 'Propriétaire') {
+                          assignedStore = 'Toutes les boutiques';
+                        }
+                      });
+                    },
+                  ),
+                ],
                 const SizedBox(height: 12),
 
                 // Si Propriétaire alors il gère tout : le champ Boutique assignée n'a pas sa place
@@ -411,8 +446,8 @@ class _TeamScreenState extends State<TeamScreen> {
                           name: fullName,
                           phone: phone,
                           email: emailCtrl.text.trim().isNotEmpty ? emailCtrl.text.trim() : null,
-                          role: role,
-                          storeName: role == 'Propriétaire' ? 'Toutes les boutiques' : assignedStore,
+                          role: isOwner ? 'Propriétaire' : role,
+                          storeName: (isOwner || role == 'Propriétaire') ? 'Toutes les boutiques' : assignedStore,
                         );
 
                         Navigator.pop(ctx);

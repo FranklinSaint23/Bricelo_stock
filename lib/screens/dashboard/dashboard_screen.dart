@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:stock_prime/screens/screens.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
@@ -13,6 +14,44 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   String _searchQuery = '';
   String _activeFilter = "Aujourd'hui"; // "Aujourd'hui", "En attente", "Stock faible", "Terminé"
+
+  Widget _buildShopLogoAvatar(AppState appState, double size) {
+    if (appState.companyLogo.isNotEmpty) {
+      try {
+        final clean = appState.companyLogo.contains(',')
+            ? appState.companyLogo.split(',').last
+            : appState.companyLogo;
+        return Image.memory(
+          base64Decode(clean),
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, stack) => _buildFallbackLogo(appState, size),
+        );
+      } catch (_) {
+        return _buildFallbackLogo(appState, size);
+      }
+    }
+    return _buildFallbackLogo(appState, size);
+  }
+
+  Widget _buildFallbackLogo(AppState appState, double size) {
+    return Image.asset(
+      'assets/images/logo.png',
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        color: AppTheme.primaryNavy,
+        child: Center(
+          child: Text(
+            appState.userInitials,
+            style: TextStyle(
+              color: AppTheme.accentGold,
+              fontWeight: FontWeight.bold,
+              fontSize: size * 0.36,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -571,14 +610,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Bricelo Stock',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.3,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.6), width: 1.2),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: _buildShopLogoAvatar(appState, 26),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              appState.displayCompanyName.isNotEmpty ? appState.displayCompanyName : 'Bricelo Stock',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
         ),
       ),
       body: SafeArea(
@@ -587,7 +642,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. TOP HEADER : Avatar Initials + Bonjour <Nom> + DATE DU JOUR en dessous + Assistant IA
+              // 1. TOP HEADER : Logo de la boutique + Bonjour <Nom> + DATE DU JOUR en dessous + Assistant IA
               Row(
                 children: [
                   InkWell(
@@ -596,23 +651,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                     borderRadius: BorderRadius.circular(24),
                     child: Container(
-                      width: 44,
-                      height: 44,
+                      width: 46,
+                      height: 46,
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryNavy,
                         shape: BoxShape.circle,
                         border: Border.all(color: AppTheme.accentGold, width: 2),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+                        ],
                       ),
-                      child: Center(
-                        child: Text(
-                          appState.userInitials,
-                          style: const TextStyle(
-                            color: AppTheme.accentGold,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: _buildShopLogoAvatar(appState, 46),
                     ),
                   ),
                   const SizedBox(width: 12),
