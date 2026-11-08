@@ -823,66 +823,6 @@ class InvoiceSignatureHelper {
     canvas.restore();
   }
 
-  static void _paintBriceloDefault(Canvas canvas, Size size, Color color, double strokeWidth) {
-    final scaleX = size.width / 160.0;
-    final scaleY = size.height / 55.0;
-
-    canvas.save();
-    canvas.scale(scaleX, scaleY);
-
-    final strokePaint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final fillPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final p = Path()
-      ..moveTo(14, 38)
-      ..cubicTo(12, 25, 20, 8, 28, 8)
-      ..cubicTo(36, 8, 40, 18, 34, 27)
-      ..cubicTo(32, 30, 27, 33, 21, 33)
-      ..cubicTo(30, 33, 40, 33, 42, 43)
-      ..cubicTo(44, 49, 34, 49, 24, 47)
-      ..cubicTo(17, 45, 14, 39, 20, 35)
-      ..moveTo(34, 32)
-      ..cubicTo(40, 28, 46, 26, 50, 28)
-      ..cubicTo(54, 30, 51, 36, 48, 40)
-      ..moveTo(52, 36)
-      ..cubicTo(56, 28, 60, 28, 64, 28)
-      ..cubicTo(68, 28, 66, 40, 66, 40)
-      ..moveTo(70, 32)
-      ..cubicTo(76, 28, 82, 30, 88, 32)
-      ..cubicTo(94, 34, 92, 40, 86, 42)
-      ..moveTo(90, 36)
-      ..cubicTo(96, 30, 102, 32, 108, 34)
-      ..cubicTo(114, 36, 110, 42, 106, 42)
-      ..moveTo(110, 32)
-      ..cubicTo(114, 20, 118, 10, 122, 8)
-      ..cubicTo(126, 6, 124, 30, 122, 40)
-      ..moveTo(126, 34)
-      ..cubicTo(132, 28, 140, 30, 146, 32)
-      ..cubicTo(152, 34, 150, 42, 142, 42)
-      ..cubicTo(134, 42, 136, 34, 144, 34);
-
-    canvas.drawPath(p, strokePaint);
-    canvas.drawCircle(const Offset(64, 20), 1.6, fillPaint);
-
-    final under = Path()
-      ..moveTo(20, 48)
-      ..quadraticBezierTo(80, 51, 148, 43)
-      ..quadraticBezierTo(158, 41, 144, 49)
-      ..quadraticBezierTo(88, 54, 36, 52)
-      ..close();
-    canvas.drawPath(under, fillPaint);
-
-    canvas.restore();
-  }
-
   // --- Modélisation algorithmique interne ---
   static _SignatureModel _buildSignatureModel(String text, int styleIndex) {
     double curX = 14.0;

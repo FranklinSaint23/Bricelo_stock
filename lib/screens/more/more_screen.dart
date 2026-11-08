@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:stock_prime/screens/company/help_center_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
@@ -45,6 +46,44 @@ class _MoreScreenState extends State<MoreScreen> {
   final appState = AppState.instance;
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
+
+  Widget _buildShopLogoAvatar(double size) {
+    if (appState.companyLogo.isNotEmpty) {
+      try {
+        final clean = appState.companyLogo.contains(',')
+            ? appState.companyLogo.split(',').last
+            : appState.companyLogo;
+        return Image.memory(
+          base64Decode(clean),
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, stack) => _buildFallbackLogo(size),
+        );
+      } catch (_) {
+        return _buildFallbackLogo(size);
+      }
+    }
+    return _buildFallbackLogo(size);
+  }
+
+  Widget _buildFallbackLogo(double size) {
+    return Image.asset(
+      'assets/images/logo.png',
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        color: AppTheme.primaryNavy,
+        child: Center(
+          child: Text(
+            appState.userInitials,
+            style: TextStyle(
+              color: AppTheme.accentGold,
+              fontWeight: FontWeight.bold,
+              fontSize: size * 0.35,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -257,23 +296,7 @@ class _MoreScreenState extends State<MoreScreen> {
                           ],
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: Image.asset(
-                          'assets/images/hum.jpg',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: AppTheme.primaryNavy,
-                            child: Center(
-                              child: Text(
-                                appState.userInitials,
-                                style: const TextStyle(
-                                  color: AppTheme.accentGold,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        child: _buildShopLogoAvatar(52),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -337,70 +360,72 @@ class _MoreScreenState extends State<MoreScreen> {
               const SizedBox(height: 14),
 
               // ==========================================
-              // 2. BANNIÈRE E-MAIL NON VÉRIFIÉ
+              // 2. BANNIÈRE E-MAIL NON VÉRIFIÉ (Masquée si vérifié)
               // ==========================================
-              InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const VerifyEmailScreen()),
-                  );
-                },
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF2D1616) : const Color(0xFFFEF2F2),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: isDark ? const Color(0xFF5A2323) : const Color(0xFFFECACA), width: 1.2),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.mail_outline_rounded, color: AppTheme.danger, size: 22),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'E-mail non vérifié'.tr,
-                              style: const TextStyle(
-                                color: AppTheme.danger,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+              if (!appState.isEmailVerified) ...[
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const VerifyEmailScreen()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF2D1616) : const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: isDark ? const Color(0xFF5A2323) : const Color(0xFFFECACA), width: 1.2),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.mail_outline_rounded, color: AppTheme.danger, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'E-mail non vérifié'.tr,
+                                style: const TextStyle(
+                                  color: AppTheme.danger,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Sécurisez votre compte — touchez pour vérifier'.tr,
-                              style: TextStyle(
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
-                                fontSize: 11,
+                              const SizedBox(height: 2),
+                              Text(
+                                'Sécurisez votre compte — touchez pour vérifier'.tr,
+                                style: TextStyle(
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
+                                  fontSize: 11,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.danger,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'À vérifier'.tr,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.bold,
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.danger,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'À vérifier'.tr,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+              ],
             ],
 
             // ==========================================

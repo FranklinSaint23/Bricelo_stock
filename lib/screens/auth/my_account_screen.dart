@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/screens/screens.dart';
 import 'package:stock_prime/services/app_state.dart';
@@ -13,11 +15,44 @@ class MyAccountScreen extends StatefulWidget {
 class _MyAccountScreenState extends State<MyAccountScreen> {
   final appState = AppState.instance;
 
+  Future<void> _pickShopLogo() async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        final base64String = base64Encode(bytes);
+        await appState.updateCompanyLogo(base64String);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFF059669),
+              content: Text('Logo de la boutique mis à jour avec succès !'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(backgroundColor: const Color(0xFFDC2626), content: Text('Erreur: $e')),
+        );
+      }
+    }
+  }
+
   void _showEditProfileDialog() {
     final nameCtrl = TextEditingController(text: appState.displayUserName);
     final companyCtrl = TextEditingController(text: appState.displayCompanyName);
     final phoneCtrl = TextEditingController(text: appState.userPhone);
     final emailCtrl = TextEditingController(text: appState.userEmail);
+    final addressCtrl = TextEditingController(text: appState.companyAddress);
 
     showModalBottomSheet(
       context: context,
@@ -73,6 +108,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
               ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: addressCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(labelText: 'Adresse de la boutique', border: OutlineInputBorder()),
+              ),
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
@@ -84,17 +125,28 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () async {
+                    final newEmail = emailCtrl.text.trim();
+                    if (newEmail != appState.userEmail) {
+                      // Si l'email a changé, réinitialiser la vérification
+                      await appState.setEmailVerified(false);
+                    }
                     await appState.updateUserProfile(
                       name: nameCtrl.text.trim(),
                       company: companyCtrl.text.trim(),
                       phone: phoneCtrl.text.trim(),
-                      email: emailCtrl.text.trim(),
+                      email: newEmail,
                     );
+                    if (addressCtrl.text.trim().isNotEmpty) {
+                      await appState.updateCompanyProfile(address: addressCtrl.text.trim());
+                    }
                     if (!ctx.mounted) return;
                     Navigator.pop(ctx);
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profil mis à jour avec succès !')),
+                      const SnackBar(
+                        backgroundColor: Color(0xFF059669),
+                        content: Text('Profil mis à jour avec succès !'),
+                      ),
                     );
                   },
                   child: const Text('Enregistrer', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -123,7 +175,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
           children: [
             TextField(controller: oldCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Ancien mot de passe', border: OutlineInputBorder())),
             const SizedBox(height: 12),
-            TextField(controller: newCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Nouveau mot de passe', border: OutlineInputBorder())),
+            TextField(controller: newCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Nouveau mot de passe (min. 6 caract.)', border: OutlineInputBorder())),
             const SizedBox(height: 12),
             TextField(controller: confirmCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Confirmer le mot de passe', border: OutlineInputBorder())),
           ],
@@ -133,8 +185,25 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white),
             onPressed: () {
+              if (newCtrl.text.length < 6) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Le mot de passe doit comporter au moins 6 caractères.')),
+                );
+                return;
+              }
+              if (newCtrl.text != confirmCtrl.text) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Les mots de passe ne correspondent pas.')),
+                );
+                return;
+              }
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mot de passe mis à jour avec succès !')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: Color(0xFF059669),
+                  content: Text('Mot de passe mis à jour avec succès !'),
+                ),
+              );
             },
             child: const Text('Enregistrer'),
           ),
@@ -164,8 +233,14 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white),
             onPressed: () {
+              final val = emailCtrl.text.trim();
+              if (val.isNotEmpty) {
+                appState.updateUserProfile(email: val);
+              }
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email de récupération enregistré !')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(backgroundColor: Color(0xFF059669), content: Text('Email de récupération enregistré !')),
+              );
             },
             child: const Text('Enregistrer'),
           ),
@@ -236,6 +311,44 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     );
   }
 
+  Widget _buildShopLogoAvatar({double size = 56}) {
+    if (appState.companyLogo.isNotEmpty) {
+      try {
+        final clean = appState.companyLogo.contains(',')
+            ? appState.companyLogo.split(',').last
+            : appState.companyLogo;
+        return Image.memory(
+          base64Decode(clean),
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, stack) => _buildFallbackShopLogo(size),
+        );
+      } catch (_) {
+        return _buildFallbackShopLogo(size);
+      }
+    }
+    return _buildFallbackShopLogo(size);
+  }
+
+  Widget _buildFallbackShopLogo(double size) {
+    return Image.asset(
+      'assets/images/logo.png',
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        color: AppTheme.primaryNavy,
+        child: Center(
+          child: Text(
+            appState.userInitials,
+            style: TextStyle(
+              color: AppTheme.accentGold,
+              fontWeight: FontWeight.bold,
+              fontSize: size * 0.35,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -274,29 +387,63 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // CARTE PROFIL DYNAMIQUE
+                // 1. CARTE PROFIL & LOGO DE LA BOUTIQUE
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFE5E7EB)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryNavy,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Center(
-                          child: Text(
-                            appState.userInitials,
-                            style: const TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.bold, fontSize: 18),
+                      // LOGO DE LA BOUTIQUE AVEC BADGE MODIFICATION
+                      Stack(
+                        children: [
+                          InkWell(
+                            onTap: _pickShopLogo,
+                            borderRadius: BorderRadius.circular(30),
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppTheme.accentGold, width: 2),
+                                boxShadow: const [
+                                  BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+                                ],
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: _buildShopLogoAvatar(size: 60),
+                            ),
                           ),
-                        ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: InkWell(
+                              onTap: _pickShopLogo,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppTheme.primaryNavy,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt_rounded,
+                                  color: Colors.white,
+                                  size: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -310,19 +457,31 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                             const SizedBox(height: 2),
                             Text(
                               appState.displayCompanyName,
-                              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w500),
                             ),
                             const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFD1FAE5),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                appState.userRole,
-                                style: const TextStyle(color: AppTheme.primaryNavy, fontSize: 11, fontWeight: FontWeight.bold),
-                              ),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD1FAE5),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    appState.userRole,
+                                    style: const TextStyle(color: AppTheme.primaryNavy, fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: _pickShopLogo,
+                                  child: const Text(
+                                    'Changer le logo',
+                                    style: TextStyle(fontSize: 11.5, color: AppTheme.primaryNavy, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -332,7 +491,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // INFORMATIONS PERSONNELLES DYNAMIQUES
+                // 2. INFORMATIONS PERSONNELLES DYNAMIQUES
                 const Text(
                   'Informations personnelles',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
@@ -342,7 +501,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
                   child: Column(
@@ -352,17 +511,76 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                       const SizedBox(height: 4),
                       Text(phoneDisplay, style: const TextStyle(fontSize: 14, color: Color(0xFF1F2937), fontWeight: FontWeight.w500)),
                       const Divider(height: 24, color: Color(0xFFF3F4F6)),
+
                       const Text('EMAIL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF9CA3AF))),
                       const SizedBox(height: 6),
-                      Text(
-                        emailDisplay,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF1F2937)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              emailDisplay,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF1F2937)),
+                            ),
+                          ),
+                          // BADGE ÉTAT DE VÉRIFICATION EMAIL
+                          if (appState.isEmailVerified)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFF86EFAC)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 13),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Vérifié',
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const VerifyEmailScreen()),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF2F2),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFFFECACA)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 13),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Vérifier',
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       const Divider(height: 24, color: Color(0xFFF3F4F6)),
+
                       const Text('BOUTIQUE PRINCIPALE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF9CA3AF))),
                       const SizedBox(height: 4),
                       Text(appState.currentStore, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
                       const SizedBox(height: 20),
+
                       SizedBox(
                         width: double.infinity,
                         height: 44,
@@ -381,7 +599,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 ),
                 const SizedBox(height: 22),
 
-                // 3. SÉCURITÉ (Image 2)
+                // 3. SÉCURITÉ
                 const Text(
                   'Sécurité',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
@@ -391,7 +609,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
                   child: Column(
@@ -440,33 +658,104 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 ),
                 const SizedBox(height: 22),
 
-                // 4. ABONNEMENT (Image 2)
-                const Text(
-                  'Abonnement',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                // 4. ABONNEMENT (FONCTIONNEL ET DYNAMIQUE)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Abonnement',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                        );
+                      },
+                      child: const Text(
+                        'Voir les formules',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.badge_outlined, color: AppTheme.primaryNavy, size: 22),
-                      SizedBox(width: 14),
-                      Text(
-                        'Formule : Gratuit',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
-                      ),
-                    ],
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.accentGold.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.workspace_premium_rounded, color: AppTheme.accentGold, size: 24),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Formule : ${appState.subscriptionPlan}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDCFCE7),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text(
+                                      'Actif',
+                                      style: TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                appState.subscriptionPlan == 'Gratuit'
+                                    ? 'Découverte — touchez pour passer à Pro'
+                                    : (appState.subscriptionBilling == 'annuel' ? 'Facturation annuelle active' : 'Facturation mensuelle active'),
+                                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: Color(0xFF9CA3AF), size: 20),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 22),
 
-                // 5. SUR LE WEB (Image 2)
+                // 5. SUR LE WEB
                 const Text(
                   'Sur le web',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
@@ -476,7 +765,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
                   child: InkWell(
@@ -499,11 +788,11 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // ACTIONS ROUGES
+                // 6. ACTIONS ROUGES (DÉCONNEXION & SUPPRESSION)
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
                   child: Column(

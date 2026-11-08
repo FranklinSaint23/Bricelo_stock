@@ -25,8 +25,15 @@ class AppState extends ChangeNotifier {
   String userName = '';
   String companyName = '';
   String userEmail = '';
+  bool isEmailVerified = false;
   String userPhone = '';
   String userRole = 'Propriétaire';
+
+  // --- Abonnement Bricelo SaaS ---
+  String subscriptionPlan = 'Gratuit'; // 'Gratuit', 'Pro', 'Entreprise'
+  String subscriptionBilling = 'mensuel'; // 'mensuel' or 'annuel'
+  String subscriptionStatus = 'Actif';
+  DateTime? subscriptionExpiresAt;
 
   // --- Profil Entreprise & Facturation Dynamique ---
   String companyLogo = '';
@@ -116,8 +123,15 @@ class AppState extends ChangeNotifier {
         userName = (data['userName'] ?? '').toString();
         companyName = (data['companyName'] ?? '').toString();
         userEmail = (data['userEmail'] ?? '').toString();
+        isEmailVerified = data['isEmailVerified'] as bool? ?? false;
         userPhone = (data['userPhone'] ?? '').toString();
         userRole = (data['userRole'] ?? 'Propriétaire').toString();
+        subscriptionPlan = (data['subscriptionPlan'] ?? 'Gratuit').toString();
+        subscriptionBilling = (data['subscriptionBilling'] ?? 'mensuel').toString();
+        subscriptionStatus = (data['subscriptionStatus'] ?? 'Actif').toString();
+        if (data['subscriptionExpiresAt'] != null) {
+          subscriptionExpiresAt = DateTime.tryParse(data['subscriptionExpiresAt'].toString());
+        }
         companyLogo = (data['companyLogo'] ?? '').toString();
         companyAddress = (data['companyAddress'] ?? 'Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)').toString();
         companyActivity = (data['companyActivity'] ?? 'VENTE DE MATELAS, LITS, MOUSSES, MEUBLES ET ACCESSOIRES MENAGERS').toString();
@@ -283,8 +297,13 @@ class AppState extends ChangeNotifier {
         'userName': userName,
         'companyName': companyName,
         'userEmail': userEmail,
+        'isEmailVerified': isEmailVerified,
         'userPhone': userPhone,
         'userRole': userRole,
+        'subscriptionPlan': subscriptionPlan,
+        'subscriptionBilling': subscriptionBilling,
+        'subscriptionStatus': subscriptionStatus,
+        'subscriptionExpiresAt': subscriptionExpiresAt?.toIso8601String(),
         'companyLogo': companyLogo,
         'companyAddress': companyAddress,
         'companyActivity': companyActivity,
@@ -688,6 +707,33 @@ class AppState extends ChangeNotifier {
     if (taxNo != null) taxNumber = taxNo.trim();
     if (rccmNo != null) rccmNumber = rccmNo.trim();
     if (logoBase64 != null) companyLogo = logoBase64;
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> setEmailVerified(bool verified) async {
+    isEmailVerified = verified;
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> updateCompanyLogo(String base64) async {
+    companyLogo = base64;
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> updateSubscription({
+    required String plan,
+    required String billing,
+    int durationMonths = 1,
+  }) async {
+    subscriptionPlan = plan;
+    subscriptionBilling = billing;
+    subscriptionStatus = 'Actif';
+    subscriptionExpiresAt = plan == 'Gratuit'
+        ? null
+        : DateTime.now().add(Duration(days: durationMonths * 30));
     notifyListeners();
     await _saveToPrefs();
   }

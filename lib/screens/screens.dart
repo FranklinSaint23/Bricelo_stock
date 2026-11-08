@@ -30,6 +30,7 @@ export 'sales/online_orders_screen.dart';
 export 'sales/online_shop_screen.dart';
 export 'sales/video_studio_screen.dart';
 export 'company/help_center_screen.dart';
+export 'company/subscription_screen.dart';
 export 'company/company_and_team_screen.dart';
 export 'company/company_profile_screen.dart';
 export 'company/brand_screen.dart';
