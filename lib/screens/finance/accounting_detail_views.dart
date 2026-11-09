@@ -267,19 +267,33 @@ class TrialBalanceScreen extends StatelessWidget {
         final suppDebts = appState.totalSupplierDebt;
         final stockVal = appState.products.fold<double>(0.0, (sum, p) => sum + (p.stock * p.buyPrice));
 
+        // Calcul des achats réels (bons de commande ou réassorts effectifs)
+        final purchasesFromOrders = appState.purchaseOrders.fold<double>(0.0, (sum, po) => sum + po.totalAmount);
+        final purchasesFromMovements = appState.stockMovements
+            .where((m) => m.type.contains('RÉASSORT'))
+            .fold<double>(0.0, (sum, m) {
+              final prod = appState.products.firstWhere(
+                (p) => p.id == m.productId,
+                orElse: () => Product(id: '', name: m.productName, category: '', barcode: '', buyPrice: 0, sellPrice: 0, stock: 0),
+              );
+              return sum + (m.quantity * prod.buyPrice);
+            });
+        final purchasesTotal = purchasesFromOrders > 0 ? purchasesFromOrders : purchasesFromMovements;
+
         final accounts = [
-          {'code': '101', 'name': 'Capital & Apports', 'debit': 0.0, 'credit': 500000.0},
+          {'code': '101', 'name': 'Capital & Apports', 'debit': 0.0, 'credit': 0.0},
           {'code': '311', 'name': 'Stocks de Marchandises', 'debit': stockVal, 'credit': 0.0},
           {'code': '401', 'name': 'Fournisseurs & comptes rattachés', 'debit': 0.0, 'credit': suppDebts},
           {'code': '411', 'name': 'Clients & comptes rattachés', 'debit': custDebts, 'credit': 0.0},
           {'code': '531', 'name': 'Caisse Principale (Espèces & Tréso)', 'debit': cashSalesTotal > expTotal ? (cashSalesTotal - expTotal) : 0.0, 'credit': expTotal > cashSalesTotal ? (expTotal - cashSalesTotal) : 0.0},
-          {'code': '601', 'name': 'Achats de Marchandises', 'debit': stockVal * 0.7, 'credit': 0.0},
+          {'code': '601', 'name': 'Achats de Marchandises', 'debit': purchasesTotal, 'credit': 0.0},
           {'code': '605', 'name': 'Autres Charges d\'Exploitation', 'debit': expTotal, 'credit': 0.0},
           {'code': '701', 'name': 'Ventes de Marchandises', 'debit': 0.0, 'credit': salesTotal},
         ];
 
         final sumDebit = accounts.fold<double>(0.0, (sum, a) => sum + (a['debit'] as double));
         final sumCredit = accounts.fold<double>(0.0, (sum, a) => sum + (a['credit'] as double));
+        final activeAccounts = accounts.where((a) => (a['debit'] as double) > 0 || (a['credit'] as double) > 0).toList();
 
         return Scaffold(
           backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF9FAFB),
@@ -327,66 +341,104 @@ class TrialBalanceScreen extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: accounts.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, idx) {
-                    final a = accounts[idx];
-                    final d = a['debit'] as double;
-                    final c = a['credit'] as double;
-                    final solde = d - c;
-
-                    return Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppTheme.darkSurface : Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                child: activeAccounts.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.accentGold.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(4),
+                                  color: AppTheme.primaryNavy.withValues(alpha: 0.08),
+                                  shape: BoxShape.circle,
                                 ),
-                                child: Text(a['code'] as String, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.accentGold)),
+                                child: const Icon(Icons.account_balance_outlined, size: 48, color: AppTheme.primaryNavy),
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  a['name'] as String,
-                                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : AppTheme.textPrimary),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Débit: ${AppTheme.formatFCFA(d)}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                              Text('Crédit: ${AppTheme.formatFCFA(c)}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                              const SizedBox(height: 16),
                               Text(
-                                solde >= 0 ? '+${AppTheme.formatFCFA(solde)} (D)' : '-${AppTheme.formatFCFA(solde.abs())} (C)',
+                                'Aucun mouvement comptable',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: solde >= 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                                  color: isDark ? Colors.white : AppTheme.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Aucune donnée prédéfinie. Les écritures de débit et crédit apparaîtront automatiquement dès l\'enregistrement de vos premières opérations réelles (ventes, achats ou dépenses).',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark ? Colors.white60 : Colors.grey.shade600,
+                                  height: 1.4,
                                 ),
                               ),
                             ],
                           ),
-                        ],
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: activeAccounts.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, idx) {
+                          final a = activeAccounts[idx];
+                          final d = a['debit'] as double;
+                          final c = a['credit'] as double;
+                          final solde = d - c;
+
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppTheme.darkSurface : Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.accentGold.withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(a['code'] as String, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.accentGold)),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        a['name'] as String,
+                                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : AppTheme.textPrimary),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Débit: ${AppTheme.formatFCFA(d)}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                    Text('Crédit: ${AppTheme.formatFCFA(c)}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                    Text(
+                                      solde >= 0 ? '+${AppTheme.formatFCFA(solde)} (D)' : '-${AppTheme.formatFCFA(solde.abs())} (C)',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: solde >= 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
             ],
           ),
@@ -553,10 +605,26 @@ class BalanceSheetScreen extends StatelessWidget {
         final cashSalesTotal = appState.sales.where((s) => s.paymentMethod != 'À Crédit').fold<double>(0.0, (sum, s) => sum + s.total);
         final expTotal = appState.expenses.fold<double>(0.0, (sum, e) => sum + e.amount);
         final cashInHand = cashSalesTotal > expTotal ? (cashSalesTotal - expTotal) : 0.0;
-        final totalActif = stockVal + custDebts + cashInHand + 250000.0; // 250k d'immobilisations
+        final totalActif = stockVal + custDebts + cashInHand;
 
         final suppDebts = appState.totalSupplierDebt;
-        final resultNet = (stockVal * 0.3) + cashInHand;
+
+        // Calcul du résultat net d'exploitation réel
+        final caBrut = appState.sales.fold<double>(0.0, (sum, s) => sum + s.total);
+        final remises = appState.sales.fold<double>(0.0, (sum, s) => sum + s.discountTotal);
+        final caNet = caBrut - remises;
+        double cogs = 0.0;
+        for (final s in appState.sales) {
+          for (final it in s.items) {
+            final p = appState.products.firstWhere(
+              (prod) => prod.name == it.productName,
+              orElse: () => Product(id: '', name: it.productName, category: '', barcode: '', buyPrice: 0, sellPrice: it.unitPrice, stock: 0),
+            );
+            cogs += p.buyPrice * it.quantity;
+          }
+        }
+        final totalDepreciations = appState.stockDepreciations.fold<double>(0.0, (sum, d) => sum + d.totalLoss);
+        final resultNet = (caNet - cogs) - expTotal - totalDepreciations;
         final capitaux = totalActif - suppDebts;
 
         return Scaffold(
@@ -592,7 +660,7 @@ class BalanceSheetScreen extends StatelessWidget {
                       ],
                     ),
                     const Divider(height: 20),
-                    _buildBalanceLine('Immobilisations corporelles (matériel/mobilier)', 250000.0),
+                    _buildBalanceLine('Immobilisations corporelles (matériel/mobilier)', 0.0),
                     _buildBalanceLine('Stocks de marchandises (${appState.products.length} articles)', stockVal),
                     _buildBalanceLine('Créances clients (crédits non réglés)', custDebts),
                     _buildBalanceLine('Disponibilités en caisse & banques', cashInHand),
@@ -622,7 +690,7 @@ class BalanceSheetScreen extends StatelessWidget {
                       ],
                     ),
                     const Divider(height: 20),
-                    _buildBalanceLine('Capitaux propres & Apports de départ', capitaux - resultNet),
+                    _buildBalanceLine('Capitaux propres & Apports de départ', (capitaux - resultNet) > 0 ? (capitaux - resultNet) : 0.0),
                     _buildBalanceLine('Résultat de l\'exercice en cours', resultNet),
                     _buildBalanceLine('Dettes fournisseurs (achats à crédit)', suppDebts),
                     const Divider(height: 24, thickness: 1.5),
@@ -804,11 +872,24 @@ class PayrollScreen extends StatefulWidget {
 class _PayrollScreenState extends State<PayrollScreen> {
   final appState = AppState.instance;
 
-  final List<Map<String, dynamic>> _staff = [
-    {'name': 'Amadou Cissé', 'role': 'Gérant principal', 'base': 180000.0, 'primes': 25000.0, 'avances': 0.0, 'paid': false},
-    {'name': 'Fatou Touré', 'role': 'Caissière', 'base': 110000.0, 'primes': 10000.0, 'avances': 15000.0, 'paid': false},
-    {'name': 'Mamadou Diallo', 'role': 'Magasinier / Livreur', 'base': 95000.0, 'primes': 5000.0, 'avances': 0.0, 'paid': false},
-  ];
+  List<Map<String, dynamic>> _staff = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initStaff();
+  }
+
+  void _initStaff() {
+    _staff = appState.teamMembers.map((m) => {
+      'name': m.name,
+      'role': m.role,
+      'base': 0.0,
+      'primes': 0.0,
+      'avances': 0.0,
+      'paid': false,
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -847,7 +928,30 @@ class _PayrollScreenState extends State<PayrollScreen> {
             ),
           ),
           Expanded(
-            child: ListView.separated(
+            child: _staff.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.badge_outlined, size: 52, color: isDark ? Colors.white38 : Colors.grey.shade400),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Aucun équipier enregistré',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : AppTheme.textPrimary),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Ajoutez vos employés dans la section Équipe pour gérer leur paie et leurs salaires.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, color: isDark ? Colors.white60 : Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: _staff.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -965,12 +1069,7 @@ class FixedAssetsScreen extends StatefulWidget {
 class _FixedAssetsScreenState extends State<FixedAssetsScreen> {
   final appState = AppState.instance;
 
-  final List<Map<String, dynamic>> _assets = [
-    {'name': 'Ordinateur portable caisse', 'date': '15/01/2026', 'valeur': 280000.0, 'duree': '3 ans', 'amorti': 70000.0},
-    {'name': 'Imprimante thermique reçus', 'date': '15/01/2026', 'valeur': 65000.0, 'duree': '3 ans', 'amorti': 16250.0},
-    {'name': 'Rayonnages métalliques magasin', 'date': '02/02/2026', 'valeur': 190000.0, 'duree': '5 ans', 'amorti': 31600.0},
-    {'name': 'Moto de livraison', 'date': '10/03/2026', 'valeur': 650000.0, 'duree': '4 ans', 'amorti': 81250.0},
-  ];
+  final List<Map<String, dynamic>> _assets = [];
 
   void _showAddAssetDialog() {
     final nameCtrl = TextEditingController();
@@ -1079,7 +1178,30 @@ class _FixedAssetsScreenState extends State<FixedAssetsScreen> {
             ),
           ),
           Expanded(
-            child: ListView.separated(
+            child: _assets.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.domain_outlined, size: 52, color: isDark ? Colors.white38 : Colors.grey.shade400),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Aucune immobilisation enregistrée',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : AppTheme.textPrimary),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Cliquez sur le bouton + en haut à droite pour déclarer vos matériels, mobiliers ou équipements.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, color: isDark ? Colors.white60 : Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: _assets.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
