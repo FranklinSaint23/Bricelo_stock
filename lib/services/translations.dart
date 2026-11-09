@@ -706,6 +706,33 @@ class AppTranslations {
     "Caissier de session verrouillé (sécurité)": "Session Cashier Locked (Security)",
     "Stock insuffisant ! Le stock disponible pour": "Insufficient stock! Available stock for",
     "est de": "is",
+
+    // --- Promotion & boutique ---
+    "Promotions": "Promotions",
+    "Catalogues à partager": "Catalogs to Share",
+    "Boutique en ligne": "Online Store",
+    "Commande externe": "External Order",
+    "Studio vidéo": "Video Studio",
+    "Catalogue WhatsApp & Facebook": "WhatsApp & Facebook Catalog",
+
+    // --- Stock sub-menu ---
+    "Rapport de dépréciations": "Depreciation Report",
+    "Ajustement de stock": "Stock Adjustment",
+    "Transferts de stock": "Stock Transfers",
+    "Exporter la liste des produits": "Export Product List",
+    "Suivi de péremption": "Expiry Tracking",
+
+    // --- Assistant Bricelo ---
+    "Quel est mon stock actuel ?": "What is my current stock?",
+    "C'est quoi une perceuse ?": "What is a drill?",
+    "C'est quoi une banane ?": "What is a banana?",
+    "Rédige une description pour un produit": "Write a description for a product",
+    "Bricelo réfléchit...": "Bricelo is thinking...",
+    "Posez une question ou demandez d'ajouter un article...": "Ask a question or request to add an item...",
+    "Confirmer l'ajout au stock": "Confirm Stock Addition",
+    "Article déjà ajouté": "Item already added",
+    "Effacer la conversation": "Clear conversation",
+    "Texte copié": "Text copied",
   };
 
   static String translate(String text) {

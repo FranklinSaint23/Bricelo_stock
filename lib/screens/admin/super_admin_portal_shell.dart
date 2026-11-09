@@ -483,7 +483,7 @@ class _SuperAdminPortalShellState extends State<SuperAdminPortalShell> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'BRICELO CLOUD',
+                                'BRICELO STOCK',
                                 style: TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.w900, fontSize: 14.5, letterSpacing: 1.1),
                               ),
                               SizedBox(height: 2),

@@ -58,3 +58,4 @@ SET
 -- 3. (Optionnel) Si vous préférez promouvoir votre compte existant sans en créer un nouveau,
 -- décommentez la ligne suivante et indiquez votre numéro de téléphone :
 -- UPDATE public.user_profiles SET role = 'super_admin', is_super_admin = true WHERE phone = '+237XXXXXXXXX';
+

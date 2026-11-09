@@ -316,9 +316,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFCD34D)),
+                  border: Border.all(color: isDark ? const Color(0xFFB45309) : const Color(0xFFFCD34D)),
                 ),
                 child: Row(
                   children: [
@@ -327,7 +327,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     Expanded(
                       child: Text(
                         'Consultation du stock de "$_selectedStoreTab" uniquement pour demander un transfert vers votre boutique rattachée (${appState.assignedStoreForCurrentUser}).',
-                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -800,9 +804,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     margin: const EdgeInsets.only(bottom: 14),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
+                      color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFCD34D)),
+                      border: Border.all(color: isDark ? const Color(0xFFB45309) : const Color(0xFFFCD34D)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -814,7 +818,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             Expanded(
                               child: Text(
                                 'Consultation du stock de "$_selectedStoreTab" (pour transfert vers ${appState.assignedStoreForCurrentUser})',
-                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                                ),
                               ),
                             ),
                           ],
@@ -1072,7 +1080,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           const SizedBox(height: 3),
                           Text(
                             '${p.category.isNotEmpty ? p.category : "Général"} | ${AppTheme.formatFCFA(p.sellPrice)}',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                           ),
                         ],
                       ),
@@ -1094,7 +1102,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   ? 'pièce(s)'
                                   : (p.unit.contains('(s)') ? p.unit : '${p.unit}(s)'))
                               : 'pièce(s)',
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                         ),
                       ],
                     ),
@@ -1149,6 +1157,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Widget _buildStoreTabPill(String tabName) {
+    final isDark = appState.isDarkMode;
     final isSel = _selectedStoreTab == tabName;
     return InkWell(
       onTap: () => setState(() => _selectedStoreTab = tabName),
@@ -1156,14 +1165,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSel ? Colors.white : Colors.transparent,
+          color: isSel ? (isDark ? const Color(0xFF1E293B) : Colors.white) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
           boxShadow: isSel ? const [BoxShadow(color: Colors.black12, blurRadius: 4)] : null,
         ),
         child: Text(
           tabName.tr,
           style: TextStyle(
-            color: isSel ? AppTheme.primaryNavy : const Color(0xFF64748B),
+            color: isSel
+                ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy)
+                : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
             fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
             fontSize: 13,
           ),
@@ -1214,9 +1225,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   void _showUpgradeLockDialog(BuildContext context, String featureName) {
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -1232,7 +1245,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
             Expanded(
               child: Text(
                 'Fonctionnalité Pro'.tr,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
               ),
             ),
           ],
@@ -1240,13 +1257,23 @@ class _InventoryScreenState extends State<InventoryScreen> {
         content: Text(
           'La fonctionnalité "$featureName" est verrouillée en formule Découverte.\n\n'
           'Elle est incluse dans la Formule Pro et la Formule Entreprise pour vous permettre de piloter votre stock et vos transferts sans restriction.\n\n'
-          'Rendez-vous sur le portail web Bricelo pour souscrire ou activer votre formule.',
-          style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF475569)),
+          'Rendez-vous sur le portail web Bricelo pour souscrire ou activer votre formule.'.tr,
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.4,
+            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Compris'.tr, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+            child: Text(
+              'Compris'.tr,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+              ),
+            ),
           ),
         ],
       ),
@@ -1254,6 +1281,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Widget _buildWebActionButton(IconData icon, String label, VoidCallback onTap, {bool isLocked = false}) {
+    final isDark = appState.isDarkMode;
     return ElevatedButton.icon(
       onPressed: isLocked ? () => _showUpgradeLockDialog(context, label) : onTap,
       icon: isLocked
@@ -1262,7 +1290,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: TextStyle(color: isLocked ? const Color(0xFF64748B) : const Color(0xFF0F172A))),
+          Text(
+            label,
+            style: TextStyle(
+              color: isLocked
+                  ? (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))
+                  : (isDark ? Colors.white : const Color(0xFF0F172A)),
+            ),
+          ),
           if (isLocked) ...[
             const SizedBox(width: 6),
             Container(
@@ -1277,10 +1312,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ],
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: isLocked ? const Color(0xFFF8FAFC) : Colors.white,
-        foregroundColor: isLocked ? const Color(0xFF64748B) : const Color(0xFF0F172A),
+        backgroundColor: isLocked
+            ? (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC))
+            : (isDark ? const Color(0xFF1E293B) : Colors.white),
+        foregroundColor: isLocked
+            ? const Color(0xFF64748B)
+            : (isDark ? Colors.white : const Color(0xFF0F172A)),
         elevation: 0,
-        side: BorderSide(color: isLocked ? const Color(0xFFE2E8F0) : const Color(0xFFCBD5E1)),
+        side: BorderSide(
+          color: isDark
+              ? const Color(0xFF334155)
+              : (isLocked ? const Color(0xFFE2E8F0) : const Color(0xFFCBD5E1)),
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
