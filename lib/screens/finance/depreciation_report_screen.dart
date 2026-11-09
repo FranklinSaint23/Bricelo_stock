@@ -197,6 +197,7 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
     return ListenableBuilder(
       listenable: appState,
       builder: (context, _) {
+        final isDark = appState.isDarkMode;
         final filteredDepreciations = appState.stockDepreciations.where((d) => _matchesPeriod(d.date)).toList();
 
         final totalLoss = filteredDepreciations.fold<double>(0.0, (sum, d) => sum + d.totalLoss);
@@ -216,8 +217,13 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
           }
         });
 
+        final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final cardBorder = isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB);
+        final titleCol = isDark ? Colors.white : const Color(0xFF111827);
+        final subtitleCol = isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280);
+
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
+          backgroundColor: isDark ? const Color(0xFF09121E) : const Color(0xFFF9FAFB),
           appBar: StockAppBar.forestGreen(
             title: 'Rapport de dépréciations',
             onBack: () => Navigator.pop(context),
@@ -234,7 +240,7 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
             children: [
               // 1. BARRE DE FILTRES TEMPORELS HORIZONTALE
               Container(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: SizedBox(
                   height: 38,
@@ -274,11 +280,13 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFFED7AA) : const Color(0xFFF3F4F6),
+                            color: isSelected
+                                ? const Color(0xFFEA580C)
+                                : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF3F4F6)),
                             borderRadius: BorderRadius.circular(20),
                             border: isSelected
                                 ? Border.all(color: const Color(0xFFEA580C), width: 1.2)
-                                : Border.all(color: const Color(0xFFE5E7EB)),
+                                : Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -288,12 +296,12 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                  color: isSelected ? const Color(0xFF9A3412) : const Color(0xFF4B5563),
+                                  color: isSelected ? Colors.white : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4B5563)),
                                 ),
                               ),
                               if (period == 'Personnalisé' && _customDateRange != null && isSelected) ...[
                                 const SizedBox(width: 4),
-                                const Icon(Icons.date_range, size: 14, color: Color(0xFF9A3412)),
+                                const Icon(Icons.date_range, size: 14, color: Colors.white),
                               ],
                             ],
                           ),
@@ -319,12 +327,12 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                                 height: 68,
                                 child: Stack(
                                   clipBehavior: Clip.none,
-                                  children: const [
+                                  children: [
                                     Center(
                                       child: Icon(
                                         Icons.inventory_2_outlined,
                                         size: 56,
-                                        color: Color(0xFF6B7280),
+                                        color: subtitleCol,
                                       ),
                                     ),
                                     Positioned(
@@ -333,35 +341,35 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                                       child: Icon(
                                         Icons.close,
                                         size: 20,
-                                        color: Color(0xFF6B7280),
+                                        color: subtitleCol,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                               const SizedBox(height: 18),
-                              const Text(
+                              Text(
                                 'Aucune dépréciation',
                                 style: TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF111827),
+                                  color: titleCol,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 'Aucune perte de stock enregistrée pour la période « $_selectedPeriod ».',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
-                                  color: Color(0xFF6B7280),
+                                  color: subtitleCol,
                                   height: 1.4,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 22),
 
-                              // BOUTON + Enregistrer une dépréciation (PÊCHE)
+                              // BOUTON + Enregistrer une dépréciation
                               InkWell(
                                 onTap: () {
                                   Navigator.push(
@@ -373,20 +381,20 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFED7AA),
+                                    color: isDark ? const Color(0xFFEA580C) : const Color(0xFFFED7AA),
                                     borderRadius: BorderRadius.circular(24),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      Icon(Icons.add, size: 18, color: Color(0xFF111827)),
-                                      SizedBox(width: 8),
+                                    children: [
+                                      Icon(Icons.add, size: 18, color: isDark ? Colors.white : const Color(0xFF111827)),
+                                      const SizedBox(width: 8),
                                       Text(
                                         'Enregistrer une dépréciation',
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF111827),
+                                          color: isDark ? Colors.white : const Color(0xFF111827),
                                         ),
                                       ),
                                     ],
@@ -407,16 +415,16 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: cardBg,
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: const Color(0xFFFECACA)),
+                                    border: Border.all(color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA)),
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'Perte totale',
-                                        style: TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
+                                        style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B)),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
@@ -436,24 +444,24 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: cardBg,
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                                    border: Border.all(color: cardBorder),
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'Qté dépréciée',
-                                        style: TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
+                                        style: TextStyle(fontSize: 12, color: subtitleCol),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         '$totalQty pièce(s)',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF111827),
+                                          color: titleCol,
                                         ),
                                       ),
                                     ],
@@ -467,31 +475,31 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: cardBg,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE5E7EB)),
+                              border: Border.all(color: cardBorder),
                             ),
                             child: Row(
                               children: [
                                 const Icon(Icons.pie_chart_outline, color: Color(0xFFEA580C), size: 20),
                                 const SizedBox(width: 10),
-                                const Text(
+                                Text(
                                   'Motif principal :',
-                                  style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+                                  style: TextStyle(fontSize: 13, color: subtitleCol),
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   topReason,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF111827),
+                                    color: titleCol,
                                   ),
                                 ),
                                 const Spacer(),
                                 Text(
                                   '$maxCount cas',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                                  style: TextStyle(fontSize: 12, color: subtitleCol),
                                 ),
                               ],
                             ),
@@ -503,7 +511,7 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                             children: [
                               Text(
                                 'Détail des pertes (${filteredDepreciations.length})',
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: titleCol),
                               ),
                               TextButton.icon(
                                 onPressed: () {
@@ -525,9 +533,9 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: cardBg,
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFFE5E7EB)),
+                                border: Border.all(color: cardBorder),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -541,16 +549,16 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                                           children: [
                                             Text(
                                               dep.productName,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 15,
-                                                color: Color(0xFF111827),
+                                                color: titleCol,
                                               ),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               '${dep.date.day.toString().padLeft(2, '0')}/${dep.date.month.toString().padLeft(2, '0')}/${dep.date.year} à ${dep.date.hour.toString().padLeft(2, '0')}:${dep.date.minute.toString().padLeft(2, '0')} • ${dep.storeName}',
-                                              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                                              style: TextStyle(fontSize: 12, color: subtitleCol),
                                             ),
                                           ],
                                         ),
@@ -568,7 +576,7 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                                           ),
                                           Text(
                                             '${dep.totalLoss.toStringAsFixed(0)} F CFA',
-                                            style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
+                                            style: TextStyle(fontSize: 12, color: subtitleCol),
                                           ),
                                         ],
                                       ),
@@ -580,16 +588,16 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFFFF7ED),
+                                          color: isDark ? const Color(0xFF7C2D12).withValues(alpha: 0.4) : const Color(0xFFFFF7ED),
                                           borderRadius: BorderRadius.circular(4),
-                                          border: Border.all(color: const Color(0xFFFED7AA)),
+                                          border: Border.all(color: isDark ? const Color(0xFFEA580C) : const Color(0xFFFED7AA)),
                                         ),
                                         child: Text(
                                           dep.reason,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w600,
-                                            color: Color(0xFFC2410C),
+                                            color: isDark ? const Color(0xFFFDBA74) : const Color(0xFFC2410C),
                                           ),
                                         ),
                                       ),
@@ -598,7 +606,7 @@ class _DepreciationReportScreenState extends State<DepreciationReportScreen> {
                                         Expanded(
                                           child: Text(
                                             dep.notes,
-                                            style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Color(0xFF6B7280)),
+                                            style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: subtitleCol),
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),

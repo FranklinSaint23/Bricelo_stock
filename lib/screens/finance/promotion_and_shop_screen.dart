@@ -2,6 +2,7 @@ import 'package:stock_prime/screens/screens.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/widgets/dialogs/upgrade_dialog.dart';
 
 class PromotionAndShopScreen extends StatelessWidget {
   const PromotionAndShopScreen({super.key});
@@ -14,6 +15,7 @@ class PromotionAndShopScreen extends StatelessWidget {
       animation: appState,
       builder: (context, _) {
         final isDark = appState.isDarkMode;
+        final isDiscovered = appState.isDiscoveredPlan;
         final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
         final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB);
         final textPrimary = isDark ? Colors.white : const Color(0xFF1F2937);
@@ -56,8 +58,9 @@ class PromotionAndShopScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildRow(
-                      Icons.local_offer_outlined,
-                      'Promotions'.tr,
+                      context: context,
+                      icon: Icons.local_offer_outlined,
+                      title: 'Promotions'.tr,
                       isLocked: false,
                       textPrimary: textPrimary,
                       isDark: isDark,
@@ -67,8 +70,9 @@ class PromotionAndShopScreen extends StatelessWidget {
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
-                      Icons.campaign_outlined,
-                      'Catalogues à partager'.tr,
+                      context: context,
+                      icon: Icons.campaign_outlined,
+                      title: 'Catalogues à partager'.tr,
                       isLocked: false,
                       textPrimary: textPrimary,
                       isDark: isDark,
@@ -78,9 +82,10 @@ class PromotionAndShopScreen extends StatelessWidget {
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
-                      Icons.storefront_outlined,
-                      'Boutique en ligne'.tr,
-                      isLocked: false,
+                      context: context,
+                      icon: Icons.storefront_outlined,
+                      title: 'Boutique en ligne'.tr,
+                      isLocked: isDiscovered,
                       textPrimary: textPrimary,
                       isDark: isDark,
                       onTap: () {
@@ -89,9 +94,10 @@ class PromotionAndShopScreen extends StatelessWidget {
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
-                      Icons.shopping_cart_outlined,
-                      'Commandes en ligne'.tr,
-                      isLocked: false,
+                      context: context,
+                      icon: Icons.shopping_cart_outlined,
+                      title: 'Commandes en ligne'.tr,
+                      isLocked: isDiscovered,
                       textPrimary: textPrimary,
                       isDark: isDark,
                       onTap: () {
@@ -100,8 +106,9 @@ class PromotionAndShopScreen extends StatelessWidget {
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
-                      Icons.assignment_outlined,
-                      'Commande externe'.tr,
+                      context: context,
+                      icon: Icons.assignment_outlined,
+                      title: 'Commande externe'.tr,
                       isLocked: false,
                       textPrimary: textPrimary,
                       isDark: isDark,
@@ -111,9 +118,10 @@ class PromotionAndShopScreen extends StatelessWidget {
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
-                      Icons.movie_creation_outlined,
-                      'Studio vidéo'.tr,
-                      isLocked: false,
+                      context: context,
+                      icon: Icons.movie_creation_outlined,
+                      title: 'Studio vidéo'.tr,
+                      isLocked: isDiscovered,
                       textPrimary: textPrimary,
                       isDark: isDark,
                       onTap: () {
@@ -122,9 +130,10 @@ class PromotionAndShopScreen extends StatelessWidget {
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
-                      Icons.chat_bubble_outline,
-                      'Catalogue WhatsApp & Facebook'.tr,
-                      isLocked: false,
+                      context: context,
+                      icon: Icons.chat_bubble_outline,
+                      title: 'Catalogue WhatsApp & Facebook'.tr,
+                      isLocked: isDiscovered,
                       textPrimary: textPrimary,
                       isDark: isDark,
                       onTap: () {
@@ -141,16 +150,23 @@ class PromotionAndShopScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(
-    IconData icon,
-    String title, {
+  Widget _buildRow({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
     required bool isLocked,
     required Color textPrimary,
     required bool isDark,
     VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: onTap ?? () {},
+      onTap: () {
+        if (isLocked) {
+          showUpgradeDialog(context, title);
+        } else if (onTap != null) {
+          onTap();
+        }
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         child: Row(
@@ -164,9 +180,11 @@ class PromotionAndShopScreen extends StatelessWidget {
               ),
             ),
             Icon(
-              isLocked ? Icons.lock_outline : Icons.chevron_right,
-              size: 20,
-              color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF),
+              isLocked ? Icons.lock_rounded : Icons.chevron_right,
+              size: isLocked ? 19 : 20,
+              color: isLocked
+                  ? const Color(0xFFD97706)
+                  : (isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
             ),
           ],
         ),

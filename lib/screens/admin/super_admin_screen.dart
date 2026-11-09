@@ -370,11 +370,13 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> with SingleTickerPr
                   ? null
                   : () async {
                       setDlgState(() => isSubmitting = true);
-                      await appState.superAdminUpdateSubscription(
+                      final success = await appState.superAdminUpdateSubscription(
                         profileId: profileId,
                         plan: selectedPlan,
                         billing: selectedBilling,
                         durationMonths: durationMonths,
+                        phone: phone,
+                        companyName: companyName,
                         notes: '${notesCtrl.text.trim()} • Moyen: $selectedPaymentMethod • Téléphone: $phone',
                         status: 'Actif',
                       );
@@ -383,8 +385,10 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> with SingleTickerPr
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            backgroundColor: const Color(0xFF059669),
-                            content: Text('Abonnement $selectedPlan activé avec succès pour $companyName !'),
+                            backgroundColor: success ? const Color(0xFF059669) : const Color(0xFFD97706),
+                            content: Text(success
+                                ? 'Abonnement $selectedPlan activé avec succès dans le Cloud pour $companyName !'
+                                : 'Abonnement $selectedPlan mis à jour en local pour $companyName.'),
                           ),
                         );
                       }
@@ -400,6 +404,7 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> with SingleTickerPr
   void _showCancelSubscriptionDialog(Map<String, dynamic> profile) {
     final profileId = (profile['id'] ?? '').toString();
     final companyName = (profile['company_name'] ?? 'Boutique').toString();
+    final phone = (profile['phone'] ?? '').toString();
 
     showDialog(
       context: context,
@@ -414,7 +419,11 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> with SingleTickerPr
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626), foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(ctx);
-              await appState.superAdminCancelSubscription(profileId: profileId);
+              await appState.superAdminCancelSubscription(
+                profileId: profileId,
+                phone: phone,
+                companyName: companyName,
+              );
               await _loadData();
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

@@ -4,6 +4,7 @@ import 'package:stock_prime/screens/screens.dart';
 import 'package:stock_prime/services/product_export_service.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/theme/app_theme.dart';
+import 'package:stock_prime/widgets/dialogs/upgrade_dialog.dart';
 
 class StockSubMenuScreen extends StatelessWidget {
   const StockSubMenuScreen({super.key});
@@ -16,6 +17,7 @@ class StockSubMenuScreen extends StatelessWidget {
       animation: appState,
       builder: (context, _) {
         final isDark = appState.isDarkMode;
+        final isDiscovered = appState.isDiscoveredPlan;
         final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
         final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB);
         final textPrimary = isDark ? Colors.white : const Color(0xFF1F2937);
@@ -58,39 +60,46 @@ class StockSubMenuScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildRow(
+                      context: context,
                       icon: Icons.move_to_inbox_rounded,
                       title: 'Approvisionnement'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: false,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.remove_circle_outline_rounded,
                       title: 'Dépréciation de stock'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const StockDepreciationScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.insert_chart_outlined_rounded,
                       title: 'Rapport de dépréciations'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.fact_check_rounded,
                       title: 'Inventaires'.tr,
-                      isLocked: false,
+                      isLocked: isDiscovered,
                       textPrimary: textPrimary,
                       isDark: isDark,
                       onTap: () {
@@ -99,20 +108,24 @@ class StockSubMenuScreen extends StatelessWidget {
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.tune_rounded,
                       title: 'Ajustement de stock'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: false,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const StockAdjustmentScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.swap_horiz_rounded,
                       title: 'Transferts de stock'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const StockTransfersScreen()));
                       },
@@ -120,10 +133,12 @@ class StockSubMenuScreen extends StatelessWidget {
                     _buildDivider(dividerCol),
                     // 1. IMPORTER DES PRODUITS (Excel, Word, PDF, CSV)
                     _buildRow(
+                      context: context,
                       icon: Icons.upload_file_rounded,
                       title: 'Importer des produits'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const ImportProductsScreen()));
                       },
@@ -131,18 +146,22 @@ class StockSubMenuScreen extends StatelessWidget {
                     _buildDivider(dividerCol),
                     // 2. EXPORTER LA LISTE DES PRODUITS (Excel universel)
                     _buildRow(
+                      context: context,
                       icon: Icons.download_rounded,
                       title: 'Exporter la liste des produits'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () => ProductExportService.exportProductsToExcelCsv(context),
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.event_busy_rounded,
                       title: 'Suivi de péremption'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpiryTrackingScreen()));
                       },
@@ -165,6 +184,7 @@ class StockSubMenuScreen extends StatelessWidget {
   }
 
   Widget _buildRow({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required Color textPrimary,
@@ -173,7 +193,13 @@ class StockSubMenuScreen extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: onTap ?? () {},
+      onTap: () {
+        if (isLocked) {
+          showUpgradeDialog(context, title);
+        } else if (onTap != null) {
+          onTap();
+        }
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         child: Row(
@@ -191,9 +217,11 @@ class StockSubMenuScreen extends StatelessWidget {
               ),
             ),
             Icon(
-              isLocked ? Icons.lock_outline : Icons.chevron_right,
-              size: 20,
-              color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF),
+              isLocked ? Icons.lock_rounded : Icons.chevron_right,
+              size: isLocked ? 19 : 20,
+              color: isLocked
+                  ? const Color(0xFFD97706)
+                  : (isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
             ),
           ],
         ),

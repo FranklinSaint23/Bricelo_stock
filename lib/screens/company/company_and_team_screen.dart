@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/screens.dart';
+import 'package:stock_prime/widgets/dialogs/upgrade_dialog.dart';
 
 class CompanyAndTeamScreen extends StatelessWidget {
   const CompanyAndTeamScreen({super.key});
@@ -14,6 +15,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
       animation: appState,
       builder: (context, _) {
         final isDark = appState.isDarkMode;
+        final isDiscovered = appState.isDiscoveredPlan;
         final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
         final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB);
         final textPrimary = isDark ? Colors.white : const Color(0xFF1F2937);
@@ -41,12 +43,12 @@ class CompanyAndTeamScreen extends StatelessWidget {
               ),
             ),
             title: Text(
-              'Entreprise & Équipe'.tr,
+              'Entreprise & équipe'.tr,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
             ),
           ),
           body: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             children: [
               // SECTION 1: POUR COMMENCER
               Padding(
@@ -65,50 +67,60 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildRow(
+                      context: context,
                       icon: Icons.business_center_rounded,
                       title: 'Profil de l\'entreprise'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: false,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyProfileScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.auto_awesome_motion_rounded,
                       title: 'Ma marque'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: false,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const BrandScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.credit_card_rounded,
                       title: 'Moyens de paiement'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: false,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentMethodsScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.receipt_long_rounded,
                       title: 'Personnalisation des factures'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoiceCustomizationScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.restart_alt_rounded,
                       title: 'Repartir à zéro'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: false,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const ResetDataScreen()));
                       },
@@ -135,31 +147,36 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildRow(
+                      context: context,
                       icon: Icons.verified_user_rounded,
                       title: 'Approbations'.tr,
                       badge: appState.pendingApprovalsCount > 0 ? '${appState.pendingApprovalsCount}' : null,
                       badgeColor: const Color(0xFFDC2626),
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const ApprovalsScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.group_rounded,
                       title: 'Équipe'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.admin_panel_settings_rounded,
                       title: 'Groupes d\'accès'.tr,
-                      isLocked: false,
+                      isLocked: isDiscovered,
                       textPrimary: textPrimary,
                       isDark: isDark,
                       onTap: () {
@@ -168,29 +185,34 @@ class CompanyAndTeamScreen extends StatelessWidget {
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.storefront_rounded,
                       title: 'Boutiques & Entrepots'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const OutletsScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.category_rounded,
                       title: 'Categories'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: false,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriesScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.history_toggle_off_rounded,
                       title: 'Historique d\'activité'.tr,
-                      isLocked: false,
+                      isLocked: isDiscovered,
                       textPrimary: textPrimary,
                       isDark: isDark,
                       onTap: () {
@@ -219,20 +241,24 @@ class CompanyAndTeamScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildRow(
+                      context: context,
                       icon: Icons.point_of_sale_rounded,
                       title: 'Caisses'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: false,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const CashDesksScreen()));
                       },
                     ),
                     _buildDivider(dividerCol),
                     _buildRow(
+                      context: context,
                       icon: Icons.punch_clock_rounded,
                       title: 'Suivi des shifts & Activités'.tr,
                       textPrimary: textPrimary,
                       isDark: isDark,
+                      isLocked: isDiscovered,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const ShiftsTrackingScreen()));
                       },
@@ -249,6 +275,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
   }
 
   Widget _buildRow({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required Color textPrimary,
@@ -259,7 +286,13 @@ class CompanyAndTeamScreen extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: onTap ?? () {},
+      onTap: () {
+        if (isLocked) {
+          showUpgradeDialog(context, title);
+        } else if (onTap != null) {
+          onTap();
+        }
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
@@ -287,9 +320,11 @@ class CompanyAndTeamScreen extends StatelessWidget {
               const SizedBox(width: 8),
             ],
             Icon(
-              isLocked ? Icons.lock_outline : Icons.chevron_right,
-              size: 20,
-              color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF),
+              isLocked ? Icons.lock_rounded : Icons.chevron_right,
+              size: isLocked ? 19 : 20,
+              color: isLocked
+                  ? const Color(0xFFD97706)
+                  : (isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
             ),
           ],
         ),

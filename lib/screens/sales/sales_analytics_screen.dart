@@ -100,10 +100,12 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
   }
 
   void _showStorePickerModal() {
+    final isDark = appState.isDarkMode;
     final stores = ['Toutes les boutiques', ...appState.outlets.map((o) => o.name)];
 
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
         return SafeArea(
@@ -114,21 +116,30 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                 width: 40,
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: isDark ? const Color(0xFF475569) : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Text('Sélectionner une boutique', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  'Sélectionner une boutique',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                ),
               ),
-              const Divider(),
+              Divider(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
               ...stores.map((s) {
                 final isSel = _selectedStore == s;
                 return ListTile(
                   leading: Icon(
                     s == 'Toutes les boutiques' ? Icons.store_mall_directory : Icons.storefront,
-                    color: isSel ? AppTheme.accentGold : AppTheme.primaryNavy,
+                    color: isSel ? AppTheme.accentGold : (isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                   ),
-                  title: Text(s, style: TextStyle(fontWeight: isSel ? FontWeight.bold : FontWeight.normal)),
+                  title: Text(
+                    s,
+                    style: TextStyle(
+                      fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
                   trailing: isSel ? const Icon(Icons.check, color: AppTheme.accentGold) : null,
                   onTap: () {
                     setState(() => _selectedStore = s);
@@ -395,10 +406,16 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
         final maxAmount = buckets.isEmpty ? 0.0 : buckets.map((b) => b.amount).reduce(math.max);
         final yCeiling = maxAmount > 0 ? (maxAmount * 1.25) : 100000.0;
 
+        final isDark = appState.isDarkMode;
+        final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final cardBorder = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+        final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+        final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFC),
+          backgroundColor: isDark ? const Color(0xFF09121E) : const Color(0xFFF8FAFC),
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             leading: TextButton.icon(
               style: TextButton.styleFrom(padding: EdgeInsets.zero),
               icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 14),
@@ -422,19 +439,19 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: cardBorder),
                       boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1))],
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.storefront, color: AppTheme.primaryNavy, size: 19),
+                        Icon(Icons.storefront, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 19),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             _selectedStore,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textPrimary),
                           ),
                         ),
                         Container(
@@ -451,7 +468,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        const Icon(Icons.keyboard_arrow_down, color: Color(0xFF6B7280), size: 18),
+                        Icon(Icons.keyboard_arrow_down, color: textSecondary, size: 18),
                       ],
                     ),
                   ),
@@ -481,9 +498,13 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSel ? AppTheme.primaryNavy : Colors.white,
+                            color: isSel
+                                ? AppTheme.primaryNavy
+                                : (isDark ? const Color(0xFF0F172A) : Colors.white),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: isSel ? AppTheme.primaryNavy : const Color(0xFFCBD5E1)),
+                            border: Border.all(
+                              color: isSel ? AppTheme.accentGold : cardBorder,
+                            ),
                             boxShadow: isSel ? const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))] : null,
                           ),
                           child: Center(
@@ -494,7 +515,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
-                                color: isSel ? AppTheme.accentGold : const Color(0xFF475569),
+                                color: isSel ? AppTheme.accentGold : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
                               ),
                             ),
                           ),
@@ -512,8 +533,9 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                       child: _buildKpiBox(
                         'Chiffre d\'affaires',
                         AppTheme.formatFCFA(totalSales),
-                        AppTheme.primaryNavy,
+                        isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                         subtitle: '$salesCount transactions',
+                        isDark: isDark,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -521,8 +543,9 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                       child: _buildKpiBox(
                         'Nombre de ventes',
                         '$salesCount',
-                        const Color(0xFF111827),
+                        textPrimary,
                         subtitle: _selectedStore,
+                        isDark: isDark,
                       ),
                     ),
                   ],
@@ -534,8 +557,9 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                       child: _buildKpiBox(
                         'Panier moyen',
                         AppTheme.formatFCFA(averageBasket),
-                        const Color(0xFF111827),
+                        textPrimary,
                         subtitle: 'Moyenne par vente',
+                        isDark: isDark,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -547,6 +571,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                         subtitle: totalSales > 0
                             ? '${((estimatedProfit / totalSales) * 100).toStringAsFixed(1)}% de marge'
                             : '0% de marge',
+                        isDark: isDark,
                       ),
                     ),
                   ],
@@ -560,6 +585,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                         AppTheme.formatFCFA(periodExpenses),
                         const Color(0xFFDC2626),
                         subtitle: 'Dépenses enregistrées',
+                        isDark: isDark,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -567,8 +593,9 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                       child: _buildKpiBox(
                         'Pertes de stock',
                         AppTheme.formatFCFA(periodDepreciations),
-                        periodDepreciations > 0 ? const Color(0xFFDC2626) : const Color(0xFF6B7280),
+                        periodDepreciations > 0 ? const Color(0xFFDC2626) : textSecondary,
                         subtitle: 'Péremptions & casse',
+                        isDark: isDark,
                       ),
                     ),
                   ],
@@ -584,6 +611,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                         subtitle: totalSales > 0
                             ? '${((netProfit / totalSales) * 100).toStringAsFixed(1)}% net (Marge - Dépenses - Pertes)'
                             : 'Marge - Dépenses - Pertes',
+                        isDark: isDark,
                       ),
                     ),
                   ],
@@ -594,9 +622,9 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: cardBorder),
                     boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))],
                   ),
                   child: Column(
@@ -605,13 +633,13 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Evolution du chiffre d\'affaires',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textPrimary),
                           ),
                           Text(
                             AppTheme.formatFCFA(totalSales),
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.primaryNavy),
+                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                           ),
                         ],
                       ),
@@ -663,13 +691,13 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Produits les plus vendus',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF111827)),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textPrimary),
                     ),
                     Text(
                       '${sortedProducts.length} référence(s)',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 12, color: textSecondary),
                     ),
                   ],
                 ),
@@ -677,22 +705,22 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
 
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: cardBorder),
                     boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))],
                   ),
                   child: sortedProducts.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                           child: Center(
                             child: Column(
                               children: [
-                                Icon(Icons.shopping_bag_outlined, size: 36, color: Color(0xFFCBD5E1)),
-                                SizedBox(height: 8),
+                                const Icon(Icons.shopping_bag_outlined, size: 36, color: Color(0xFFCBD5E1)),
+                                const SizedBox(height: 8),
                                 Text(
                                   'Aucun produit vendu sur cette période',
-                                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.bold),
+                                  style: TextStyle(color: textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -702,7 +730,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: sortedProducts.take(5).length,
-                          separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          separatorBuilder: (context, index) => Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
                           itemBuilder: (context, idx) {
                             final entry = sortedProducts[idx];
                             final prodName = entry.key;
@@ -731,7 +759,11 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                                       ),
                                       child: Text(
                                         '#${idx + 1}',
-                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: idx == 0 ? Colors.black : Colors.white,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -739,15 +771,15 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                               ),
                               title: Text(
                                 prodName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF0F172A)),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: textPrimary),
                               ),
                               subtitle: Text(
                                 '${stats.quantity} unité(s) vendue(s)',
-                                style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                style: TextStyle(fontSize: 11.5, color: textSecondary),
                               ),
                               trailing: Text(
                                 AppTheme.formatFCFA(stats.revenue),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppTheme.primaryNavy),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                               ),
                             );
                           },
@@ -762,19 +794,19 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
     );
   }
 
-  Widget _buildKpiBox(String title, String value, Color color, {String? subtitle}) {
+  Widget _buildKpiBox(String title, String value, Color color, {String? subtitle, bool isDark = false}) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5, fontWeight: FontWeight.w600)),
+          Text(title, style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 11.5, fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           Text(
             value,

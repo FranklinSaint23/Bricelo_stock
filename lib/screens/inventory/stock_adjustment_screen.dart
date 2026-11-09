@@ -107,7 +107,7 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
             // 1. SÉLECTION DE LA BOUTIQUE
             Row(
               children: [
-                const Icon(Icons.storefront, size: 16, color: AppTheme.primaryNavy),
+                Icon(Icons.storefront, size: 16, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                 const SizedBox(width: 6),
                 Text(
                   'Boutique concernée *',
@@ -132,7 +132,8 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                   value: _selectedStore,
                   isExpanded: true,
                   dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  items: stores.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                  style: TextStyle(color: isDark ? Colors.white : AppTheme.textPrimary, fontSize: 14),
+                  items: stores.map((s) => DropdownMenuItem(value: s, child: Text(s, style: TextStyle(color: isDark ? Colors.white : AppTheme.textPrimary)))).toList(),
                   onChanged: (val) {
                     if (val != null) {
                       setState(() {
@@ -158,6 +159,7 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
               ),
               child: TextField(
                 controller: _searchController,
+                style: TextStyle(color: isDark ? Colors.white : AppTheme.textPrimary, fontSize: 14),
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: 'Rechercher un produit à ajuster...',
@@ -166,7 +168,7 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
+                          icon: Icon(Icons.clear, size: 18, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
                           onPressed: () {
                             _searchController.clear();
                             setState(() {});
@@ -286,17 +288,17 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                             children: [
                               Text(
                                 _selectedProduct!.name,
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.primaryNavy),
+                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: isDark ? Colors.white : AppTheme.primaryNavy),
                               ),
                               Text(
                                 '${_selectedProduct!.category} • Boutique : $_selectedStore',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                               ),
                             ],
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Color(0xFF64748B)),
+                          icon: Icon(Icons.close, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                           onPressed: () => setState(() => _selectedProduct = null),
                         ),
                       ],
@@ -306,24 +308,24 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Stock actuel enregistré :', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                        Text('Stock actuel enregistré :', style: TextStyle(fontSize: 13, color: isDark ? Colors.white60 : const Color(0xFF64748B))),
                         Text(
                           '${_selectedProduct!.stockForStore(_selectedStore)} ${_selectedProduct!.unit}(s)',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                         ),
                       ],
                     ),
                     const SizedBox(height: 14),
 
                     // SAISIE NOUVEAU STOCK AVEC BOUTONS - / +
-                    const Text('Nouveau stock réel *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text('Nouveau stock réel *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF111827))),
                     const SizedBox(height: 6),
                     Row(
                       children: [
                         IconButton.filled(
                           style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFF1F5F9),
-                            foregroundColor: const Color(0xFF0F172A),
+                            backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                            foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
                           ),
                           icon: const Icon(Icons.remove),
                           onPressed: () {
@@ -339,19 +341,22 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                             controller: _newStockController,
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20),
+                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                             onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
                               contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB))),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB))),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         IconButton.filled(
                           style: IconButton.styleFrom(
-                            backgroundColor: AppTheme.primaryNavy,
-                            foregroundColor: Colors.white,
+                            backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                            foregroundColor: isDark ? Colors.black : Colors.white,
                           ),
                           icon: const Icon(Icons.add),
                           onPressed: () {
@@ -373,9 +378,18 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: diff == 0
-                              ? const Color(0xFFF1F5F9)
-                              : (diff > 0 ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2)),
+                              ? (isDark ? const Color(0xFF334155).withValues(alpha: 0.5) : const Color(0xFFF1F5F9))
+                              : (diff > 0
+                                  ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFECFDF5))
+                                  : (isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.4) : const Color(0xFFFEF2F2))),
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: diff == 0
+                                ? (isDark ? const Color(0xFF475569) : const Color(0xFFE2E8F0))
+                                : (diff > 0
+                                    ? (isDark ? const Color(0xFF059669) : const Color(0xFFA7F3D0))
+                                    : (isDark ? const Color(0xFFDC2626) : const Color(0xFFFECACA))),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -385,7 +399,11 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.bold,
-                                color: diff == 0 ? const Color(0xFF64748B) : (diff > 0 ? const Color(0xFF059669) : const Color(0xFFDC2626)),
+                                color: diff == 0
+                                    ? (isDark ? Colors.white70 : const Color(0xFF64748B))
+                                    : (diff > 0
+                                        ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
+                                        : (isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626))),
                               ),
                             ),
                             Text(
@@ -393,7 +411,11 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w900,
-                                color: diff == 0 ? const Color(0xFF64748B) : (diff > 0 ? const Color(0xFF059669) : const Color(0xFFDC2626)),
+                                color: diff == 0
+                                    ? (isDark ? Colors.white70 : const Color(0xFF64748B))
+                                    : (diff > 0
+                                        ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
+                                        : (isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626))),
                               ),
                             ),
                           ],
@@ -403,20 +425,22 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                     const SizedBox(height: 14),
 
                     // MOTIF DE L'AJUSTEMENT
-                    const Text('Motif de l’ajustement *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text('Motif de l’ajustement *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF111827))),
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF0F172A) : Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFD1D5DB)),
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _selectedReason,
                           isExpanded: true,
-                          items: _reasons.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                          dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          style: TextStyle(color: isDark ? Colors.white : AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
+                          items: _reasons.map((r) => DropdownMenuItem(value: r, child: Text(r, style: TextStyle(color: isDark ? Colors.white : AppTheme.textPrimary)))).toList(),
                           onChanged: (val) {
                             if (val != null) setState(() => _selectedReason = val);
                           },

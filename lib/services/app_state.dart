@@ -3811,11 +3811,13 @@ class AppState extends ChangeNotifier {
   }
 
   /// Met à jour manuellement ou active un abonnement pour un compte donné
-  Future<void> superAdminUpdateSubscription({
+  Future<bool> superAdminUpdateSubscription({
     required String profileId,
     required String plan,
     required String billing,
     int durationMonths = 1,
+    String? phone,
+    String? companyName,
     String? notes,
     String? status,
   }) async {
@@ -3827,21 +3829,49 @@ class AppState extends ChangeNotifier {
       'subscription_billing': billing,
       'subscription_status': status ?? 'Actif',
       'subscription_expires_at': exp?.toIso8601String(),
-      if (notes != null && notes.isNotEmpty) 'subscription_notes': notes,
       'updated_at': now.toIso8601String(),
     };
 
+    bool updatedInCloud = false;
+
     if (sb != null) {
+      final fullPayload = Map<String, dynamic>.from(payload);
+      if (notes != null && notes.trim().isNotEmpty) {
+        fullPayload['subscription_notes'] = notes.trim();
+      }
+
+      // Tentative 1 : avec subscription_notes
       try {
-        await sb.from('user_profiles').update(payload).eq('id', profileId);
+        await sb.from('user_profiles').update(fullPayload).eq('id', profileId);
+        updatedInCloud = true;
       } catch (e) {
-        debugPrint('Erreur superAdminUpdateSubscription: $e');
+        debugPrint('superAdminUpdateSubscription tentative 1 échouée: $e');
+        // Tentative 2 : sans subscription_notes (au cas où la colonne n'est pas créée dans Postgres)
+        try {
+          await sb.from('user_profiles').update(payload).eq('id', profileId);
+          updatedInCloud = true;
+        } catch (e2) {
+          debugPrint('superAdminUpdateSubscription tentative 2 échouée: $e2');
+          // Tentative 3 : par phone si l'id ne correspond pas
+          if (phone != null && phone.trim().isNotEmpty) {
+            final cleanPhone = normalizePhoneDigits(phone);
+            try {
+              await sb.from('user_profiles').update(payload).or('phone.eq.${phone.trim()},phone.eq.$cleanPhone');
+              updatedInCloud = true;
+            } catch (e3) {
+              debugPrint('superAdminUpdateSubscription tentative 3 échouée: $e3');
+            }
+          }
+        }
       }
     }
 
-    // Si on met à jour le profil actuel connecté
+    // Si on met à jour le profil actuel connecté ou la boutique courante
     final currentId = normalizePhoneDigits(userPhone).isNotEmpty ? normalizePhoneDigits(userPhone) : userPhone;
-    if (profileId == currentId || profileId == userPhone || profileId == userEmail || profileId == companyName) {
+    if (profileId == currentId ||
+        profileId == userPhone ||
+        profileId == userEmail ||
+        (companyName != null && companyName.trim().toLowerCase() == this.companyName.trim().toLowerCase())) {
       subscriptionPlan = plan;
       subscriptionBilling = billing;
       subscriptionStatus = status ?? 'Actif';
@@ -3849,15 +3879,23 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       await _saveToPrefs();
     }
+
+    return updatedInCloud;
   }
 
   /// Résilie ou rétrograde un abonnement vers la formule Découverte (Gratuit)
-  Future<void> superAdminCancelSubscription({required String profileId}) async {
+  Future<void> superAdminCancelSubscription({
+    required String profileId,
+    String? phone,
+    String? companyName,
+  }) async {
     await superAdminUpdateSubscription(
       profileId: profileId,
       plan: 'Gratuit',
       billing: 'mensuel',
       durationMonths: 0,
+      phone: phone,
+      companyName: companyName,
       notes: 'Abonnement résilié par le Super Administrateur',
       status: 'Résilié',
     );

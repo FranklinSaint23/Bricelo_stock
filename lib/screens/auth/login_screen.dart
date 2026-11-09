@@ -532,16 +532,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordCtrl,
                       obscureText: _obscurePassword,
                       keyboardType: _authMode == 2 ? TextInputType.number : TextInputType.text,
+                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827)),
                       decoration: InputDecoration(
                         prefixIcon: Icon(
                           _authMode == 2 ? Icons.pin_outlined : Icons.lock_outline_rounded,
-                          color: AppTheme.primaryNavy,
+                          color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                           size: 20,
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                            color: const Color(0xFF64748B),
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                             size: 20,
                           ),
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -550,20 +551,21 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? (isEn ? '6-digit PIN Code *' : 'Code PIN secret (6 chiffres) *')
                             : (isEn ? 'Password *' : 'Mot de passe *'),
                         hintText: _authMode == 2 ? 'Ex: 482915' : null,
-                        labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 13),
+                        hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8), fontSize: 13),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 1.5),
+                          borderSide: BorderSide(color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, width: 1.5),
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
@@ -574,18 +576,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0FDF4),
+                          color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFF0FDF4),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                          border: Border.all(color: isDark ? const Color(0xFF047857) : const Color(0xFFBBF7D0)),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.shield_outlined, color: Color(0xFF15803D), size: 18),
-                            SizedBox(width: 8),
+                            Icon(Icons.shield_outlined, color: isDark ? const Color(0xFF34D399) : const Color(0xFF15803D), size: 18),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Votre interface s\'adaptera automatiquement à votre rôle (Caissier, Magasinier, Gérant...) et aux permissions accordées par le propriétaire.',
-                                style: TextStyle(fontSize: 11, color: Color(0xFF166534), fontWeight: FontWeight.w600),
+                                style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF166534), fontWeight: FontWeight.w600),
                               ),
                             ),
                           ],

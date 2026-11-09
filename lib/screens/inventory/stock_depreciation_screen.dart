@@ -118,10 +118,11 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
   }
 
   void _showProductPicker() {
+    final isDark = appState.isDarkMode;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -143,12 +144,12 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Sélectionner un produit',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: Icon(Icons.close, color: isDark ? Colors.white70 : Colors.black87),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -157,32 +158,35 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                   Container(
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF3F4F6),
                       borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                     ),
                     child: TextField(
                       controller: _searchController,
+                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827)),
                       onChanged: (_) => setModalState(() {}),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Rechercher par nom, catégorie, code...',
-                        prefixIcon: Icon(Icons.search, color: Color(0xFF6B7280)),
+                        hintStyle: TextStyle(color: isDark ? Colors.white38 : const Color(0xFF6B7280)),
+                        prefixIcon: Icon(Icons.search, color: isDark ? AppTheme.accentGold : const Color(0xFF6B7280)),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   Expanded(
                     child: filtered.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Text(
                               'Aucun produit trouvé',
-                              style: TextStyle(color: Color(0xFF6B7280)),
+                              style: TextStyle(color: isDark ? Colors.white60 : const Color(0xFF6B7280)),
                             ),
                           )
                         : ListView.separated(
                             itemCount: filtered.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                            separatorBuilder: (_, __) => Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF3F4F6)),
                             itemBuilder: (_, idx) {
                               final p = filtered[idx];
                               final storeStock = p.stockForStore(_selectedStore);
@@ -194,23 +198,23 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF3F4F6),
+                                    color: isDark ? const Color(0xFF334155) : const Color(0xFFF3F4F6),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF374151)),
+                                  child: Icon(Icons.inventory_2_outlined, color: isDark ? AppTheme.accentGold : const Color(0xFF374151)),
                                 ),
                                 title: Text(
                                   p.name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF111827)),
                                 ),
                                 subtitle: Text(
                                   'Stock: $storeStock ${p.unit} • Coût: ${cost.toStringAsFixed(0)} F CFA',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: storeStock <= 0 ? Colors.red : const Color(0xFF6B7280),
+                                    color: storeStock <= 0 ? Colors.red : (isDark ? Colors.white60 : const Color(0xFF6B7280)),
                                   ),
                                 ),
-                                trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF9CA3AF)),
+                                trailing: Icon(Icons.arrow_forward_ios, size: 14, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF)),
                                 onTap: () {
                                   setState(() {
                                     _selectedProduct = p;
@@ -235,10 +239,18 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
     return ListenableBuilder(
       listenable: appState,
       builder: (context, _) {
+        final isDark = appState.isDarkMode;
         final recentDepreciations = appState.stockDepreciations;
+        final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final cardBorder = isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB);
+        final inputBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+        final inputBorder = isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB);
+        final titleCol = isDark ? Colors.white : const Color(0xFF111827);
+        final labelCol = isDark ? const Color(0xFFE2E8F0) : const Color(0xFF374151);
+        final subtitleCol = isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280);
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
+          backgroundColor: isDark ? const Color(0xFF09121E) : const Color(0xFFF9FAFB),
           appBar: StockAppBar.forestGreen(
             title: 'Dépréciation de stock',
             onBack: () => Navigator.pop(context),
@@ -250,8 +262,9 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: cardBorder),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.04),
@@ -263,25 +276,25 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Enregistrer une dépréciation / perte',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827),
+                        color: titleCol,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'Déduisez du stock les articles avariés, périmés, cassés ou perdus.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                      style: TextStyle(fontSize: 12, color: subtitleCol),
                     ),
                     const SizedBox(height: 16),
 
                     // SÉLECTION DU PRODUIT
-                    const Text(
+                    Text(
                       'Produit concerné *',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: labelCol),
                     ),
                     const SizedBox(height: 8),
                     InkWell(
@@ -290,17 +303,21 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
-                          color: _selectedProduct != null ? const Color(0xFFF0FDF4) : Colors.white,
+                          color: _selectedProduct != null
+                              ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFF0FDF4))
+                              : inputBg,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: _selectedProduct != null ? const Color(0xFF16A34A) : const Color(0xFFD1D5DB),
+                            color: _selectedProduct != null
+                                ? (isDark ? const Color(0xFF059669) : const Color(0xFF16A34A))
+                                : inputBorder,
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               _selectedProduct != null ? Icons.check_circle : Icons.search,
-                              color: _selectedProduct != null ? const Color(0xFF16A34A) : const Color(0xFF6B7280),
+                              color: _selectedProduct != null ? const Color(0xFF16A34A) : (isDark ? AppTheme.accentGold : const Color(0xFF6B7280)),
                               size: 20,
                             ),
                             const SizedBox(width: 10),
@@ -311,20 +328,20 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                                       children: [
                                         Text(
                                           _selectedProduct!.name,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: titleCol),
                                         ),
                                         Text(
                                           'Stock dispo: ${_selectedProduct!.stockForStore(_selectedStore)} ${_selectedProduct!.unit} • Coût: ${_unitCost.toStringAsFixed(0)} F CFA',
-                                          style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
+                                          style: TextStyle(fontSize: 12, color: subtitleCol),
                                         ),
                                       ],
                                     )
-                                  : const Text(
+                                  : Text(
                                       'Choisir un produit dans le stock...',
-                                      style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+                                      style: TextStyle(color: subtitleCol, fontSize: 14),
                                     ),
                             ),
-                            const Icon(Icons.arrow_drop_down, color: Color(0xFF6B7280)),
+                            Icon(Icons.arrow_drop_down, color: subtitleCol),
                           ],
                         ),
                       ),
@@ -332,22 +349,23 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                     const SizedBox(height: 16),
 
                     // MOTIF DE DÉPRÉCIATION
-                    const Text(
+                    Text(
                       'Motif de la perte *',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: labelCol),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: inputBg,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFD1D5DB)),
+                        border: Border.all(color: inputBorder),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _selectedReason,
                           isExpanded: true,
+                          dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                           items: _reasons.map((r) {
                             return DropdownMenuItem<String>(
                               value: r,
@@ -365,7 +383,7 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                                     color: const Color(0xFFEA580C),
                                   ),
                                   const SizedBox(width: 10),
-                                  Text(r, style: const TextStyle(fontSize: 14, color: Color(0xFF111827))),
+                                  Text(r, style: TextStyle(fontSize: 14, color: titleCol)),
                                 ],
                               ),
                             );
@@ -379,9 +397,9 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                     const SizedBox(height: 16),
 
                     // QUANTITÉ À DÉPRÉCIER
-                    const Text(
+                    Text(
                       'Quantité dépréciée *',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: labelCol),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -394,22 +412,22 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                               setState(() {});
                             }
                           },
-                          icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF6B7280)),
+                          icon: Icon(Icons.remove_circle_outline, color: subtitleCol),
                         ),
                         Expanded(
                           child: Container(
                             height: 44,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: inputBg,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFD1D5DB)),
+                              border: Border.all(color: inputBorder),
                             ),
                             child: TextField(
                               controller: _qtyController,
                               keyboardType: TextInputType.number,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: titleCol),
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.zero,
@@ -435,7 +453,7 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                                 setState(() {});
                               }
                             },
-                            child: const Text('Max', style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: Text('Max', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy)),
                           ),
                       ],
                     ),
@@ -443,26 +461,27 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
 
                     // BOUTIQUE CONCERNÉE
                     if (appState.availableStores.length > 1) ...[
-                      const Text(
+                      Text(
                         'Boutique',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: labelCol),
                       ),
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: inputBg,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFD1D5DB)),
+                          border: Border.all(color: inputBorder),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: _selectedStore,
                             isExpanded: true,
+                            dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                             items: appState.availableStores.map((s) {
                               return DropdownMenuItem<String>(
                                 value: s,
-                                child: Text(s, style: const TextStyle(fontSize: 14)),
+                                child: Text(s, style: TextStyle(fontSize: 14, color: titleCol)),
                               );
                             }).toList(),
                             onChanged: (val) {
@@ -475,25 +494,26 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                     ],
 
                     // NOTE / DÉTAIL FACULTATIF
-                    const Text(
+                    Text(
                       'Observations (optionnel)',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: labelCol),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: inputBg,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFD1D5DB)),
+                        border: Border.all(color: inputBorder),
                       ),
                       child: TextField(
                         controller: _notesController,
                         maxLines: 2,
-                        decoration: const InputDecoration(
+                        style: TextStyle(fontSize: 13, color: titleCol),
+                        decoration: InputDecoration(
                           hintText: 'Ex: Colis tombé lors du déchargement, flacon brisé...',
-                          hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                          hintStyle: TextStyle(fontSize: 13, color: isDark ? Colors.white38 : const Color(0xFF9CA3AF)),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.all(10),
+                          contentPadding: const EdgeInsets.all(10),
                         ),
                       ),
                     ),
@@ -503,9 +523,9 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
+                        color: isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.3) : const Color(0xFFFEF2F2),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFFECACA)),
+                        border: Border.all(color: isDark ? const Color(0xFF991B1B) : const Color(0xFFFECACA)),
                       ),
                       child: Row(
                         children: [
@@ -515,9 +535,9 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Perte financière estimée',
-                                  style: TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
+                                  style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B)),
                                 ),
                                 Text(
                                   '${_totalLoss.toStringAsFixed(0)} F CFA',
@@ -532,7 +552,7 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                           ),
                           Text(
                             '$_quantity unit.',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF991B1B)),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B)),
                           ),
                         ],
                       ),
@@ -546,19 +566,20 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                       child: ElevatedButton(
                         onPressed: _submitDepreciation,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0D1B2E),
+                          backgroundColor: isDark ? AppTheme.accentGold : const Color(0xFF0D1B2E),
+                          foregroundColor: isDark ? Colors.black : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.check, color: Colors.white, size: 20),
-                            SizedBox(width: 8),
+                            Icon(Icons.check, color: isDark ? Colors.black : Colors.white, size: 20),
+                            const SizedBox(width: 8),
                             Text(
                               'Valider la dépréciation',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: isDark ? Colors.black : Colors.white),
                             ),
                           ],
                         ),
@@ -574,13 +595,13 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Historique récent des pertes',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: titleCol),
                   ),
                   Text(
                     '${recentDepreciations.length} enregistrée(s)',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    style: TextStyle(fontSize: 12, color: subtitleCol),
                   ),
                 ],
               ),
@@ -590,13 +611,14 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cardBorder),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
                       'Aucune perte enregistrée pour le moment',
-                      style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                      style: TextStyle(color: subtitleCol, fontSize: 13),
                     ),
                   ),
                 )
@@ -606,9 +628,9 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      border: Border.all(color: cardBorder),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -616,7 +638,7 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEE2E2),
+                            color: isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.3) : const Color(0xFFFEE2E2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(Icons.remove_shopping_cart_outlined, color: Color(0xFFDC2626), size: 20),
@@ -628,19 +650,19 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                             children: [
                               Text(
                                 dep.productName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: titleCol),
                               ),
                               const SizedBox(height: 3),
                               Text(
                                 '${dep.date.day.toString().padLeft(2, '0')}/${dep.date.month.toString().padLeft(2, '0')}/${dep.date.year} • Motif: ${dep.reason}',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                                style: TextStyle(fontSize: 12, color: subtitleCol),
                               ),
                               if (dep.notes.isNotEmpty)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 2),
                                   child: Text(
                                     dep.notes,
-                                    style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Color(0xFF4B5563)),
+                                    style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: isDark ? Colors.white60 : const Color(0xFF4B5563)),
                                   ),
                                 ),
                             ],
@@ -655,7 +677,7 @@ class _StockDepreciationScreenState extends State<StockDepreciationScreen> {
                             ),
                             Text(
                               '${dep.totalLoss.toStringAsFixed(0)} F CFA',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                              style: TextStyle(fontSize: 12, color: subtitleCol),
                             ),
                           ],
                         ),

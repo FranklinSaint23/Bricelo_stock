@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/screens/screens.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/widgets/dialogs/upgrade_dialog.dart';
 
 class PurchasesAndExpensesScreen extends StatelessWidget {
   const PurchasesAndExpensesScreen({super.key});
@@ -14,6 +15,7 @@ class PurchasesAndExpensesScreen extends StatelessWidget {
       animation: appState,
       builder: (context, _) {
         final isDark = appState.isDarkMode;
+        final isDiscovered = appState.isDiscoveredPlan;
         final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
         final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB);
         final textPrimary = isDark ? Colors.white : const Color(0xFF1F2937);
@@ -55,29 +57,77 @@ class PurchasesAndExpensesScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _buildRow(Icons.domain_rounded, 'Fournisseurs'.tr, isLocked: false, textPrimary: textPrimary, isDark: isDark, onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SuppliersScreen()));
-                    }),
+                    _buildRow(
+                      context: context,
+                      icon: Icons.domain_rounded,
+                      title: 'Fournisseurs'.tr,
+                      isLocked: false,
+                      textPrimary: textPrimary,
+                      isDark: isDark,
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SuppliersScreen()));
+                      },
+                    ),
                     _buildDivider(dividerCol),
-                    _buildRow(Icons.receipt_long_rounded, 'Bons d\'achat'.tr, isLocked: false, textPrimary: textPrimary, isDark: isDark, onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchaseOrdersScreen()));
-                    }),
+                    _buildRow(
+                      context: context,
+                      icon: Icons.receipt_long_rounded,
+                      title: 'Bons d\'achat'.tr,
+                      isLocked: false,
+                      textPrimary: textPrimary,
+                      isDark: isDark,
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchaseOrdersScreen()));
+                      },
+                    ),
                     _buildDivider(dividerCol),
-                    _buildRow(Icons.price_change_rounded, 'Dépenses'.tr, isLocked: false, textPrimary: textPrimary, isDark: isDark, onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen()));
-                    }),
+                    _buildRow(
+                      context: context,
+                      icon: Icons.price_change_rounded,
+                      title: 'Dépenses'.tr,
+                      isLocked: false,
+                      textPrimary: textPrimary,
+                      isDark: isDark,
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen()));
+                      },
+                    ),
                     _buildDivider(dividerCol),
-                    _buildRow(Icons.insights_rounded, 'Analyse des sorties'.tr, isLocked: false, textPrimary: textPrimary, isDark: isDark, onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesAnalyticsScreen()));
-                    }),
+                    _buildRow(
+                      context: context,
+                      icon: Icons.insights_rounded,
+                      title: 'Analyse des sorties'.tr,
+                      isLocked: isDiscovered,
+                      textPrimary: textPrimary,
+                      isDark: isDark,
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesAnalyticsScreen()));
+                      },
+                    ),
                     _buildDivider(dividerCol),
-                    _buildRow(Icons.request_quote_rounded, 'Coût d\'achat'.tr, isLocked: false, textPrimary: textPrimary, isDark: isDark, onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchaseCostsScreen()));
-                    }),
+                    _buildRow(
+                      context: context,
+                      icon: Icons.request_quote_rounded,
+                      title: 'Coût d\'achat'.tr,
+                      isLocked: isDiscovered,
+                      textPrimary: textPrimary,
+                      isDark: isDark,
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchaseCostsScreen()));
+                      },
+                    ),
                     _buildDivider(dividerCol),
-                    _buildRow(Icons.credit_card_off_rounded, 'Dettes fournisseurs'.tr, isLocked: false, textPrimary: textPrimary, isDark: isDark, onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplierDebtsScreen()));
-                    }),
+                    _buildRow(
+                      context: context,
+                      icon: Icons.credit_card_off_rounded,
+                      title: 'Dettes fournisseurs'.tr,
+                      isLocked: isDiscovered,
+                      textPrimary: textPrimary,
+                      isDark: isDark,
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplierDebtsScreen()));
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -88,9 +138,10 @@ class PurchasesAndExpensesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(
-    IconData icon,
-    String title, {
+  Widget _buildRow({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
     required bool isLocked,
     required Color textPrimary,
     required bool isDark,
@@ -98,7 +149,13 @@ class PurchasesAndExpensesScreen extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: onTap ?? () {},
+      onTap: () {
+        if (isLocked) {
+          showUpgradeDialog(context, title);
+        } else if (onTap != null) {
+          onTap();
+        }
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         child: Row(
@@ -126,9 +183,11 @@ class PurchasesAndExpensesScreen extends StatelessWidget {
                 ),
               ),
             Icon(
-              isLocked ? Icons.lock_outline : Icons.chevron_right,
-              size: 20,
-              color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF),
+              isLocked ? Icons.lock_rounded : Icons.chevron_right,
+              size: isLocked ? 19 : 20,
+              color: isLocked
+                  ? const Color(0xFFD97706)
+                  : (isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
             ),
           ],
         ),

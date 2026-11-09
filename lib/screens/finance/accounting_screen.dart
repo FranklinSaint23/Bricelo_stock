@@ -3,6 +3,7 @@ import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/sales/debts_screen.dart';
 import 'package:stock_prime/screens/finance/accounting_detail_views.dart';
+import 'package:stock_prime/widgets/dialogs/upgrade_dialog.dart';
 
 class AccountingScreen extends StatelessWidget {
   const AccountingScreen({super.key});
@@ -15,51 +16,61 @@ class AccountingScreen extends StatelessWidget {
       {
         'icon': Icons.auto_stories_rounded,
         'title': 'Journal & activation',
+        'requiresPro': false,
         'builder': (BuildContext ctx) => const AccountingJournalScreen(),
       },
       {
         'icon': Icons.scale_rounded,
         'title': 'Balance',
+        'requiresPro': false,
         'builder': (BuildContext ctx) => const TrialBalanceScreen(),
       },
       {
         'icon': Icons.person_pin_circle_rounded,
         'title': 'Clients à crédit',
+        'requiresPro': false,
         'builder': (BuildContext ctx) => const DebtsScreen(),
       },
       {
         'icon': Icons.query_stats_rounded,
         'title': 'Compte de résultat',
+        'requiresPro': true,
         'builder': (BuildContext ctx) => const IncomeStatementScreen(),
       },
       {
         'icon': Icons.account_balance_rounded,
         'title': 'Bilan',
+        'requiresPro': true,
         'builder': (BuildContext ctx) => const BalanceSheetScreen(),
       },
       {
         'icon': Icons.percent_rounded,
         'title': 'TVA',
+        'requiresPro': true,
         'builder': (BuildContext ctx) => const VatReportScreen(),
       },
       {
         'icon': Icons.badge_rounded,
         'title': 'Paie',
+        'requiresPro': true,
         'builder': (BuildContext ctx) => const PayrollScreen(),
       },
       {
         'icon': Icons.domain_rounded,
         'title': 'Immobilisations',
+        'requiresPro': true,
         'builder': (BuildContext ctx) => const FixedAssetsScreen(),
       },
       {
         'icon': Icons.lock_clock_rounded,
         'title': 'Clôture',
+        'requiresPro': true,
         'builder': (BuildContext ctx) => const DailyClosingScreen(),
       },
       {
         'icon': Icons.folder_shared_rounded,
         'title': 'Médiathèque',
+        'requiresPro': true,
         'builder': (BuildContext ctx) => const AccountingMediaScreen(),
       },
     ];
@@ -68,6 +79,7 @@ class AccountingScreen extends StatelessWidget {
       animation: appState,
       builder: (context, _) {
         final isDark = appState.isDarkMode;
+        final isDiscovered = appState.isDiscoveredPlan;
         final pageBg = isDark ? AppTheme.darkScaffold : const Color(0xFFF9FAFB);
         final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
         final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB);
@@ -118,6 +130,7 @@ class AccountingScreen extends StatelessWidget {
                         title: (items[i]['title'] as String).tr,
                         textPrimary: textPrimary,
                         isDark: isDark,
+                        isLocked: isDiscovered && (items[i]['requiresPro'] == true),
                         onTap: () {
                           final builder = items[i]['builder'] as Widget Function(BuildContext);
                           Navigator.push(context, MaterialPageRoute(builder: builder));
@@ -140,10 +153,17 @@ class AccountingScreen extends StatelessWidget {
     required String title,
     required Color textPrimary,
     required bool isDark,
+    required bool isLocked,
     required VoidCallback onTap,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        if (isLocked) {
+          showUpgradeDialog(context, title);
+        } else {
+          onTap();
+        }
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
@@ -156,7 +176,13 @@ class AccountingScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary),
               ),
             ),
-            Icon(Icons.chevron_right, size: 20, color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
+            Icon(
+              isLocked ? Icons.lock_rounded : Icons.chevron_right,
+              size: isLocked ? 19 : 20,
+              color: isLocked
+                  ? const Color(0xFFD97706)
+                  : (isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
+            ),
           ],
         ),
       ),
