@@ -1894,15 +1894,16 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    final sb = _supabase;
-    if (sb != null) {
-      sb.from('categories').upsert({
+    enqueueOrSendSupabase(
+      table: 'categories',
+      action: 'upsert',
+      payload: {
         'id': cat.id,
         'name': cat.name,
         'parent_name': cat.parent,
         'tva': cat.tva,
-      }).then((_) {}, onError: (_) {});
-    }
+      },
+    );
   }
 
   void updateCategory(CategoryItem cat) {
@@ -1911,12 +1912,16 @@ class AppState extends ChangeNotifier {
       categories[idx] = cat;
       _saveToPrefs();
       notifyListeners();
-      _supabase?.from('categories').upsert({
-        'id': cat.id,
-        'name': cat.name,
-        'parent_name': cat.parent,
-        'tva': cat.tva,
-      }).then((_) {}, onError: (_) {});
+      enqueueOrSendSupabase(
+        table: 'categories',
+        action: 'upsert',
+        payload: {
+          'id': cat.id,
+          'name': cat.name,
+          'parent_name': cat.parent,
+          'tva': cat.tva,
+        },
+      );
     }
   }
 
@@ -1924,7 +1929,12 @@ class AppState extends ChangeNotifier {
     categories.removeWhere((c) => c.id == id);
     _saveToPrefs();
     notifyListeners();
-    _supabase?.from('categories').delete().eq('id', id).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'categories',
+      action: 'delete',
+      matchCol: 'id',
+      matchVal: id,
+    );
   }
 
   // --- GESTION DYNAMIQUE DES BOUTIQUES ---
@@ -1938,11 +1948,16 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('stores').upsert({
-      'name': clean,
-      'address': address,
-      'phone': userPhone,
-    }, onConflict: 'name').then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'stores',
+      action: 'upsert',
+      onConflict: 'name',
+      payload: {
+        'name': clean,
+        'address': address,
+        'phone': userPhone,
+      },
+    );
   }
 
   void removeStore(String name) {
@@ -2012,11 +2027,17 @@ class AppState extends ChangeNotifier {
     await _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('stores').upsert({
-      'name': cleanName,
-      'address': address,
-      'phone': phone.isNotEmpty ? phone : userPhone,
-    }, onConflict: 'name').then((_) {}, onError: (_) {});
+    await enqueueOrSendSupabase(
+      table: 'stores',
+      action: 'upsert',
+      onConflict: 'name',
+      payload: {
+        'name': cleanName,
+        'address': address,
+        'phone': phone.isNotEmpty ? phone : userPhone,
+      },
+    );
+    await syncOwnerWorkspaceConfigToCloud();
   }
 
   Future<void> updateOutlet(
@@ -2165,13 +2186,17 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('customers').upsert({
-      'id': customer.id,
-      'name': customer.name,
-      'phone': customer.phone,
-      'email': customer.email,
-      'address': customer.address,
-    }).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'customers',
+      action: 'upsert',
+      payload: {
+        'id': customer.id,
+        'name': customer.name,
+        'phone': customer.phone,
+        'email': customer.email,
+        'address': customer.address,
+      },
+    );
   }
 
   void updateCustomer(Customer customer) {
@@ -2181,13 +2206,17 @@ class AppState extends ChangeNotifier {
       _saveToPrefs();
       notifyListeners();
 
-      _supabase?.from('customers').upsert({
-        'id': customer.id,
-        'name': customer.name,
-        'phone': customer.phone,
-        'email': customer.email,
-        'address': customer.address,
-      }).then((_) {}, onError: (_) {});
+      enqueueOrSendSupabase(
+        table: 'customers',
+        action: 'upsert',
+        payload: {
+          'id': customer.id,
+          'name': customer.name,
+          'phone': customer.phone,
+          'email': customer.email,
+          'address': customer.address,
+        },
+      );
     }
   }
 
@@ -2195,7 +2224,12 @@ class AppState extends ChangeNotifier {
     customers.removeWhere((c) => c.id == id);
     _saveToPrefs();
     notifyListeners();
-    _supabase?.from('customers').delete().eq('id', id).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'customers',
+      action: 'delete',
+      matchCol: 'id',
+      matchVal: id,
+    );
   }
 
   // --- GESTION DYNAMIQUE DES FOURNISSEURS ---
@@ -2204,14 +2238,18 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('suppliers').upsert({
-      'id': supplier.id,
-      'name': supplier.name,
-      'phone': supplier.phone,
-      'email': supplier.email,
-      'category': supplier.contactName,
-      'address': supplier.address,
-    }).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'suppliers',
+      action: 'upsert',
+      payload: {
+        'id': supplier.id,
+        'name': supplier.name,
+        'phone': supplier.phone,
+        'email': supplier.email,
+        'category': supplier.contactName,
+        'address': supplier.address,
+      },
+    );
   }
 
   void updateSupplier(Supplier supplier) {
@@ -2221,14 +2259,18 @@ class AppState extends ChangeNotifier {
       _saveToPrefs();
       notifyListeners();
 
-      _supabase?.from('suppliers').upsert({
-        'id': supplier.id,
-        'name': supplier.name,
-        'phone': supplier.phone,
-        'email': supplier.email,
-        'category': supplier.contactName,
-        'address': supplier.address,
-      }).then((_) {}, onError: (_) {});
+      enqueueOrSendSupabase(
+        table: 'suppliers',
+        action: 'upsert',
+        payload: {
+          'id': supplier.id,
+          'name': supplier.name,
+          'phone': supplier.phone,
+          'email': supplier.email,
+          'category': supplier.contactName,
+          'address': supplier.address,
+        },
+      );
     }
   }
 
@@ -2236,7 +2278,12 @@ class AppState extends ChangeNotifier {
     suppliers.removeWhere((s) => s.id == id);
     _saveToPrefs();
     notifyListeners();
-    _supabase?.from('suppliers').delete().eq('id', id).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'suppliers',
+      action: 'delete',
+      matchCol: 'id',
+      matchVal: id,
+    );
   }
 
   void resetAllData() {
@@ -2494,8 +2541,6 @@ class AppState extends ChangeNotifier {
       storeName: storeForSale,
     );
 
-    final sb = _supabase;
-
     // Décrémenter le stock des produits par boutique et globalement
     for (var item in cart) {
       final pIdx = products.indexWhere((prod) => prod.id == item.product.id);
@@ -2518,17 +2563,25 @@ class AppState extends ChangeNotifier {
         );
         stockMovements.insert(0, sm);
 
-        if (sb != null) {
-          sb.from('products').update({'stock': p.stock}).eq('id', p.id).then((_) {}, onError: (_) {});
-          sb.from('stock_movements').upsert({
+        enqueueOrSendSupabase(
+          table: 'products',
+          action: 'update',
+          matchCol: 'id',
+          matchVal: p.id,
+          payload: {'stock': p.stock},
+        );
+        enqueueOrSendSupabase(
+          table: 'stock_movements',
+          action: 'upsert',
+          payload: {
             'id': sm.id,
             'product_name': sm.productName,
             'movement_type': sm.type,
             'quantity': sm.quantity,
             'reason': sm.reason,
             'author': effectiveCashier,
-          }).then((_) {}, onError: (_) {});
-        }
+          },
+        );
       }
     }
 
@@ -2569,16 +2622,18 @@ class AppState extends ChangeNotifier {
       );
       debts.insert(0, debt);
 
-      if (sb != null) {
-        sb.from('customer_debts').upsert({
+      enqueueOrSendSupabase(
+        table: 'customer_debts',
+        action: 'upsert',
+        payload: {
           'id': debt.id,
           'customer_name': debt.customerName,
           'phone': debt.customerPhone,
           'total_debt': debt.initialDebt,
           'remaining_amount': debt.remainingDebt,
           'store_name': currentStore,
-        }).then((_) {}, onError: (_) {});
-      }
+        },
+      );
     }
 
     sales.insert(0, sale);
@@ -2594,38 +2649,41 @@ class AppState extends ChangeNotifier {
       final normKey = sale.paymentMethod.isNotEmpty ? sale.paymentMethod : 'Espèces';
       activeCashShift!.paymentMethodsBreakdown[normKey] =
           (activeCashShift!.paymentMethodsBreakdown[normKey] ?? 0.0) + sale.total;
+      _syncShiftToCloud(activeCashShift!);
     }
 
     cart.clear();
     _saveToPrefs();
     notifyListeners();
 
-    // Sauvegarde asynchrone de la vente sur Supabase
-    if (sb != null) {
-      () async {
-        try {
-          await sb.from('sales').upsert({
-            'id': sale.ticketNumber,
-            'sale_date': sale.createdAt.toIso8601String(),
-            'total_amount': sale.total,
-            'amount_received': sale.amountReceived,
-            'change_returned': sale.changeReturned,
-            'payment_method': sale.paymentMethod,
-            'status': sale.paymentMethod == 'À Crédit' ? 'CREDIT' : 'COMPLETED',
-            'customer_name': sale.customerName,
-            'cashier_name': sale.cashierName,
-            'store_name': sale.storeName,
-          });
-          for (final it in sale.items) {
-            await sb.from('sale_items').insert({
-              'sale_id': sale.ticketNumber,
-              'product_name': it.productName,
-              'quantity': it.quantity,
-              'unit_price': it.unitPrice,
-            });
-          }
-        } catch (_) {}
-      }();
+    // Sauvegarde de la vente et des articles sur Supabase (ou mise en file d'attente si hors-ligne)
+    enqueueOrSendSupabase(
+      table: 'sales',
+      action: 'upsert',
+      payload: {
+        'id': sale.ticketNumber,
+        'sale_date': sale.createdAt.toIso8601String(),
+        'total_amount': sale.total,
+        'amount_received': sale.amountReceived,
+        'change_returned': sale.changeReturned,
+        'payment_method': sale.paymentMethod,
+        'status': sale.paymentMethod == 'À Crédit' ? 'CREDIT' : 'COMPLETED',
+        'customer_name': sale.customerName,
+        'cashier_name': sale.cashierName,
+        'store_name': sale.storeName,
+      },
+    );
+    for (final it in sale.items) {
+      enqueueOrSendSupabase(
+        table: 'sale_items',
+        action: 'insert',
+        payload: {
+          'sale_id': sale.ticketNumber,
+          'product_name': it.productName,
+          'quantity': it.quantity,
+          'unit_price': it.unitPrice,
+        },
+      );
     }
 
     return sale;
@@ -2679,10 +2737,16 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('customer_debts').update({
-      'remaining_amount': debt.remainingDebt,
-      'last_activity': DateTime.now().toIso8601String(),
-    }).eq('id', debt.id).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'customer_debts',
+      action: 'update',
+      matchCol: 'id',
+      matchVal: debt.id,
+      payload: {
+        'remaining_amount': debt.remainingDebt,
+        'last_activity': DateTime.now().toIso8601String(),
+      },
+    );
   }
 
   void addManualDebt({
@@ -2708,14 +2772,18 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('customer_debts').upsert({
-      'id': debt.id,
-      'customer_name': debt.customerName,
-      'phone': debt.customerPhone,
-      'total_debt': debt.initialDebt,
-      'remaining_amount': debt.remainingDebt,
-      'store_name': currentStore,
-    }).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'customer_debts',
+      action: 'upsert',
+      payload: {
+        'id': debt.id,
+        'customer_name': debt.customerName,
+        'phone': debt.customerPhone,
+        'total_debt': debt.initialDebt,
+        'remaining_amount': debt.remainingDebt,
+        'store_name': currentStore,
+      },
+    );
   }
 
   void addCustomerDebt(CustomerDebt debt) {
@@ -2847,15 +2915,19 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('expenses').upsert({
-      'id': exp.id,
-      'title': exp.description,
-      'category': exp.category,
-      'amount': exp.amount,
-      'beneficiary': exp.paidBy,
-      'paid_from_caisse': exp.paidFromCaisse,
-      'reference': exp.reference,
-    }).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'expenses',
+      action: 'upsert',
+      payload: {
+        'id': exp.id,
+        'title': exp.description,
+        'category': exp.category,
+        'amount': exp.amount,
+        'beneficiary': exp.paidBy,
+        'paid_from_caisse': exp.paidFromCaisse,
+        'reference': exp.reference,
+      },
+    );
   }
 
   // --- ACTIONS GESTION DE PRODUITS & STOCK ---
@@ -2974,10 +3046,16 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('products').update({
-      'stock': p.stock,
-      'purchase_price': p.buyPrice,
-    }).eq('id', p.id).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'products',
+      action: 'update',
+      matchCol: 'id',
+      matchVal: p.id,
+      payload: {
+        'stock': p.stock,
+        'purchase_price': p.buyPrice,
+      },
+    );
   }
 
   void adjustStock({
@@ -3011,7 +3089,13 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('products').update({'stock': p.stock}).eq('id', p.id).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'products',
+      action: 'update',
+      matchCol: 'id',
+      matchVal: p.id,
+      payload: {'stock': p.stock},
+    );
   }
 
   // --- ACTIONS TRANSFERTS DE STOCK INTER-BOUTIQUES ---
@@ -3154,7 +3238,13 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('products').update({'stock': p.stock}).eq('id', p.id).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'products',
+      action: 'update',
+      matchCol: 'id',
+      matchVal: p.id,
+      payload: {'stock': p.stock},
+    );
   }
 
   // --- GESTION DES DEVIS PRO-FORMA ---

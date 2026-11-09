@@ -30,9 +30,9 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
         return StatefulBuilder(
           builder: (dialogCtx, setDlgState) {
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: appState.isDarkMode ? AppTheme.darkSurface : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              title: const Text('Nouvelle demande d\'approbation', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              title: Text('Nouvelle demande d\'approbation'.tr, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: appState.isDarkMode ? Colors.white : const Color(0xFF111827))),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
