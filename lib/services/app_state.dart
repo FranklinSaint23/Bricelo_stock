@@ -113,27 +113,6 @@ class AppState extends ChangeNotifier {
     _globalSubscriptionExpiresAt = value;
   }
 
-  // Quotas & vérifications de la formule d'abonnement
-  bool get isFreePlan =>
-      subscriptionPlan.toLowerCase().contains('gratuit') ||
-      subscriptionPlan.toLowerCase().contains('découverte') ||
-      subscriptionPlan.toLowerCase().contains('decouverte');
-  bool get isProPlan => subscriptionPlan.toLowerCase().contains('pro');
-  bool get isEnterprisePlan => subscriptionPlan.toLowerCase().contains('entreprise');
-
-  int get maxSalesQuota => isFreePlan ? 50 : 999999;
-  int get maxProductsQuota => isFreePlan ? 30 : 999999;
-  int get maxCollaboratorsQuota => isFreePlan ? 0 : (isProPlan ? 3 : 999999);
-  int get maxCreditCustomersQuota => isFreePlan ? 5 : 999999;
-
-  int get currentMonthSalesCount {
-    final now = DateTime.now();
-    return sales.where((s) => s.createdAt.year == now.year && s.createdAt.month == now.month).length;
-  }
-
-  bool get hasReachedSalesQuota => isFreePlan && currentMonthSalesCount >= 50;
-  bool get hasReachedProductsQuota => isFreePlan && products.length >= 30;
-
   // --- Profil Entreprise & Facturation Dynamique ---
   String companyLogo = '';
   String companyAddress = 'Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)';
@@ -912,9 +891,7 @@ class AppState extends ChangeNotifier {
         'language': currentLanguage,
         if (ownerPasswordHash.isNotEmpty) 'password_hash': ownerPasswordHash,
         'subscription_plan': subscriptionPlan,
-        'subscription_billing': subscriptionBilling,
         'subscription_status': subscriptionStatus,
-        'subscription_expires_at': subscriptionExpiresAt?.toIso8601String(),
         'access_groups': accessGroups,
         'cash_desks': cashDesks.map((e) => e.toJson()).toList(),
         'available_stores': availableStores,
@@ -956,14 +933,8 @@ class AppState extends ChangeNotifier {
             if (prof['subscription_plan'] != null && prof['subscription_plan'].toString().trim().isNotEmpty) {
               subscriptionPlan = prof['subscription_plan'].toString().trim();
             }
-            if (prof['subscription_billing'] != null && prof['subscription_billing'].toString().trim().isNotEmpty) {
-              subscriptionBilling = prof['subscription_billing'].toString().trim();
-            }
             if (prof['subscription_status'] != null && prof['subscription_status'].toString().trim().isNotEmpty) {
               subscriptionStatus = prof['subscription_status'].toString().trim();
-            }
-            if (prof['subscription_expires_at'] != null && prof['subscription_expires_at'].toString().trim().isNotEmpty) {
-              subscriptionExpiresAt = DateTime.tryParse(prof['subscription_expires_at'].toString());
             }
             if (prof['access_groups'] is List && (prof['access_groups'] as List).isNotEmpty) {
               accessGroups = (prof['access_groups'] as List)
@@ -1349,18 +1320,6 @@ class AppState extends ChangeNotifier {
       if (matchedRemoteProfile['subscription_plan'] != null &&
           matchedRemoteProfile['subscription_plan'].toString().trim().isNotEmpty) {
         subscriptionPlan = matchedRemoteProfile['subscription_plan'].toString().trim();
-      }
-      if (matchedRemoteProfile['subscription_billing'] != null &&
-          matchedRemoteProfile['subscription_billing'].toString().trim().isNotEmpty) {
-        subscriptionBilling = matchedRemoteProfile['subscription_billing'].toString().trim();
-      }
-      if (matchedRemoteProfile['subscription_status'] != null &&
-          matchedRemoteProfile['subscription_status'].toString().trim().isNotEmpty) {
-        subscriptionStatus = matchedRemoteProfile['subscription_status'].toString().trim();
-      }
-      if (matchedRemoteProfile['subscription_expires_at'] != null &&
-          matchedRemoteProfile['subscription_expires_at'].toString().trim().isNotEmpty) {
-        subscriptionExpiresAt = DateTime.tryParse(matchedRemoteProfile['subscription_expires_at'].toString());
       }
       if (matchedRemoteProfile['access_groups'] is List &&
           (matchedRemoteProfile['access_groups'] as List).isNotEmpty) {

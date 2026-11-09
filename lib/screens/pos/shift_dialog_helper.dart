@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/services/translations.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 
 class ShiftDialogHelper {
   /// Ouvre la modale pour démarrer un shift de caisse
   static Future<bool> showOpenShiftDialog(BuildContext context) async {
     final appState = AppState.instance;
+    final isDark = appState.isDarkMode;
     final isCashier = appState.userRole.toLowerCase() == 'caissier';
     final cashiers = appState.teamMembers.isNotEmpty
         ? appState.teamMembers.map((m) => m.name).toList()
@@ -31,16 +33,20 @@ class ShiftDialogHelper {
         return StatefulBuilder(
           builder: (dialogCtx, setDlgState) {
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              title: const Row(
+              title: Row(
                 children: [
-                  Icon(Icons.point_of_sale, color: AppTheme.primaryNavy),
-                  SizedBox(width: 8),
+                  const Icon(Icons.point_of_sale, color: AppTheme.accentGold),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Ouvrir un shift de caisse',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      'Ouvrir un shift de caisse'.tr,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
                     ),
                   ),
                 ],
@@ -49,19 +55,35 @@ class ShiftDialogHelper {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Un shift de caisse doit être ouvert avant d\'encaisser les ventes.',
-                      style: TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
+                    Text(
+                      'Un shift de caisse doit être ouvert avant d\'encaisser les ventes.'.tr,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String>(
                       value: selectedCashier,
+                      dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        fontSize: 14,
+                      ),
                       decoration: InputDecoration(
-                        labelText: 'Caissier responsable',
+                        labelText: 'Caissier responsable'.tr,
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
-                      items: cashiers.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                      items: cashiers
+                          .map((c) => DropdownMenuItem(
+                                value: c,
+                                child: Text(c, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                              ))
+                          .toList(),
                       onChanged: (val) {
                         if (val != null) setDlgState(() => selectedCashier = val);
                       },
@@ -69,12 +91,25 @@ class ShiftDialogHelper {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       value: selectedDesk,
+                      dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        fontSize: 14,
+                      ),
                       decoration: InputDecoration(
-                        labelText: 'Poste de caisse',
+                        labelText: 'Poste de caisse'.tr,
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
-                      items: desks.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                      items: desks
+                          .map((d) => DropdownMenuItem(
+                                value: d,
+                                child: Text(d, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                              ))
+                          .toList(),
                       onChanged: (val) {
                         if (val != null) setDlgState(() => selectedDesk = val);
                       },
@@ -83,9 +118,14 @@ class ShiftDialogHelper {
                     TextField(
                       controller: openingCashCtrl,
                       keyboardType: TextInputType.number,
+                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                       decoration: InputDecoration(
-                        labelText: 'Fond de caisse initial (FCFA) *',
+                        labelText: '${'Fond de caisse initial'.tr} (FCFA) *',
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                         hintText: '0',
+                        hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
@@ -96,12 +136,15 @@ class ShiftDialogHelper {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Annuler', style: TextStyle(color: Color(0xFF6B7280))),
+                  child: Text(
+                    'Annuler'.tr,
+                    style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  ),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryNavy,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppTheme.accentGold,
+                    foregroundColor: const Color(0xFF0F172A),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () async {
@@ -116,13 +159,13 @@ class ShiftDialogHelper {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Shift de caisse ouvert pour $selectedCashier !'),
+                          content: Text('${'Shift de caisse ouvert pour'.tr} $selectedCashier !'),
                           backgroundColor: const Color(0xFF059669),
                         ),
                       );
                     }
                   },
-                  child: const Text('Démarrer le shift', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text('Démarrer le shift'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -136,6 +179,7 @@ class ShiftDialogHelper {
   /// Ouvre la modale pour clôturer un shift de caisse en cours
   static Future<bool> showCloseShiftDialog(BuildContext context, CashShift shift) async {
     final appState = AppState.instance;
+    final isDark = appState.isDarkMode;
     final expectedTotal = shift.openingCash + shift.cashSalesTotal;
     final countedCtrl = TextEditingController(text: expectedTotal.toInt().toString());
     final noteCtrl = TextEditingController();
@@ -150,16 +194,20 @@ class ShiftDialogHelper {
             final discrepancy = counted - expectedTotal;
 
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              title: const Row(
+              title: Row(
                 children: [
-                  Icon(Icons.lock_clock, color: AppTheme.primaryNavy),
-                  SizedBox(width: 8),
+                  const Icon(Icons.lock_clock, color: AppTheme.accentGold),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Fermer le shift (Faire la caisse)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      'Fermer le shift (Faire la caisse)'.tr,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
                     ),
                   ),
                 ],
@@ -172,28 +220,30 @@ class ShiftDialogHelper {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
+                        color: isDark ? const Color(0xFF162540) : const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
                         children: [
-                          _buildDetailRow('Caissier :', shift.cashierName),
+                          _buildDetailRow('Caissier :'.tr, shift.cashierName, isDark: isDark),
                           const SizedBox(height: 4),
                           _buildDetailRow(
-                            'Poste de caisse :',
+                            'Poste de caisse :'.tr,
                             shift.storeName.isNotEmpty && !shift.cashDeskName.toLowerCase().contains(shift.storeName.toLowerCase())
                                 ? '${shift.cashDeskName} · ${shift.storeName}'
                                 : shift.cashDeskName,
+                            isDark: isDark,
                           ),
                           const SizedBox(height: 4),
-                          _buildDetailRow('Fond initial :', AppTheme.formatFCFA(shift.openingCash)),
+                          _buildDetailRow('Fond initial :'.tr, AppTheme.formatFCFA(shift.openingCash), isDark: isDark),
                           const SizedBox(height: 4),
-                          _buildDetailRow('Ventes espèces décomptées :', AppTheme.formatFCFA(shift.cashSalesTotal)),
-                          const Divider(height: 12),
+                          _buildDetailRow('Ventes espèces décomptées :'.tr, AppTheme.formatFCFA(shift.cashSalesTotal), isDark: isDark),
+                          Divider(height: 12, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
                           _buildDetailRow(
-                            'Total théorique attendu :',
+                            'Total théorique attendu :'.tr,
                             AppTheme.formatFCFA(expectedTotal),
                             isBold: true,
+                            isDark: isDark,
                           ),
                         ],
                       ),
@@ -203,9 +253,14 @@ class ShiftDialogHelper {
                       controller: countedCtrl,
                       keyboardType: TextInputType.number,
                       onChanged: (_) => setDlgState(() {}),
+                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                       decoration: InputDecoration(
-                        labelText: 'Espèces réelles comptées (FCFA) *',
+                        labelText: '${'Espèces réelles comptées'.tr} (FCFA) *',
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                         hintText: '0',
+                        hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
@@ -215,8 +270,10 @@ class ShiftDialogHelper {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: discrepancy == 0
-                            ? const Color(0xFFD1FAE5)
-                            : (discrepancy > 0 ? const Color(0xFFDBEAFE) : const Color(0xFFFEE2E2)),
+                            ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFD1FAE5))
+                            : (discrepancy > 0
+                                ? (isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.4) : const Color(0xFFDBEAFE))
+                                : (isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.4) : const Color(0xFFFEE2E2))),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -224,14 +281,16 @@ class ShiftDialogHelper {
                           Expanded(
                             child: Text(
                               discrepancy == 0
-                                  ? 'Caisse parfaite (Aucun écart)'
-                                  : (discrepancy > 0 ? 'Excédent de caisse :' : 'Déficit de caisse :'),
+                                  ? 'Caisse parfaite (Aucun écart)'.tr
+                                  : (discrepancy > 0 ? 'Excédent de caisse :'.tr : 'Déficit de caisse :'.tr),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 color: discrepancy == 0
-                                    ? const Color(0xFF065F46)
-                                    : (discrepancy > 0 ? const Color(0xFF1E40AF) : const Color(0xFF991B1B)),
+                                    ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46))
+                                    : (discrepancy > 0
+                                        ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF))
+                                        : (isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B))),
                               ),
                             ),
                           ),
@@ -242,8 +301,10 @@ class ShiftDialogHelper {
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: discrepancy == 0
-                                  ? const Color(0xFF065F46)
-                                  : (discrepancy > 0 ? const Color(0xFF1E40AF) : const Color(0xFF991B1B)),
+                                  ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46))
+                                  : (discrepancy > 0
+                                      ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF))
+                                      : (isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B))),
                             ),
                           ),
                         ],
@@ -253,9 +314,14 @@ class ShiftDialogHelper {
                     TextField(
                       controller: noteCtrl,
                       maxLines: 2,
+                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                       decoration: InputDecoration(
-                        labelText: 'Remarque de fin de service (optionnel)',
-                        hintText: 'Ex: Billet déchiré, rendu monnaie...',
+                        labelText: 'Remarque de fin de service (optionnel)'.tr,
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                        hintText: 'Ex: Billet déchiré, rendu monnaie...'.tr,
+                        hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
@@ -266,7 +332,10 @@ class ShiftDialogHelper {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Annuler', style: TextStyle(color: Color(0xFF6B7280))),
+                  child: Text(
+                    'Annuler'.tr,
+                    style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  ),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -282,14 +351,14 @@ class ShiftDialogHelper {
                     );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Shift de caisse clôturé avec succès.'),
-                          backgroundColor: Color(0xFF059669),
+                        SnackBar(
+                          content: Text('Shift de caisse clôturé avec succès.'.tr),
+                          backgroundColor: const Color(0xFF059669),
                         ),
                       );
                     }
                   },
-                  child: const Text('Fermer le shift', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text('Fermer le shift'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -300,7 +369,7 @@ class ShiftDialogHelper {
     return result ?? false;
   }
 
-  static Widget _buildDetailRow(String label, String value, {bool isBold = false}) {
+  static Widget _buildDetailRow(String label, String value, {bool isBold = false, bool isDark = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -308,7 +377,7 @@ class ShiftDialogHelper {
           label,
           style: TextStyle(
             fontSize: 12.5,
-            color: const Color(0xFF4B5563),
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563),
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -321,7 +390,7 @@ class ShiftDialogHelper {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 12.5,
-              color: const Color(0xFF111827),
+              color: isDark ? Colors.white : const Color(0xFF111827),
               fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
             ),
           ),
@@ -330,4 +399,3 @@ class ShiftDialogHelper {
     );
   }
 }
-

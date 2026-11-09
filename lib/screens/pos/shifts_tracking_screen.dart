@@ -122,7 +122,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
     final products = appState.products;
     if (products.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Aucun produit disponible dans le catalogue.')),
+        SnackBar(content: Text('Aucun produit disponible dans le catalogue.'.tr)),
       );
       return;
     }
@@ -137,17 +137,18 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (dialogCtx, setDlgState) {
+          final isDark = appState.isDarkMode;
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.inventory_2_rounded, color: AppTheme.primaryNavy),
-                SizedBox(width: 8),
+                const Icon(Icons.inventory_2_rounded, color: AppTheme.accentGold),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Demande de réapprovisionnement',
-                    style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold),
+                    'Demande de réapprovisionnement'.tr,
+                    style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                 ),
               ],
@@ -157,9 +158,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Le magasinier transmet cette demande d\'approvisionnement au propriétaire pour validation et paiement.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                  Text(
+                    'Le magasinier transmet cette demande d\'approvisionnement au propriétaire pour validation et paiement.'.tr,
+                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                   ),
                   const SizedBox(height: 14),
 
@@ -167,14 +168,19 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   DropdownButtonFormField<Product>(
                     value: selectedProd,
                     isExpanded: true,
+                    dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
                     decoration: InputDecoration(
-                      labelText: 'Article concerné *',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      labelText: 'Article concerné *'.tr,
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1))),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                     items: products.map((p) => DropdownMenuItem(
                       value: p,
-                      child: Text('${p.name} (Stock: ${p.stock})', overflow: TextOverflow.ellipsis),
+                      child: Text('${p.name} (${'Stock:'.tr} ${p.stock})', overflow: TextOverflow.ellipsis, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A))),
                     )).toList(),
                     onChanged: (val) {
                       if (val != null) {
@@ -193,14 +199,14 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: isDark ? const Color(0xFF162540) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Stock actuel : ${selectedProd.stock} ${selectedProd.unit}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                        Text('Alerte seuil : ${selectedProd.minStockAlert}', style: const TextStyle(fontSize: 12, color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        Text('${'Stock actuel :'.tr} ${selectedProd.stock} ${selectedProd.unit}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                        Text('${'Alerte seuil :'.tr} ${selectedProd.minStockAlert}', style: const TextStyle(fontSize: 12, color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -210,9 +216,14 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   TextField(
                     controller: qtyCtrl,
                     keyboardType: TextInputType.number,
+                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                     decoration: InputDecoration(
-                      labelText: 'Quantité à commander (${selectedProd.unit}) *',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      labelText: '${'Quantité à commander'.tr} (${selectedProd.unit}) *',
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1))),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                     onChanged: (v) {
@@ -227,10 +238,15 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   // Fournisseur
                   TextField(
                     controller: supplierCtrl,
+                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                     decoration: InputDecoration(
-                      labelText: 'Fournisseur suggéré',
+                      labelText: 'Fournisseur suggéré'.tr,
                       hintText: 'Ex: Quincaillerie Centrale',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1))),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                   ),
@@ -240,10 +256,15 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   TextField(
                     controller: costCtrl,
                     keyboardType: TextInputType.number,
+                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                     decoration: InputDecoration(
-                      labelText: 'Coût estimé (FCFA) *',
+                      labelText: 'Coût estimé (FCFA) *'.tr,
                       hintText: '0',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1))),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                   ),
@@ -253,10 +274,15 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   TextField(
                     controller: noteCtrl,
                     maxLines: 2,
+                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                     decoration: InputDecoration(
-                      labelText: 'Remarque / Urgence',
+                      labelText: 'Remarque / Urgence'.tr,
                       hintText: 'Ex: Rupture imminente sur le chantier...',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1))),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                   ),
@@ -266,7 +292,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Annuler', style: TextStyle(color: Color(0xFF6B7280))),
+                child: Text('Annuler'.tr, style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -278,7 +304,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   final q = int.tryParse(qtyCtrl.text.trim()) ?? 0;
                   if (q <= 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Veuillez saisir une quantité supérieure à 0.'), backgroundColor: Color(0xFFDC2626)),
+                      SnackBar(content: Text('Veuillez saisir une quantité supérieure à 0.'.tr), backgroundColor: const Color(0xFFDC2626)),
                     );
                     return;
                   }
@@ -296,13 +322,13 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Demande d\'approvisionnement envoyée au propriétaire pour ${selectedProd.name} !'),
+                        content: Text('${'Demande d\'approvisionnement envoyée au propriétaire pour'.tr} ${selectedProd.name} !'),
                         backgroundColor: const Color(0xFF0D9488),
                       ),
                     );
                   }
                 },
-                child: const Text('Soumettre au Propriétaire', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text('Soumettre au Propriétaire'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -312,20 +338,22 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
   }
 
   void _showSettingsToggleDialog() {
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) {
         final isEnabled = appState.isShiftsTrackingEnabled;
         return AlertDialog(
+          backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: const Text('Configuration du suivi des shifts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          title: Text('Configuration du suivi des shifts'.tr, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF0F172A))),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               SwitchListTile.adaptive(
                 value: isEnabled,
-                title: const Text('Activer le suivi des shifts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                subtitle: const Text('Exige l\'ouverture et fermeture de caisse avant encaissement.', style: TextStyle(fontSize: 12)),
+                title: Text('Activer le suivi des shifts'.tr, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                subtitle: Text('Exige l\'ouverture et fermeture de caisse avant encaissement.'.tr, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
                 activeColor: AppTheme.accentGold,
                 onChanged: (val) {
                   appState.setShiftsTrackingEnabled(val);
@@ -337,7 +365,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Fermer'),
+              child: Text('Fermer'.tr, style: TextStyle(color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy)),
             ),
           ],
         );
@@ -357,10 +385,10 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
       firstDate: DateTime(2020),
       lastDate: DateTime(now.year + 1, 12, 31),
       initialDateRange: initialRange,
-      helpText: 'Sélectionner la période personnalisée',
-      cancelText: 'Annuler',
-      confirmText: 'Valider',
-      saveText: 'Appliquer',
+      helpText: 'Sélectionner la période personnalisée'.tr,
+      cancelText: 'Annuler'.tr,
+      confirmText: 'Valider'.tr,
+      saveText: 'Appliquer'.tr,
     );
     if (picked != null && mounted) {
       setState(() {
@@ -371,30 +399,32 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
   }
 
   void _confirmDeleteShift(CashShift shift) {
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.delete_forever_rounded, color: Color(0xFFDC2626)),
-            SizedBox(width: 8),
+            const Icon(Icons.delete_forever_rounded, color: Color(0xFFDC2626)),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Supprimer ce shift passé ?',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                'Supprimer ce shift passé ?'.tr,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF0F172A)),
               ),
             ),
           ],
         ),
         content: Text(
-          'Voulez-vous supprimer définitivement le shift de ${shift.cashierName} (${shift.cashDeskName}) du ${shift.openedAt.day.toString().padLeft(2, "0")}/${shift.openedAt.month.toString().padLeft(2, "0")}/${shift.openedAt.year} ?',
-          style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+          '${'Voulez-vous supprimer définitivement le shift de'.tr} ${shift.cashierName} (${shift.cashDeskName}) ${'du'.tr} ${shift.openedAt.day.toString().padLeft(2, "0")}/${shift.openedAt.month.toString().padLeft(2, "0")}/${shift.openedAt.year} ?',
+          style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4B5563)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annuler', style: TextStyle(color: Color(0xFF6B7280))),
+            child: Text('Annuler'.tr, style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -407,14 +437,14 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               await appState.deleteCashShift(shift.id);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Shift passé supprimé de l\'historique.'),
-                    backgroundColor: Color(0xFFDC2626),
+                  SnackBar(
+                    content: Text('Shift passé supprimé de l\'historique.'.tr),
+                    backgroundColor: const Color(0xFFDC2626),
                   ),
                 );
               }
             },
-            child: const Text('Supprimer', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text('Supprimer'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -506,35 +536,36 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
   }
 
   Widget _buildStoreSelectorBar() {
+    final isDark = appState.isDarkMode;
     if (!appState.isOwnerAccount) {
       final myStore = appState.assignedStoreForCurrentUser;
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.darkSurface : Colors.white,
+          border: Border(bottom: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB))),
         ),
         child: Row(
           children: [
-            const Icon(Icons.storefront_rounded, size: 18, color: AppTheme.primaryNavy),
+            const Icon(Icons.storefront_rounded, size: 18, color: AppTheme.accentGold),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Boutique rattachée : $myStore • ${appState.displayUserName}',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                '${'Boutique rattachée :'.tr} $myStore • ${appState.displayUserName}',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.primaryNavy),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFFDCFCE7),
+                color: isDark ? const Color(0xFF064E3B) : const Color(0xFFDCFCE7),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                appState.userRole,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                appState.userRole.tr,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF16A34A)),
               ),
             ),
           ],
@@ -564,24 +595,24 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
     final roleOrMemberItems = <DropdownMenuItem<String>>[
       DropdownMenuItem(
         value: 'ALL',
-        child: Text('Tous les rôles & équipiers (${attachedMembers.length})', overflow: TextOverflow.ellipsis),
+        child: Text('${'Tous les rôles & équipiers'.tr} (${attachedMembers.length})', overflow: TextOverflow.ellipsis),
       ),
       DropdownMenuItem(
         value: 'ROLE:Caissier',
-        child: Text('Rôle : Tous les Caissiers ($attachedCashiers)', overflow: TextOverflow.ellipsis),
+        child: Text('${'Rôle : Tous les Caissiers'.tr} ($attachedCashiers)', overflow: TextOverflow.ellipsis),
       ),
       DropdownMenuItem(
         value: 'ROLE:Magasinier',
-        child: Text('Rôle : Tous les Magasiniers ($attachedWarehouse)', overflow: TextOverflow.ellipsis),
+        child: Text('${'Rôle : Tous les Magasiniers'.tr} ($attachedWarehouse)', overflow: TextOverflow.ellipsis),
       ),
       DropdownMenuItem(
         value: 'ROLE:Gérant',
-        child: Text('Rôle : Tous les Gérants ($attachedManagers)', overflow: TextOverflow.ellipsis),
+        child: Text('${'Rôle : Tous les Gérants'.tr} ($attachedManagers)', overflow: TextOverflow.ellipsis),
       ),
       ...attachedMembers.map(
         (m) => DropdownMenuItem(
           value: 'MEMBER:${m.name}',
-          child: Text('👤 ${m.name} (${m.role} · ${m.storeName})', overflow: TextOverflow.ellipsis),
+          child: Text('👤 ${m.name} (${m.role.tr} · ${m.storeName})', overflow: TextOverflow.ellipsis),
         ),
       ),
     ];
@@ -594,44 +625,45 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.darkSurface : Colors.white,
+        border: Border(bottom: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.storefront_rounded, size: 18, color: AppTheme.primaryNavy),
+              const Icon(Icons.storefront_rounded, size: 18, color: AppTheme.accentGold),
               const SizedBox(width: 8),
-              const SizedBox(
+              SizedBox(
                 width: 72,
                 child: Text(
-                  'Boutique :',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF374151)),
+                  'Boutique :'.tr,
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151)),
                 ),
               ),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                    border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1)),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedStore,
+                      dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
                       isExpanded: true,
                       isDense: true,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primaryNavy),
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.accentGold),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.primaryNavy),
                       items: storeOptions
                           .map(
                             (st) => DropdownMenuItem(
                               value: st,
-                              child: Text(st, overflow: TextOverflow.ellipsis),
+                              child: Text(st.tr, overflow: TextOverflow.ellipsis, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A))),
                             ),
                           )
                           .toList(),
@@ -652,33 +684,44 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.badge_outlined, size: 18, color: AppTheme.primaryNavy),
+              const Icon(Icons.badge_outlined, size: 18, color: AppTheme.accentGold),
               const SizedBox(width: 8),
-              const SizedBox(
+              SizedBox(
                 width: 72,
                 child: Text(
-                  'Équipier :',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF374151)),
+                  'Équipier :'.tr,
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151)),
                 ),
               ),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _selectedMemberFilter != 'ALL' ? const Color(0xFFFFFBEB) : const Color(0xFFF8FAFC),
+                    color: _selectedMemberFilter != 'ALL'
+                        ? (isDark ? const Color(0xFF2E2412) : const Color(0xFFFFFBEB))
+                        : (isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC)),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: _selectedMemberFilter != 'ALL' ? AppTheme.accentGold : const Color(0xFFCBD5E1),
+                      color: _selectedMemberFilter != 'ALL' ? AppTheme.accentGold : (isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1)),
                     ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedMemberFilter,
+                      dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
                       isExpanded: true,
                       isDense: true,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primaryNavy),
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
-                      items: roleOrMemberItems,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.accentGold),
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.primaryNavy),
+                      items: roleOrMemberItems.map((item) {
+                        return DropdownMenuItem<String>(
+                          value: item.value,
+                          child: DefaultTextStyle(
+                            style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 12.5),
+                            child: item.child,
+                          ),
+                        );
+                      }).toList(),
                       onChanged: (val) {
                         if (val != null) {
                           _applyMemberOrRoleFilter(val);
@@ -696,12 +739,13 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: isDark ? const Color(0xFF162540) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1)),
                     ),
-                    child: const Text(
-                      'Tous',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                    child: Text(
+                      'Tous'.tr,
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                     ),
                   ),
                 ),
@@ -757,27 +801,28 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
   }
 
   Widget _buildDetailRow(String label, String value, {bool isBold = false}) {
+    final isDark = appState.isDarkMode;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          label.tr,
           style: TextStyle(
             fontSize: 12.5,
-            color: const Color(0xFF4B5563),
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563),
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            value,
+            value.tr,
             textAlign: TextAlign.end,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 12.5,
-              color: const Color(0xFF111827),
+              color: isDark ? Colors.white : const Color(0xFF111827),
               fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
             ),
           ),
@@ -791,6 +836,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
     return AnimatedBuilder(
       animation: appState,
       builder: (context, _) {
+        final isDark = appState.isDarkMode;
         final isEnabled = appState.isShiftsTrackingEnabled;
         final activeShift = appState.activeCashShift;
         final rawHistory = appState.cashShiftsHistory;
@@ -799,41 +845,46 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         final isOwner = appState.isOwnerAccount;
         final isInvited = !isOwner;
         final invitedRole = appState.userRole.toLowerCase().trim();
+        final storeSuffix = appState.assignedStoreForCurrentUser.isNotEmpty && appState.assignedStoreForCurrentUser != 'Toutes les boutiques'
+            ? ' (${appState.assignedStoreForCurrentUser})'
+            : '';
         final invitedTitle = invitedRole.contains('magasinier')
-            ? 'Mon Espace Magasinier (${appState.assignedStoreForCurrentUser})'
+            ? ('Mon Espace Magasinier'.tr + storeSuffix)
             : invitedRole.contains('gérant')
-                ? 'Mon Suivi & Mes Activités (${appState.assignedStoreForCurrentUser})'
-                : 'Mes Shifts & Ma Caisse (${appState.assignedStoreForCurrentUser})';
+                ? ('Mon Suivi & Mes Activités'.tr + storeSuffix)
+                : ('Mes Shifts & Ma Caisse'.tr + storeSuffix);
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
+          backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF9FAFB),
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             elevation: 0,
             centerTitle: true,
-            leading: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: InkWell(
-                onTap: () => Navigator.pop(context),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
-                ),
-              ),
-            ),
+            leading: Navigator.canPop(context)
+                ? Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: InkWell(
+                      onTap: () => Navigator.pop(context),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  )
+                : null,
             title: Text(
-              isInvited ? invitedTitle : 'Suivi Shifts & Activités Équipe',
+              isInvited ? invitedTitle : 'Suivi Shifts & Activités Équipe'.tr,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5, color: Colors.white),
             ),
             actions: [
               if (isOwner)
                 IconButton(
                   icon: const Icon(Icons.tune_rounded, color: Colors.white),
-                  tooltip: 'Paramètres du suivi',
+                  tooltip: 'Paramètres du suivi'.tr,
                   onPressed: _showSettingsToggleDialog,
                 ),
             ],
@@ -846,9 +897,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                     labelColor: AppTheme.accentGold,
                     unselectedLabelColor: const Color(0xFF94A3B8),
                     tabs: [
-                      const Tab(
-                        icon: Icon(Icons.point_of_sale_rounded, size: 20),
-                        text: 'Caissiers & Caisse',
+                      Tab(
+                        icon: const Icon(Icons.point_of_sale_rounded, size: 20),
+                        text: 'Caissiers & Caisse'.tr,
                       ),
                       Tab(
                         icon: Stack(
@@ -869,7 +920,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                               ),
                           ],
                         ),
-                        text: 'Magasiniers',
+                        text: 'Magasiniers'.tr,
                       ),
                       Tab(
                         icon: Stack(
@@ -891,7 +942,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                               ),
                           ],
                         ),
-                        text: 'Gérants',
+                        text: 'Gérants'.tr,
                       ),
                     ],
                   ),
@@ -936,6 +987,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
     List<CashShift> history,
     List<Sale> periodSales,
   ) {
+    final isDark = appState.isDarkMode;
     final now = DateTime.now();
     final isPast17h30 = now.hour > 17 || (now.hour == 17 && now.minute >= 30);
 
@@ -973,20 +1025,20 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
+                color: isDark ? const Color(0xFF3B1219) : const Color(0xFFFEF2F2),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFCA5A5)),
+                border: Border.all(color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5)),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.alarm_on_rounded, color: Color(0xFFDC2626), size: 22),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Alerte Clôture 17h30 !', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF991B1B), fontSize: 13)),
-                        Text('L\'heure de clôture est dépassée. Effectuez le décompte et fermez votre caisse.', style: TextStyle(fontSize: 11.5, color: Color(0xFF7F1D1D))),
+                        Text('Alerte Clôture 17h30 !'.tr, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEF4444), fontSize: 13)),
+                        Text('L\'heure de clôture est dépassée. Effectuez le décompte et fermez votre caisse.'.tr, style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF7F1D1D))),
                       ],
                     ),
                   ),
@@ -998,7 +1050,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     onPressed: () => _showCloseShiftDialog(activeShift),
-                    child: const Text('Clôturer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    child: Text('Clôturer'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
                 ],
               ),
@@ -1008,9 +1060,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? AppTheme.darkSurface : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1.6),
+              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6), width: 1.6),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF10B981).withValues(alpha: 0.08),
@@ -1027,7 +1079,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD1FAE5),
+                        color: isDark ? const Color(0xFF064E3B) : const Color(0xFFD1FAE5),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.lock_open_rounded, color: Color(0xFF059669), size: 22),
@@ -1040,8 +1092,8 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           Row(
                             children: [
                               Text(
-                                '${activeShift.cashDeskName} ouvert',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15.5, color: Color(0xFF111827)),
+                                '${activeShift.cashDeskName} ${'ouvert'.tr}',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.5, color: isDark ? Colors.white : const Color(0xFF111827)),
                               ),
                               const SizedBox(width: 8),
                               Container(
@@ -1065,8 +1117,8 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                             ],
                           ),
                           Text(
-                            'Caissier : ${activeShift.cashierName} · ${activeShift.storeName}',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                            '${'Caissier :'.tr} ${activeShift.cashierName} · ${activeShift.storeName}',
+                            style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                           ),
                         ],
                       ),
@@ -1074,9 +1126,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   ],
                 ),
                 const SizedBox(height: 14),
-                const Divider(height: 1),
+                Divider(height: 1, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
                 const SizedBox(height: 12),
-                _buildDetailRow('Heure d\'ouverture :', '${activeShift.openedAt.day.toString().padLeft(2, "0")}/${activeShift.openedAt.month.toString().padLeft(2, "0")} à ${activeShift.openedAt.hour.toString().padLeft(2, "0")}:${activeShift.openedAt.minute.toString().padLeft(2, "0")}'),
+                _buildDetailRow('Heure d\'ouverture :', '${activeShift.openedAt.day.toString().padLeft(2, "0")}/${activeShift.openedAt.month.toString().padLeft(2, "0")} ${'à'.tr} ${activeShift.openedAt.hour.toString().padLeft(2, "0")}:${activeShift.openedAt.minute.toString().padLeft(2, "0")}'),
                 const SizedBox(height: 5),
                 _buildDetailRow('Fond initial en caisse :', AppTheme.formatFCFA(activeShift.openingCash)),
                 const SizedBox(height: 5),
@@ -1085,7 +1137,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
+                    color: isDark ? const Color(0xFF162540) : const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: _buildDetailRow(
@@ -1105,7 +1157,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     icon: const Icon(Icons.lock_clock, size: 18),
-                    label: const Text('Clôturer le shift (Faire la caisse)', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: Text('Clôturer le shift (Faire la caisse)'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
                     onPressed: () => _showCloseShiftDialog(activeShift),
                   ),
                 ),
@@ -1117,20 +1169,20 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? AppTheme.darkSurface : Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB)),
             ),
             child: Row(
               children: [
                 const Icon(Icons.storefront_outlined, size: 36, color: Color(0xFF9CA3AF)),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Aucun shift de caisse ouvert', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF374151))),
-                      Text('Ouvrez un shift avant d\'encaisser des ventes.', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                      Text('Aucun shift de caisse ouvert'.tr, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF374151))),
+                      Text('Ouvrez un shift avant d\'encaisser des ventes.'.tr, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
                     ],
                   ),
                 ),
@@ -1141,7 +1193,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: _showOpenShiftDialog,
-                  child: const Text('Ouvrir', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text('Ouvrir'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -1153,26 +1205,27 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Rapport d\'activité caisse',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                'Rapport d\'activité caisse'.tr,
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFCBD5E1)),
+                border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1)),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _periodOptions.contains(_selectedPeriod) ? _selectedPeriod : 'Tout',
+                  dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
                   isDense: true,
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                   items: _periodOptions
-                      .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                      .map((p) => DropdownMenuItem(value: p, child: Text(p.tr, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)))))
                       .toList(),
                   onChanged: (v) async {
                     if (v == null) return;
@@ -1195,18 +1248,18 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppTheme.primaryNavy.withValues(alpha: 0.06),
+                color: isDark ? const Color(0xFF162540) : AppTheme.primaryNavy.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppTheme.primaryNavy.withValues(alpha: 0.2)),
+                border: Border.all(color: isDark ? const Color(0xFF1E3052) : AppTheme.primaryNavy.withValues(alpha: 0.2)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.date_range_rounded, size: 16, color: AppTheme.primaryNavy),
+                  const Icon(Icons.date_range_rounded, size: 16, color: AppTheme.accentGold),
                   const SizedBox(width: 6),
                   Text(
-                    'Du ${_customDateRange!.start.day.toString().padLeft(2, "0")}/${_customDateRange!.start.month.toString().padLeft(2, "0")}/${_customDateRange!.start.year} au ${_customDateRange!.end.day.toString().padLeft(2, "0")}/${_customDateRange!.end.month.toString().padLeft(2, "0")}/${_customDateRange!.end.year}',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                    '${'Du'.tr} ${_customDateRange!.start.day.toString().padLeft(2, "0")}/${_customDateRange!.start.month.toString().padLeft(2, "0")}/${_customDateRange!.start.year} ${'au'.tr} ${_customDateRange!.end.day.toString().padLeft(2, "0")}/${_customDateRange!.end.month.toString().padLeft(2, "0")}/${_customDateRange!.end.year}',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                   ),
                   const SizedBox(width: 6),
                   const Icon(Icons.edit_calendar_rounded, size: 15, color: AppTheme.accentGold),
@@ -1247,18 +1300,18 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         if (isOwner) ...[
           Text(
             _selectedStore == 'Toutes les boutiques'
-                ? 'Caissiers rattachés (${attachedCashiers.length}) — touchez un équipier pour filtrer ses stats'
-                : 'Caissiers rattachés à $_selectedStore (${attachedCashiers.length})',
-            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                ? ('Caissiers rattachés'.tr + ' (${attachedCashiers.length}) — ' + 'touchez un équipier pour filtrer ses stats'.tr)
+                : ('${'Caissiers rattachés à'.tr} $_selectedStore (${attachedCashiers.length})'),
+            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
           ),
           const SizedBox(height: 10),
           if (attachedCashiers.isEmpty)
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB)),
               ),
               child: Row(
                 children: [
@@ -1267,9 +1320,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   Expanded(
                     child: Text(
                       _selectedStore == 'Toutes les boutiques'
-                          ? 'Aucun caissier invité pour le moment.'
-                          : 'Aucun caissier rattaché à la boutique "$_selectedStore".',
-                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF4B5563)),
+                          ? 'Aucun caissier invité pour le moment.'.tr
+                          : '${'Aucun caissier rattaché à la boutique'.tr} "$_selectedStore".',
+                      style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
                     ),
                   ),
                 ],
@@ -1306,10 +1359,12 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isSelectedMember ? const Color(0xFFEFF6FF) : Colors.white,
+                    color: isSelectedMember
+                        ? (isDark ? const Color(0xFF132A4A) : const Color(0xFFEFF6FF))
+                        : (isDark ? AppTheme.darkSurface : Colors.white),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelectedMember ? const Color(0xFF0284C7) : const Color(0xFFE5E7EB),
+                      color: isSelectedMember ? const Color(0xFF0284C7) : (isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB)),
                       width: isSelectedMember ? 1.5 : 1.0,
                     ),
                   ),
@@ -1327,12 +1382,12 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           children: [
                             Text(
                               m.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF111827)),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF111827)),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               '${m.assignedCashDesk ?? "Caisse Principale"} · ${m.storeName}',
-                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                              style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -1343,11 +1398,11 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                         children: [
                           Text(
                             AppTheme.formatFCFA(mRevenue),
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${mSales.length} vente(s) · $mShifts shift(s)',
+                            '${mSales.length} ${'vente(s)'.tr} · $mShifts ${'shift(s)'.tr}',
                             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF0284C7)),
                           ),
                         ],
@@ -1364,35 +1419,35 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? AppTheme.darkSurface : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.pie_chart_outline_rounded, color: AppTheme.primaryNavy, size: 20),
-                  SizedBox(width: 8),
+                  const Icon(Icons.pie_chart_outline_rounded, color: AppTheme.accentGold, size: 20),
+                  const SizedBox(width: 8),
                   Text(
-                    'Moyens de paiement (Sommes & %)',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                    'Moyens de paiement (Sommes & %)'.tr,
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Répartition sur la période sélectionnée :',
-                style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+              Text(
+                'Répartition sur la période sélectionnée :'.tr,
+                style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
               ),
               const SizedBox(height: 14),
 
               if (paymentBreakdown.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Center(
-                    child: Text('Aucune vente enregistrée sur cette période.', style: TextStyle(fontSize: 12.5, color: Color(0xFF9CA3AF))),
+                    child: Text('Aucune vente enregistrée sur cette période.'.tr, style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF))),
                   ),
                 )
               else
@@ -1418,14 +1473,14 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              method,
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                              method.tr,
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1F2937)),
                             ),
                             Row(
                               children: [
                                 Text(
                                   AppTheme.formatFCFA(amt),
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                                 ),
                                 const SizedBox(width: 8),
                                 Container(
@@ -1449,7 +1504,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           child: LinearProgressIndicator(
                             value: (pct / 100).clamp(0.0, 1.0),
                             minHeight: 7,
-                            backgroundColor: const Color(0xFFE2E8F0),
+                            backgroundColor: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0),
                             valueColor: AlwaysStoppedAnimation<Color>(barColor),
                           ),
                         ),
@@ -1463,9 +1518,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         const SizedBox(height: 20),
 
         // 5. HISTORIQUE DÉTAILLÉ DES SHIFTS CLÔTURÉS
-        const Text(
-          'Détail des shifts clôturés (Heures & Durée)',
-          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+        Text(
+          'Détail des shifts clôturés (Heures & Durée)'.tr,
+          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
         ),
         const SizedBox(height: 10),
 
@@ -1473,14 +1528,14 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? AppTheme.darkSurface : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB)),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                'Aucun shift clôturé sur cette période.',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                'Aucun shift clôturé sur cette période.'.tr,
+                style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
               ),
             ),
           )
@@ -1495,9 +1550,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB)),
                 boxShadow: const [
                   BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 2)),
                 ],
@@ -1511,12 +1566,12 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                       Expanded(
                         child: Row(
                           children: [
-                            const Icon(Icons.person_pin_rounded, color: AppTheme.primaryNavy, size: 20),
+                            const Icon(Icons.person_pin_rounded, color: AppTheme.accentGold, size: 20),
                             const SizedBox(width: 6),
                             Flexible(
                               child: Text(
                                 shift.cashierName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF111827)),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: isDark ? Colors.white : const Color(0xFF111827)),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -1529,17 +1584,17 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
+                              color: isDark ? const Color(0xFF162540) : const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                              border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1)),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.timer_outlined, size: 12, color: Color(0xFF475569)),
+                                Icon(Icons.timer_outlined, size: 12, color: isDark ? AppTheme.accentGold : const Color(0xFF475569)),
                                 const SizedBox(width: 4),
                                 Text(
                                   shift.formattedDuration,
-                                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : const Color(0xFF334155)),
                                 ),
                               ],
                             ),
@@ -1568,16 +1623,16 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   const SizedBox(height: 4),
                   Text(
                     '${shift.cashDeskName} · ${shift.storeName}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                   ),
-                  const Divider(height: 14),
+                  Divider(height: 14, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
 
                   _buildDetailRow('Heure d\'ouverture :', openStr),
                   const SizedBox(height: 4),
                   _buildDetailRow('Heure de clôture :', closeStr),
                   const SizedBox(height: 4),
                   if (shift.salesCount > 0 || shift.totalSalesAmount > 0) ...[
-                    _buildDetailRow('Nombre de ventes :', '${shift.salesCount} vente(s)'),
+                    _buildDetailRow('Nombre de ventes :', '${shift.salesCount} ${'vente(s)'.tr}'),
                     const SizedBox(height: 4),
                     _buildDetailRow('Total des ventes :', AppTheme.formatFCFA(shift.totalSalesAmount)),
                     const SizedBox(height: 4),
@@ -1590,27 +1645,31 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Résultat de caisse :', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF4B5563))),
+                      Text('Résultat de caisse :'.tr, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4B5563))),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: shift.discrepancy == 0
-                              ? const Color(0xFFD1FAE5)
-                              : (shift.discrepancy > 0 ? const Color(0xFFDBEAFE) : const Color(0xFFFEE2E2)),
+                              ? (isDark ? const Color(0xFF064E3B) : const Color(0xFFD1FAE5))
+                              : (shift.discrepancy > 0
+                                  ? (isDark ? const Color(0xFF1E3A5F) : const Color(0xFFDBEAFE))
+                                  : (isDark ? const Color(0xFF451A1A) : const Color(0xFFFEE2E2))),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           shift.discrepancy == 0
-                              ? 'Caisse parfaite (Aucun écart)'
+                              ? 'Caisse parfaite (Aucun écart)'.tr
                               : (shift.discrepancy > 0
-                                  ? 'Excédent : +${AppTheme.formatFCFA(shift.discrepancy)}'
-                                  : 'Déficit : -${AppTheme.formatFCFA(shift.discrepancy.abs())}'),
+                                  ? '${'Excédent : +'.tr}${AppTheme.formatFCFA(shift.discrepancy)}'
+                                  : '${'Déficit : -'.tr}${AppTheme.formatFCFA(shift.discrepancy.abs())}'),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: shift.discrepancy == 0
-                                ? const Color(0xFF065F46)
-                                : (shift.discrepancy > 0 ? const Color(0xFF1E40AF) : const Color(0xFF991B1B)),
+                                ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46))
+                                : (shift.discrepancy > 0
+                                    ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF))
+                                    : (isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B))),
                           ),
                         ),
                       ),
@@ -1619,8 +1678,8 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   if (shift.note.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Text(
-                      'Remarque : ${shift.note}',
-                      style: const TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: Color(0xFF6B7280)),
+                      '${'Remarque :'.tr} ${shift.note}',
+                      style: TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                     ),
                   ],
                 ],
@@ -1639,12 +1698,13 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
     required IconData icon,
     required Color color,
   }) {
+    final isDark = appState.isDarkMode;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppTheme.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1654,14 +1714,14 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               Icon(icon, color: color, size: 18),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(title, style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280), fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+                child: Text(title.tr, style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+          Text(value.tr, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF0F172A))),
           const SizedBox(height: 2),
-          Text(sub, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+          Text(sub.tr, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
         ],
       ),
     );
@@ -1671,6 +1731,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
   // TAB 2: MAGASINIERS (Supervision Propriétaire & Suivi des demandes de stock)
   // ===========================================================================
   Widget _buildWarehouseTab() {
+    final isDark = appState.isDarkMode;
     final isOwner = appState.isOwnerAccount;
     final effectiveStore = isOwner ? _selectedStore : appState.assignedStoreForCurrentUser;
     final lowStockProds = appState.products.where((p) {
@@ -1727,9 +1788,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                     child: Text(
                       isOwner
                           ? (_selectedStore == 'Toutes les boutiques'
-                              ? 'Supervision des Magasiniers & Stocks'
-                              : 'Magasiniers · $_selectedStore')
-                          : 'Mon Espace Magasinier & Stocks',
+                              ? 'Supervision des Magasiniers & Stocks'.tr
+                              : '${'Magasiniers'.tr} · $_selectedStore')
+                          : 'Mon Espace Magasinier & Stocks'.tr,
                       style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -1738,8 +1799,8 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               const SizedBox(height: 6),
               Text(
                 isOwner
-                    ? 'Suivez les activités de vos magasiniers rattachés à la boutique sélectionnée, validez leurs demandes et réglez les fournisseurs.'
-                    : 'Quand un stock diminue, soumettez une demande d\'approvisionnement au propriétaire qui la validera et paiera le fournisseur.',
+                    ? 'Suivez les activités de vos magasiniers rattachés à la boutique sélectionnée, validez leurs demandes et réglez les fournisseurs.'.tr
+                    : 'Quand un stock diminue, soumettez une demande d\'approvisionnement au propriétaire qui la validera et paiera le fournisseur.'.tr,
                 style: const TextStyle(color: Color(0xFFCCFBF1), fontSize: 12.5, height: 1.35),
               ),
               const SizedBox(height: 12),
@@ -1749,15 +1810,15 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                 children: [
                   _buildHeaderStatChip(
                     icon: Icons.badge_outlined,
-                    label: '${warehouseMembers.length} Magasinier(s)',
+                    label: '${warehouseMembers.length} ${'Magasinier(s)'.tr}',
                   ),
                   _buildHeaderStatChip(
                     icon: Icons.pending_actions_rounded,
-                    label: '$pendingRestocksCount En attente',
+                    label: '$pendingRestocksCount ${'En attente'.tr}',
                   ),
                   _buildHeaderStatChip(
                     icon: Icons.warning_amber_rounded,
-                    label: '${lowStockProds.length} Stock(s) faible(s)',
+                    label: '${lowStockProds.length} ${'Stock(s) faible(s)'.tr}',
                   ),
                 ],
               ),
@@ -1775,9 +1836,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                    label: const Text(
-                      'Soumettre une demande d\'approvisionnement',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    label: Text(
+                      'Soumettre une demande d\'approvisionnement'.tr,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     onPressed: () => _showRestockDialog(),
                   ),
@@ -1795,7 +1856,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               child: _buildKpiBox(
                 title: 'Demandes soumises',
                 value: '${restockRequests.length}',
-                sub: '$pendingRestocksCount en attente',
+                sub: '$pendingRestocksCount ${'en attente'.tr}',
                 icon: Icons.local_shipping_outlined,
                 color: const Color(0xFF0D9488),
               ),
@@ -1805,7 +1866,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               child: _buildKpiBox(
                 title: 'Approvisionné validé',
                 value: AppTheme.formatFCFA(approvedRestocksTotal),
-                sub: '${restockRequests.where((r) => r.status == "approved").length} validée(s)',
+                sub: '${restockRequests.where((r) => r.status == "approved").length} ${'validée(s)'.tr}',
                 icon: Icons.verified_outlined,
                 color: const Color(0xFF059669),
               ),
@@ -1818,18 +1879,18 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         if (isOwner) ...[
           Text(
             _selectedStore == 'Toutes les boutiques'
-                ? 'Magasiniers rattachés (${warehouseMembers.length})'
-                : 'Magasiniers rattachés à $_selectedStore (${warehouseMembers.length})',
-            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                ? '${'Magasiniers rattachés'.tr} (${warehouseMembers.length})'
+                : '${'Magasiniers rattachés à'.tr} $_selectedStore (${warehouseMembers.length})',
+            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
           ),
           const SizedBox(height: 10),
           if (warehouseMembers.isEmpty)
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
               ),
               child: Row(
                 children: [
@@ -1838,9 +1899,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   Expanded(
                     child: Text(
                       _selectedStore == 'Toutes les boutiques'
-                          ? 'Aucun magasinier invité pour le moment. Invitez un rôle "Magasinier" depuis Équipe pour suivre ses demandes ici.'
-                          : 'Aucun magasinier rattaché à la boutique "$_selectedStore".',
-                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF4B5563)),
+                          ? 'Aucun magasinier invité pour le moment. Invitez un rôle "Magasinier" depuis Équipe pour suivre ses demandes ici.'.tr
+                          : '${'Aucun magasinier rattaché à la boutique'.tr} "$_selectedStore".',
+                      style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
                     ),
                   ),
                 ],
@@ -1866,10 +1927,12 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isSelectedMember ? const Color(0xFFF0FDFA) : Colors.white,
+                    color: isSelectedMember
+                        ? (isDark ? const Color(0xFF134E4A).withValues(alpha: 0.5) : const Color(0xFFF0FDFA))
+                        : (isDark ? AppTheme.darkSurface : Colors.white),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelectedMember ? const Color(0xFF0D9488) : const Color(0xFFE5E7EB),
+                      color: isSelectedMember ? const Color(0xFF0D9488) : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
                       width: isSelectedMember ? 1.5 : 1.0,
                     ),
                   ),
@@ -1887,12 +1950,12 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           children: [
                             Text(
                               m.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF111827)),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF111827)),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${m.storeName} · Tél: ${m.phone}',
-                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                              '${m.storeName} · ${'Tél:'.tr} ${m.phone}',
+                              style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                             ),
                           ],
                         ),
@@ -1903,19 +1966,19 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF0FDFA),
+                              color: isDark ? const Color(0xFF134E4A).withValues(alpha: 0.4) : const Color(0xFFF0FDFA),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: const Color(0xFF99F6E4)),
                             ),
                             child: Text(
-                              '${mReqs.length} demande(s) ($mApproved validée(s))',
+                              '${mReqs.length} ${'demande(s)'.tr} ($mApproved ${'validée(s)'.tr})',
                               style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
                             ),
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            mPending > 0 ? '$mPending en attente · ${AppTheme.formatFCFA(mVolume)}' : AppTheme.formatFCFA(mVolume),
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                            mPending > 0 ? '$mPending ${'en attente'.tr} · ${AppTheme.formatFCFA(mVolume)}' : AppTheme.formatFCFA(mVolume),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.primaryNavy),
                           ),
                         ],
                       ),
@@ -1931,22 +1994,23 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Demandes d\'approvisionnement & transferts',
-                style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                'Demandes d\'approvisionnement & transferts'.tr,
+                style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
               ),
             ),
             if (pendingRestocksCount > 0)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7),
                   borderRadius: BorderRadius.circular(10),
+                  border: isDark ? Border.all(color: const Color(0xFFB45309)) : null,
                 ),
                 child: Text(
-                  '$pendingRestocksCount à valider',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                  '$pendingRestocksCount ${'à valider'.tr}',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E)),
                 ),
               ),
           ],
@@ -1957,14 +2021,14 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? AppTheme.darkSurface : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                'Aucune demande d\'approvisionnement ou de transfert enregistrée.',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                'Aucune demande d\'approvisionnement ou de transfert enregistrée.'.tr,
+                style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF9CA3AF)),
               ),
             ),
           )
@@ -1978,12 +2042,14 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isPending
                       ? const Color(0xFFFDE68A)
-                      : (isApproved ? const Color(0xFFA7F3D0) : const Color(0xFFE5E7EB)),
+                      : (isApproved
+                          ? const Color(0xFFA7F3D0)
+                          : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB))),
                 ),
               ),
               child: Column(
@@ -1999,34 +2065,38 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          req.type,
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
+                          req.type.tr,
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0D9488)),
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: isPending
-                              ? const Color(0xFFFEF3C7)
+                              ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7))
                               : (isPaid
-                                  ? const Color(0xFFDBEAFE)
-                                  : (isApproved ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2))),
+                                  ? (isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.4) : const Color(0xFFDBEAFE))
+                                  : (isApproved
+                                      ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFD1FAE5))
+                                      : (isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.4) : const Color(0xFFFEE2E2)))),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           isPending
-                              ? '🟡 En attente Proprio'
+                              ? '🟡 ${'En attente Proprio'.tr}'
                               : (isPaid
-                                  ? '💳 Payé au fournisseur'
-                                  : (isApproved ? '🟢 Validé par Proprio' : '🔴 Rejeté')),
+                                  ? '💳 ${'Payé au fournisseur'.tr}'
+                                  : (isApproved ? '🟢 ${'Validé par Proprio'.tr}' : '🔴 ${'Rejeté'.tr}')),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: isPending
-                                ? const Color(0xFF92400E)
+                                ? (isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E))
                                 : (isPaid
-                                    ? const Color(0xFF1E40AF)
-                                    : (isApproved ? const Color(0xFF065F46) : const Color(0xFF991B1B))),
+                                    ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF))
+                                    : (isApproved
+                                        ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46))
+                                        : (isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B)))),
                           ),
                         ),
                       ),
@@ -2035,7 +2105,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   const SizedBox(height: 8),
                   Text(
                     req.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF111827)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: isDark ? Colors.white : const Color(0xFF111827)),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -2043,15 +2113,15 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                     children: [
                       Expanded(
                         child: Text(
-                          'Demandé par : ${req.requesterName}',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                          '${'Demandé par :'.tr} ${req.requesterName}',
+                          style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (req.amount > 0)
                         Text(
                           AppTheme.formatFCFA(req.amount),
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryNavy),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : AppTheme.primaryNavy),
                         ),
                     ],
                   ),
@@ -2061,10 +2131,10 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                       width: double.infinity,
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(req.details, style: const TextStyle(fontSize: 11.5, color: Color(0xFF475569))),
+                      child: Text(req.details, style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569))),
                     ),
                   ],
 
@@ -2081,7 +2151,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
                           onPressed: () => appState.rejectApprovalRequest(req.id),
-                          child: const Text('Rejeter', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: Text('Rejeter'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -2095,8 +2165,8 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                             icon: const Icon(Icons.check_circle_outline, size: 16),
                             label: Text(
                               req.type == 'Approvisionnement'
-                                  ? 'Valider & Payer le fournisseur'
-                                  : 'Approuver le transfert',
+                                  ? 'Valider & Payer le fournisseur'.tr
+                                  : 'Approuver le transfert'.tr,
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                             ),
                             onPressed: () async {
@@ -2110,8 +2180,8 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                                   SnackBar(
                                     content: Text(
                                       req.type == 'Approvisionnement'
-                                          ? 'Approvisionnement validé, stock mis à jour et paiement fournisseur enregistré !'
-                                          : 'Transfert de stock approuvé !',
+                                          ? 'Approvisionnement validé, stock mis à jour et paiement fournisseur enregistré !'.tr
+                                          : 'Transfert de stock approuvé !'.tr,
                                     ),
                                     backgroundColor: const Color(0xFF059669),
                                   ),
@@ -2133,22 +2203,26 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Alertes de stock faible en boutique',
-              style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+            Text(
+              'Alertes de stock faible en boutique'.tr,
+              style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: lowStockProds.isNotEmpty ? const Color(0xFFFEE2E2) : const Color(0xFFD1FAE5),
+                color: lowStockProds.isNotEmpty
+                    ? (isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.4) : const Color(0xFFFEE2E2))
+                    : (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFD1FAE5)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                '${lowStockProds.length} alerte(s)',
+                '${lowStockProds.length} ${'alerte(s)'.tr}',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: lowStockProds.isNotEmpty ? const Color(0xFFDC2626) : const Color(0xFF059669),
+                  color: lowStockProds.isNotEmpty
+                      ? (isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626))
+                      : (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF059669)),
                 ),
               ),
             ),
@@ -2160,15 +2234,18 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? AppTheme.darkSurface : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.check_circle_outline, color: Color(0xFF059669), size: 20),
-                SizedBox(width: 8),
-                Text('Tous les niveaux de stock sont optimaux.', style: TextStyle(fontSize: 13, color: Color(0xFF374151))),
+                const Icon(Icons.check_circle_outline, color: Color(0xFF059669), size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Tous les niveaux de stock sont optimaux.'.tr,
+                  style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151)),
+                ),
               ],
             ),
           )
@@ -2178,9 +2255,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFCA5A5)),
+                border: Border.all(color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5)),
               ),
               child: Row(
                 children: [
@@ -2188,7 +2265,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEE2E2),
+                      color: isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.4) : const Color(0xFFFEE2E2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 22),
@@ -2200,11 +2277,11 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                       children: [
                         Text(
                           prod.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF111827)),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF111827)),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Stock : ${_selectedStore == "Toutes les boutiques" ? prod.stock : prod.stockForStore(_selectedStore)} ${prod.unit} · Seuil d\'alerte : ${prod.minStockAlert}',
+                          '${'Stock :'.tr} ${_selectedStore == "Toutes les boutiques" ? prod.stock : prod.stockForStore(_selectedStore)} ${prod.unit} · ${'Seuil d\'alerte :'.tr} ${prod.minStockAlert}',
                           style: const TextStyle(fontSize: 12, color: Color(0xFFDC2626), fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -2220,18 +2297,18 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       onPressed: () => _showRestockDialog(prod),
-                      child: const Text('Demander réappro', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                      child: Text('Demander réappro'.tr, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
                     )
                   else
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
+                        color: isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.4) : const Color(0xFFFEF2F2),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        'À réapprovisionner',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
+                      child: Text(
+                        'À réapprovisionner'.tr,
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626)),
                       ),
                     ),
                 ],
@@ -2241,9 +2318,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
 
         if (recentMovements.isNotEmpty) ...[
           const SizedBox(height: 24),
-          const Text(
-            'Derniers mouvements de stock enregistrés',
-            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+          Text(
+            'Derniers mouvements de stock enregistrés'.tr,
+            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
           ),
           const SizedBox(height: 10),
           ...recentMovements.map((mov) {
@@ -2254,9 +2331,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
               ),
               child: Row(
                 children: [
@@ -2272,11 +2349,11 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                       children: [
                         Text(
                           mov.productName,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF111827)),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF111827)),
                         ),
                         Text(
                           '${mov.reason} · $formattedDate',
-                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                          style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                         ),
                       ],
                     ),
@@ -2324,6 +2401,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
   // TAB 3: GÉRANTS (Supervision Propriétaire & Statistiques par Boutique)
   // ===========================================================================
   Widget _buildManagersTab() {
+    final isDark = appState.isDarkMode;
     final isOwner = appState.isOwnerAccount;
     final managerRequests = appState.approvalRequests
         .where((r) =>
@@ -2365,17 +2443,17 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   Expanded(
                     child: Text(
                       _selectedStore == 'Toutes les boutiques'
-                          ? 'Supervision des Gérants'
-                          : 'Gérants · $_selectedStore',
+                          ? 'Supervision des Gérants'.tr
+                          : '${'Gérants'.tr} · $_selectedStore',
                       style: const TextStyle(color: Colors.white, fontSize: 15.5, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Retrouvez ici les gérants rattachés à la boutique sélectionnée, leurs performances de supervision ainsi que leurs opérations soumises à votre approbation.',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5, height: 1.35),
+              Text(
+                'Retrouvez ici les gérants rattachés à la boutique sélectionnée, leurs performances de supervision ainsi que leurs opérations soumises à votre approbation.'.tr,
+                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5, height: 1.35),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -2384,15 +2462,15 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                 children: [
                   _buildHeaderStatChip(
                     icon: Icons.supervisor_account_rounded,
-                    label: '${managerMembers.length} Gérant(s)',
+                    label: '${managerMembers.length} ${'Gérant(s)'.tr}',
                   ),
                   _buildHeaderStatChip(
                     icon: Icons.pending_actions_rounded,
-                    label: '$pendingManagerReqs En attente',
+                    label: '$pendingManagerReqs ${'En attente'.tr}',
                   ),
                   _buildHeaderStatChip(
                     icon: Icons.point_of_sale_rounded,
-                    label: '${storeSales.length} Vente(s) boutique',
+                    label: '${storeSales.length} ${'Vente(s) boutique'.tr}',
                   ),
                 ],
               ),
@@ -2408,7 +2486,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               child: _buildKpiBox(
                 title: 'CA Boutique supervisé',
                 value: AppTheme.formatFCFA(storeRevenue),
-                sub: '${storeSales.length} vente(s)',
+                sub: '${storeSales.length} ${'vente(s)'.tr}',
                 icon: Icons.trending_up_rounded,
                 color: const Color(0xFF92400E),
               ),
@@ -2418,7 +2496,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               child: _buildKpiBox(
                 title: 'Opérations Gérants',
                 value: '${managerRequests.length}',
-                sub: '$pendingManagerReqs à valider',
+                sub: '$pendingManagerReqs ${'à valider'.tr}',
                 icon: Icons.fact_check_outlined,
                 color: AppTheme.primaryNavy,
               ),
@@ -2431,18 +2509,18 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         if (isOwner) ...[
           Text(
             _selectedStore == 'Toutes les boutiques'
-                ? 'Gérants rattachés (${managerMembers.length})'
-                : 'Gérants rattachés à $_selectedStore (${managerMembers.length})',
-            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                ? '${'Gérants rattachés'.tr} (${managerMembers.length})'
+                : '${'Gérants rattachés à'.tr} $_selectedStore (${managerMembers.length})',
+            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
           ),
           const SizedBox(height: 10),
           if (managerMembers.isEmpty)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
               ),
               child: Row(
                 children: [
@@ -2451,9 +2529,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   Expanded(
                     child: Text(
                       _selectedStore == 'Toutes les boutiques'
-                          ? 'Aucun Gérant invité pour l\'instant. Dès que vous invitez un Gérant dans Équipe, ses statistiques s\'affichent ici.'
-                          : 'Aucun Gérant rattaché à la boutique "$_selectedStore".',
-                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
+                          ? 'Aucun Gérant invité pour l\'instant. Dès que vous invitez un Gérant dans Équipe, ses statistiques s\'affichent ici.'.tr
+                          : '${'Aucun Gérant rattaché à la boutique'.tr} "$_selectedStore".',
+                      style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                     ),
                   ),
                 ],
@@ -2489,10 +2567,12 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isSelectedMember ? const Color(0xFFFEF3C7).withValues(alpha: 0.35) : Colors.white,
+                    color: isSelectedMember
+                        ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.35) : const Color(0xFFFEF3C7).withValues(alpha: 0.35))
+                        : (isDark ? AppTheme.darkSurface : Colors.white),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isSelectedMember ? const Color(0xFFD97706) : const Color(0xFFE5E7EB),
+                      color: isSelectedMember ? const Color(0xFFD97706) : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
                       width: isSelectedMember ? 1.5 : 1.0,
                     ),
                   ),
@@ -2513,11 +2593,11 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                               children: [
                                 Text(
                                   member.name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF111827)),
                                 ),
                                 Text(
-                                  '${member.storeName} · Tél: ${member.phone}',
-                                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                                  '${member.storeName} · ${'Tél:'.tr} ${member.phone}',
+                                  style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                                 ),
                               ],
                             ),
@@ -2525,12 +2605,12 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFEF3C7),
+                              color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              member.role,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                              member.role.tr,
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E)),
                             ),
                           ),
                         ],
@@ -2540,12 +2620,12 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '$activePermsCount droit(s) actif(s) · ${memberSales.length} vente(s) (${AppTheme.formatFCFA(memberSalesVol)})',
-                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF475569), fontWeight: FontWeight.w600),
+                            '$activePermsCount ${'droit(s) actif(s)'.tr} · ${memberSales.length} ${'vente(s)'.tr} (${AppTheme.formatFCFA(memberSalesVol)})',
+                            style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569), fontWeight: FontWeight.w600),
                           ),
                           Text(
-                            '$memberReqsCount opération(s)',
-                            style: const TextStyle(fontSize: 11.5, color: AppTheme.primaryNavy, fontWeight: FontWeight.bold),
+                            '$memberReqsCount ${'opération(s)'.tr}',
+                            style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white : AppTheme.primaryNavy, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -2558,8 +2638,8 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         ],
 
         Text(
-          isOwner ? 'Opérations sous validation du Propriétaire' : 'Mes opérations soumises au Propriétaire',
-          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+          isOwner ? 'Opérations sous validation du Propriétaire'.tr : 'Mes opérations soumises au Propriétaire'.tr,
+          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
         ),
         const SizedBox(height: 10),
 
@@ -2567,14 +2647,14 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? AppTheme.darkSurface : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                'Aucune opération de supervision soumise pour le moment.',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                'Aucune opération de supervision soumise pour le moment.'.tr,
+                style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF9CA3AF)),
               ),
             ),
           )
@@ -2587,9 +2667,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2600,30 +2680,34 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
+                          color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          req.type,
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                          req.type.tr,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E)),
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: isPending
-                              ? const Color(0xFFFEF3C7)
-                              : (isApproved ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2)),
+                              ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7))
+                              : (isApproved
+                                  ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFD1FAE5))
+                                  : (isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.4) : const Color(0xFFFEE2E2))),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          isPending ? '🟡 En attente' : (isApproved ? '🟢 Validé' : '🔴 Rejeté'),
+                          isPending ? '🟡 ${'En attente'.tr}' : (isApproved ? '🟢 ${'Validé'.tr}' : '🔴 ${'Rejeté'.tr}'),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: isPending
-                                ? const Color(0xFF92400E)
-                                : (isApproved ? const Color(0xFF065F46) : const Color(0xFF991B1B)),
+                                ? (isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E))
+                                : (isApproved
+                                    ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46))
+                                    : (isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B))),
                           ),
                         ),
                       ),
@@ -2632,7 +2716,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                   const SizedBox(height: 8),
                   Text(
                     req.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF111827)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: isDark ? Colors.white : const Color(0xFF111827)),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -2640,15 +2724,15 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                     children: [
                       Expanded(
                         child: Text(
-                          'Soumis par : ${req.requesterName}',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                          '${'Soumis par :'.tr} ${req.requesterName}',
+                          style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (req.amount > 0)
                         Text(
                           AppTheme.formatFCFA(req.amount),
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryNavy),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : AppTheme.primaryNavy),
                         ),
                     ],
                   ),
@@ -2658,10 +2742,10 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                       width: double.infinity,
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(req.details, style: const TextStyle(fontSize: 11.5, color: Color(0xFF475569))),
+                      child: Text(req.details, style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569))),
                     ),
                   ],
                   if (isPending && isOwner) ...[
@@ -2676,7 +2760,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                             onPressed: () => appState.rejectApprovalRequest(req.id),
-                            child: const Text('Rejeter', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            child: Text('Rejeter'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -2688,7 +2772,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                             onPressed: () => appState.approveApprovalRequest(req.id),
-                            child: const Text('Approuver', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            child: Text('Approuver'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                           ),
                         ),
                       ],

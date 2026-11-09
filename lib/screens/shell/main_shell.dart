@@ -154,7 +154,7 @@ class _MainShellState extends State<MainShell> {
     tabs.add(_DynamicNavTab(
       id: 'more',
       screen: const MoreScreen(),
-      label: isOwner ? 'Plus'.tr : 'Mon Compte',
+      label: (isOwner ? 'Plus' : 'Mon Compte').tr,
       webTitle: 'Menu & Paramètres'.tr,
       icon: Icons.widgets_outlined,
       activeIcon: Icons.widgets_rounded,
@@ -808,13 +808,13 @@ class _MainShellState extends State<MainShell> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${appState.displayUserName} • ${appState.userRole}',
+                                '${appState.displayUserName} • ${appState.userRole.tr}',
                                 style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
                                 overflow: TextOverflow.ellipsis,
                               ),
                               if (appState.userAssignedCashDesk != null && appState.userAssignedCashDesk!.isNotEmpty)
                                 Text(
-                                  'Caisse : ${appState.userAssignedCashDesk}',
+                                  '${'Caisse'.tr} : ${appState.userAssignedCashDesk}',
                                   style: const TextStyle(color: AppTheme.accentGold, fontSize: 10, fontWeight: FontWeight.w600),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -839,14 +839,14 @@ class _MainShellState extends State<MainShell> {
                               color: const Color(0xFFDC2626),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.logout_rounded, color: Colors.white, size: 12),
-                                SizedBox(width: 4),
+                                const Icon(Icons.logout_rounded, color: Colors.white, size: 12),
+                                const SizedBox(width: 4),
                                 Text(
-                                  'Déconnexion',
-                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                  'Déconnexion'.tr,
+                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
