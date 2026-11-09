@@ -130,30 +130,7 @@ class AppState extends ChangeNotifier {
   ];
 
   // --- Approbations (Workflow de validation de caisse & stock) ---
-  List<ApprovalRequest> approvalRequests = [
-    ApprovalRequest(
-      id: 'appr_1',
-      title: 'Remise exceptionnelle de 15%',
-      type: 'Remise',
-      requesterName: 'Caissier 1',
-      storeName: 'Boutique Principale',
-      amount: 15000.0,
-      details: 'Demande de remise de 15% sur un matelas orthopédique pour un client fidèle.',
-      date: DateTime.now().subtract(const Duration(minutes: 45)),
-      status: 'pending',
-    ),
-    ApprovalRequest(
-      id: 'appr_2',
-      title: 'Sortie de caisse imprévue (Fournitures)',
-      type: 'Dépense',
-      requesterName: 'Gérant Adjoint',
-      storeName: 'Boutique Principale',
-      amount: 8500.0,
-      details: 'Achat de rouleaux thermiques de caisse et papier d\'emballage.',
-      date: DateTime.now().subtract(const Duration(hours: 3)),
-      status: 'pending',
-    ),
-  ];
+  List<ApprovalRequest> approvalRequests = [];
 
   // --- Suivi des Shifts (Sessions de Caisse) ---
   bool isShiftsTrackingEnabled = false;
@@ -413,11 +390,14 @@ class AppState extends ChangeNotifier {
               .toList();
         }
 
-        // Approbations
+        // Approbations (aucune donnée prédéfinie)
         if (data['approvalRequests'] != null) {
           approvalRequests = (data['approvalRequests'] as List<dynamic>)
               .map((e) => ApprovalRequest.fromJson(Map<String, dynamic>.from(e as Map)))
+              .where((r) => r.id != 'appr_1' && r.id != 'appr_2')
               .toList();
+        } else {
+          approvalRequests = [];
         }
 
         // Shifts de caisse

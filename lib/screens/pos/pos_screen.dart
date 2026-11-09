@@ -1,4 +1,5 @@
 import 'package:stock_prime/models/models.dart';
+import 'package:stock_prime/screens/pos/shift_dialog_helper.dart';
 import 'package:stock_prime/screens/screens.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -441,6 +442,10 @@ class _PosScreenState extends State<PosScreen> {
                           ),
                         ],
                       ),
+                      if (appState.isShiftsTrackingEnabled) ...[
+                        const SizedBox(height: 10),
+                        _buildShiftBottomBar(context),
+                      ],
                       const SizedBox(height: 14),
                       SizedBox(
                         width: double.infinity,
@@ -947,116 +952,123 @@ class _PosScreenState extends State<PosScreen> {
                   ),
           ),
 
-          // 3. BARRE D'ENCAISSEMENT FLOTTANTE EN BAS
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, -4),
+          // 3. BARRE DE SHIFT & D'ENCAISSEMENT FLOTTANTE EN BAS
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (appState.isShiftsTrackingEnabled)
+                _buildShiftBottomBar(context),
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Row(
-              children: [
-                // Détail du panier au clic
-                Expanded(
-                  child: InkWell(
-                    onTap: appState.cart.isEmpty ? null : () => _showCartSummaryModal(context),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
+                child: Row(
+                  children: [
+                    // Détail du panier au clic
+                    Expanded(
+                      child: InkWell(
+                        onTap: appState.cart.isEmpty ? null : () => _showCartSummaryModal(context),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
+                            Row(
+                              children: [
+                                Text(
+                                  '${appState.cartCount} ${'articles'.tr}',
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    color: Color(0xFF64748B),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                if (appState.cart.isNotEmpty) ...[
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.keyboard_arrow_up_rounded, size: 16, color: AppTheme.primaryNavy),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 2),
                             Text(
-                              '${appState.cartCount} ${'articles'.tr}',
+                              AppTheme.formatFCFA(appState.cartTotal),
                               style: const TextStyle(
-                                fontSize: 11.5,
-                                color: Color(0xFF64748B),
-                                fontWeight: FontWeight.w700,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.primaryNavy,
                               ),
                             ),
-                            if (appState.cart.isNotEmpty) ...[
-                              const SizedBox(width: 6),
-                              const Icon(Icons.keyboard_arrow_up_rounded, size: 16, color: AppTheme.primaryNavy),
-                            ],
                           ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          AppTheme.formatFCFA(appState.cartTotal),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.primaryNavy,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    if (appState.cart.isNotEmpty) ...[
+                      IconButton(
+                        tooltip: 'Mettre en attente',
+                        icon: const Icon(Icons.pause_circle_outline_rounded, color: AppTheme.primaryNavy),
+                        onPressed: () {
+                          appState.holdCurrentCart();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Panier mis en attente')),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        tooltip: 'Vider le panier',
+                        icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger),
+                        onPressed: () => appState.clearCart(),
+                      ),
+                    ],
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: appState.cart.isEmpty
+                              ? const Color(0xFFE2E8F0)
+                              : AppTheme.accentGold,
+                          foregroundColor: appState.cart.isEmpty
+                              ? const Color(0xFF94A3B8)
+                              : AppTheme.primaryNavy,
+                          elevation: appState.cart.isEmpty ? 0 : 2,
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: appState.cart.isEmpty
+                            ? null
+                            : () => _handleMobilePay(context),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Payer • ${AppTheme.formatFCFA(appState.cartTotal)}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 13.5,
+                                color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 12,
+                              color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                if (appState.cart.isNotEmpty) ...[
-                  IconButton(
-                    tooltip: 'Mettre en attente',
-                    icon: const Icon(Icons.pause_circle_outline_rounded, color: AppTheme.primaryNavy),
-                    onPressed: () {
-                      appState.holdCurrentCart();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Panier mis en attente')),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    tooltip: 'Vider le panier',
-                    icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger),
-                    onPressed: () => appState.clearCart(),
-                  ),
-                ],
-                SizedBox(
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: appState.cart.isEmpty
-                          ? const Color(0xFFE2E8F0)
-                          : AppTheme.accentGold,
-                      foregroundColor: appState.cart.isEmpty
-                          ? const Color(0xFF94A3B8)
-                          : AppTheme.primaryNavy,
-                      elevation: appState.cart.isEmpty ? 0 : 2,
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: appState.cart.isEmpty
-                        ? null
-                        : () => CheckoutStepperModal.show(context),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Payer • ${AppTheme.formatFCFA(appState.cartTotal)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13.5,
-                            color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: 12,
-                          color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1143,10 +1155,175 @@ class _PosScreenState extends State<PosScreen> {
     );
   }
 
+  void _handleMobilePay(BuildContext context) async {
+    if (appState.isShiftsTrackingEnabled && appState.activeCashShift == null) {
+      final opened = await ShiftDialogHelper.showOpenShiftDialog(context);
+      if (!opened) return;
+    }
+    if (!context.mounted) return;
+    CheckoutStepperModal.show(context);
+  }
+
+  Widget _buildShiftBottomBar(BuildContext context) {
+    final shift = appState.activeCashShift;
+    if (shift != null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F172A),
+          border: const Border(
+            top: BorderSide(color: Color(0xFF1E293B)),
+            bottom: BorderSide(color: Color(0xFF1E293B)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 4,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 9,
+              height: 9,
+              decoration: const BoxDecoration(
+                color: Color(0xFF10B981),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          'Shift : ${shift.cashierName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '· ${shift.cashDeskName}',
+                        style: const TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Décompte : ${AppTheme.formatFCFA(shift.cashSalesTotal)} encaissés · Fond: ${AppTheme.formatFCFA(shift.openingCash)}',
+                    style: const TextStyle(
+                      color: AppTheme.accentGold,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () => ShiftDialogHelper.showCloseShiftDialog(context, shift),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.6)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.lock_clock, size: 14, color: Color(0xFFFCA5A5)),
+                    SizedBox(width: 4),
+                    Text(
+                      'Fermer',
+                      style: TextStyle(
+                        color: Color(0xFFFCA5A5),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF3C7),
+          border: const Border(
+            top: BorderSide(color: Color(0xFFFDE68A)),
+            bottom: BorderSide(color: Color(0xFFFDE68A)),
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, size: 16, color: Color(0xFFD97706)),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Aucun shift ouvert pour cette caisse',
+                style: TextStyle(
+                  color: Color(0xFF92400E),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            InkWell(
+              onTap: () => ShiftDialogHelper.showOpenShiftDialog(context),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryNavy,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Ouvrir le shift',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   // ==========================================
   // MODAL D'ENCAISSEMENT COMPLET JUSQU'AU REÇU (COMME STOCKPLUS)
   // ==========================================
-  void _showCheckoutDialog(BuildContext context) {
+  Future<void> _showCheckoutDialog(BuildContext context) async {
+    if (appState.isShiftsTrackingEnabled && appState.activeCashShift == null) {
+      final opened = await ShiftDialogHelper.showOpenShiftDialog(context);
+      if (!opened) return;
+    }
+    if (!context.mounted) return;
     final total = appState.cartTotal;
     String selectedPayment = 'Espèces';
     Customer? selectedCustomer;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:stock_prime/models/models.dart';
+import 'package:stock_prime/screens/pos/shift_dialog_helper.dart';
 import 'package:stock_prime/screens/sales/new_customer_screen.dart';
 import 'package:stock_prime/screens/sales/sale_detail_screen.dart';
 import 'package:stock_prime/services/app_state.dart';
@@ -10,7 +11,13 @@ import 'package:stock_prime/widgets/sale_receipt_dialog.dart';
 class CheckoutStepperModal extends StatefulWidget {
   const CheckoutStepperModal({super.key});
 
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(BuildContext context) async {
+    final state = AppState.instance;
+    if (state.isShiftsTrackingEnabled && state.activeCashShift == null) {
+      final opened = await ShiftDialogHelper.showOpenShiftDialog(context);
+      if (!opened) return;
+    }
+    if (!context.mounted) return;
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
