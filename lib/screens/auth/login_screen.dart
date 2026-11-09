@@ -26,16 +26,16 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    final state = AppState.instance;
-    // Si aucun profil n'a jamais été créé sur l'appareil, pré-sélectionner "Nouveau sur la plateforme"
-    if (state.userName.isEmpty && state.companyName.isEmpty && state.teamMembers.isEmpty) {
-      _authMode = 1;
-    } else {
-      _authMode = 0;
-      _phoneCtrl.text = state.userPhone.isNotEmpty ? state.userPhone : state.userEmail;
-      _fullNameCtrl.text = state.userName;
-      _shopNameCtrl.text = state.companyName;
-    }
+    // Tous les champs restent strictement vides à l'ouverture de l'écran de connexion
+    _authMode = 0;
+  }
+
+  void _clearAllFields() {
+    _fullNameCtrl.clear();
+    _shopNameCtrl.clear();
+    _phoneCtrl.clear();
+    _emailCtrl.clear();
+    _passwordCtrl.clear();
   }
 
   @override
@@ -304,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       subtitle: isEn ? 'My store account' : 'Déjà utilisateur',
                       onTap: () => setState(() {
                         _authMode = 0;
-                        _passwordCtrl.clear();
+                        _clearAllFields();
                       }),
                     ),
                   ),
@@ -317,7 +317,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       subtitle: isEn ? 'Create store' : 'Créer boutique',
                       onTap: () => setState(() {
                         _authMode = 1;
-                        _passwordCtrl.clear();
+                        _clearAllFields();
                       }),
                     ),
                   ),
@@ -330,8 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       subtitle: isEn ? 'Cashier, Staff...' : 'Équipier / Rôle',
                       onTap: () => setState(() {
                         _authMode = 2;
-                        _phoneCtrl.clear();
-                        _passwordCtrl.clear();
+                        _clearAllFields();
                       }),
                     ),
                   ),
@@ -406,75 +405,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Si mode Compte Invité (2) et des membres invités existent sur l'appareil : sélection rapide
-                    if (_authMode == 2) ...[
-                      Builder(builder: (_) {
-                        final invitedList = appState.teamMembers
-                            .where((m) => !m.role.toLowerCase().contains('propriétaire') && m.isActive)
-                            .toList();
-                        if (invitedList.isEmpty) return const SizedBox.shrink();
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Équipiers enregistrés dans la boutique (touchez pour pré-remplir) :',
-                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
-                            ),
-                            const SizedBox(height: 8),
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: invitedList.map((m) {
-                                  final isSelectedMember = _phoneCtrl.text.trim() == m.phone.trim();
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 8),
-                                    child: InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          _phoneCtrl.text = m.phone;
-                                        });
-                                      },
-                                      borderRadius: BorderRadius.circular(20),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: isSelectedMember ? AppTheme.primaryNavy : const Color(0xFFF1F5F9),
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(
-                                            color: isSelectedMember ? AppTheme.accentGold : const Color(0xFFCBD5E1),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.person_pin_circle_rounded,
-                                              size: 15,
-                                              color: isSelectedMember ? AppTheme.accentGold : AppTheme.primaryNavy,
-                                            ),
-                                            const SizedBox(width: 5),
-                                            Text(
-                                              '${m.name} (${m.role})',
-                                              style: TextStyle(
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.bold,
-                                                color: isSelectedMember ? Colors.white : AppTheme.primaryNavy,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                          ],
-                        );
-                      }),
-                    ],
-
                     if (_authMode == 1) ...[
                       _buildInput(
                         controller: _fullNameCtrl,
@@ -525,16 +455,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         hint: isEn ? 'Enter phone or email' : 'Votre numéro ou adresse email',
                       ),
                       const SizedBox(height: 14),
-                      if (appState.userName.isEmpty) ...[
-                        _buildInput(
-                          controller: _fullNameCtrl,
-                          icon: Icons.badge_outlined,
-                          label: isEn ? 'Your name (if new device)' : 'Votre nom d\'affichage',
-                          hint: isEn ? 'Ex: Jean Kamga' : 'Ex: Jean Kamga',
-                          textCapitalization: TextCapitalization.words,
-                        ),
-                        const SizedBox(height: 14),
-                      ],
                     ],
 
                     // Mot de passe ou Code PIN
