@@ -349,7 +349,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('BÉNÉFICE NET RÉEL DU JOUR :', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.success)),
+                        const Text('BÉNÉFICE NET DU JOUR :', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.success)),
                         Text(
                           AppTheme.formatFCFA(appState.todayNetProfit),
                           style: TextStyle(

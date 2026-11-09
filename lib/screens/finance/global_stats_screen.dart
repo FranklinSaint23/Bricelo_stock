@@ -247,7 +247,7 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
         final grossMargin = totalRevenue - totalCOGS;
         final marginRate = totalRevenue > 0 ? (grossMargin / totalRevenue * 100) : 0.0;
         final totalExpenses = filteredExpenses.fold<double>(0.0, (sum, e) => sum + e.amount);
-        // Formule commerciale rigoureuse : Bénéfice Net Réel = Marge Brute - Dépenses - Pertes de stock
+        // Formule commerciale rigoureuse : Bénéfice Net = Marge Brute - Dépenses - Pertes de stock
         final netProfit = grossMargin - totalExpenses - totalDepreciations;
 
         // 4. CALCUL DES RECORDS / PICS
@@ -688,7 +688,7 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _buildMetricCard(
-                      title: 'BÉNÉFICE NET RÉEL',
+                      title: 'BÉNÉFICE NET',
                       amount: AppTheme.formatFCFA(netProfit),
                       icon: Icons.monetization_on_outlined,
                       iconColor: netProfit >= 0 ? const Color(0xFF059669) : const Color(0xFFDC2626),
@@ -787,7 +787,7 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
                           const SizedBox(height: 2),
                           Text(
                             totalDepreciations > 0
-                                ? 'Péremptions, casse & avaries déduits du bénéfice net réel'
+                                ? 'Péremptions, casse & avaries déduits du bénéfice net'
                                 : 'Aucune dépréciation de stock enregistrée sur la période',
                             style: TextStyle(
                               fontSize: 11,

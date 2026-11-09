@@ -361,7 +361,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
               d.date.isBefore(range.end.add(const Duration(milliseconds: 1)));
         }).fold(0.0, (sum, d) => sum + d.totalLoss);
 
-        // Bénéfice Net Réel = Marge Brute - Dépenses - Pertes de stock
+        // Bénéfice Net = Marge Brute - Dépenses - Pertes de stock
         final netProfit = estimatedProfit - periodExpenses - periodDepreciations;
 
         // Produits les plus vendus calculés dynamiquement
@@ -578,7 +578,7 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                   children: [
                     Expanded(
                       child: _buildKpiBox(
-                        'Bénéfice net réel',
+                        'Bénéfice net',
                         AppTheme.formatFCFA(netProfit),
                         netProfit >= 0 ? const Color(0xFF059669) : const Color(0xFFDC2626),
                         subtitle: totalSales > 0

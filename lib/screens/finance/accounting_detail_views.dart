@@ -474,7 +474,7 @@ class IncomeStatementScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      resultatNet >= 0 ? 'Bénéfice net réel réalisé sur la période' : 'Perte nette réelle sur la période',
+                      resultatNet >= 0 ? 'Bénéfice net réalisé sur la période' : 'Perte nette réelle sur la période',
                       style: const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
@@ -502,7 +502,7 @@ class IncomeStatementScreen extends StatelessWidget {
                     _buildRowItem('Charges d\'exploitation & dépenses', -totalCharges, isPositive: false),
                     _buildRowItem('Pertes & Dépréciations de stock', -totalDepreciations, isPositive: false, color: const Color(0xFFDC2626)),
                     const Divider(height: 24, thickness: 1.5),
-                    _buildRowItem('BÉNÉFICE NET RÉEL', resultatNet, isBold: true, fontSize: 15, color: resultatNet >= 0 ? AppTheme.primaryNavy : const Color(0xFFDC2626)),
+                    _buildRowItem('BÉNÉFICE NET', resultatNet, isBold: true, fontSize: 15, color: resultatNet >= 0 ? AppTheme.primaryNavy : const Color(0xFFDC2626)),
                   ],
                 ),
               ),

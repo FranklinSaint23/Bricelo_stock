@@ -240,7 +240,7 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
         }).toList();
 
         final totalDepreciations = filteredDepreciations.fold<double>(0.0, (sum, d) => sum + d.totalLoss);
-        // Bénéfice Net Réel = Marge Brute - Dépenses - Pertes de stock
+        // Bénéfice Net = Marge Brute - Dépenses - Pertes de stock
         final netProfit = grossMargin - totalExpenses - totalDepreciations;
 
         // 4. MOUVEMENTS DE STOCK & OPÉRATIONS SUR LA PÉRIODE
@@ -525,7 +525,7 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
                     _buildReportLine('Pertes & Dépréciations de stock', -totalDepreciations, color: const Color(0xFFDC2626), isDark: isDark),
                     const Divider(height: 20, thickness: 1.5),
                     _buildReportLine(
-                      'BÉNÉFICE NET RÉEL DE L\'ACTIVITÉ',
+                      'BÉNÉFICE NET DE L\'ACTIVITÉ',
                       netProfit,
                       isBold: true,
                       fontSize: 14.5,

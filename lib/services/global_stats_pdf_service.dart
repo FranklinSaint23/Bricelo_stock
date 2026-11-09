@@ -304,7 +304,7 @@ class GlobalStatsPdfService {
                 pw.SizedBox(width: 8),
                 pw.Expanded(
                   child: buildMetricCard(
-                    label: 'Bénéfice net réel',
+                    label: 'Bénéfice net',
                     value: _formatFCFA(netProfit),
                     badge: 'Net Réel',
                     subtitle: peakNetText.isNotEmpty
@@ -368,7 +368,7 @@ class GlobalStatsPdfService {
               label: 'Pertes & Dépréciations de stock',
               value: _formatFCFA(totalDepreciations),
               subtitle: totalDepreciations > 0
-                  ? 'Péremptions, casse & écarts déduits du bénéfice net réel'
+                  ? 'Péremptions, casse & écarts déduits du bénéfice net'
                   : 'Aucune dépréciation de stock enregistrée sur la période',
               valueColor: totalDepreciations > 0 ? redAlert : grayMuted,
               valueSize: 11,
