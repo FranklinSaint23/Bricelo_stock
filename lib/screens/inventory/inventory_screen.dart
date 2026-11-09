@@ -148,37 +148,103 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
             // 1. CARTE VALEUR DU STOCK EN 3 COLONNES (Uniquement Propriétaire)
             if (appState.isOwnerAccount && appState.hasPermission('Comptabilité & Finances')) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildWebValueCard(
-                      'VALEUR DU STOCK (VENTE)'.tr,
-                      AppTheme.formatFCFA(totalVente),
-                      Icons.trending_up,
-                      AppTheme.accentGold,
-                    ),
+              if (appState.isDiscoveredPlan) ...[
+                // Cadenas et grisé en formule Découverte au lieu de masquer
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF132238) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildWebValueCard(
-                      'COÛT D\'ACHAT'.tr,
-                      AppTheme.formatFCFA(totalAchat),
-                      Icons.shopping_bag_outlined,
-                      isDark ? Colors.white70 : const Color(0xFF0F172A),
-                    ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.lock_rounded, color: Color(0xFFD97706), size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'VALEUR DU STOCK & MARGE BRUTE'.tr,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF64748B)),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF3C7),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text('FORMULE PRO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Le calcul en direct de la valeur marchande, du coût d\'achat et du taux de marge brute est débloqué avec la Formule Pro ou Entreprise.'.tr,
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryNavy,
+                          foregroundColor: AppTheme.accentGold,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.lock_open_rounded, size: 16),
+                        label: const Text('Débloquer sur le web', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                        onPressed: () => _showUpgradeLockDialog(context, 'Valeur du stock & Marges'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildWebValueCard(
-                      'MARGE BRUTE'.tr,
-                      '${AppTheme.formatFCFA(marge)} (${margePct.toStringAsFixed(1)}%)',
-                      Icons.pie_chart_outline,
-                      const Color(0xFF10B981),
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildWebValueCard(
+                        'VALEUR DU STOCK (VENTE)'.tr,
+                        AppTheme.formatFCFA(totalVente),
+                        Icons.trending_up,
+                        AppTheme.accentGold,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildWebValueCard(
+                        'COÛT D\'ACHAT'.tr,
+                        AppTheme.formatFCFA(totalAchat),
+                        Icons.shopping_bag_outlined,
+                        isDark ? Colors.white70 : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildWebValueCard(
+                        'MARGE BRUTE'.tr,
+                        '${AppTheme.formatFCFA(marge)} (${margePct.toStringAsFixed(1)}%)',
+                        Icons.pie_chart_outline,
+                        const Color(0xFF10B981),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
             ],
 
             // 2. BARRE D'ACTIONS WEB
@@ -214,17 +280,32 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const StockAdjustmentScreen()));
                   }),
                   const SizedBox(width: 10),
-                  _buildWebActionButton(Icons.swap_horiz, 'Transférer'.tr, () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const StockTransfersScreen()));
-                  }),
+                  _buildWebActionButton(
+                    Icons.swap_horiz,
+                    'Transférer'.tr,
+                    () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const StockTransfersScreen()));
+                    },
+                    isLocked: appState.isDiscoveredPlan,
+                  ),
                   const SizedBox(width: 10),
-                  _buildWebActionButton(Icons.fact_check_rounded, 'Inventaires'.tr, () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const PhysicalInventoryScreen()));
-                  }),
+                  _buildWebActionButton(
+                    Icons.fact_check_rounded,
+                    'Inventaires'.tr,
+                    () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const PhysicalInventoryScreen()));
+                    },
+                    isLocked: appState.isDiscoveredPlan,
+                  ),
                   const SizedBox(width: 10),
-                  _buildWebActionButton(Icons.trending_down, 'Dépréciation'.tr, () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
-                  }),
+                  _buildWebActionButton(
+                    Icons.trending_down,
+                    'Dépréciation'.tr,
+                    () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
+                    },
+                    isLocked: appState.isDiscoveredPlan,
+                  ),
                 ],
               ),
             ),
@@ -524,69 +605,132 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
                 // 1. CARTE VALEUR DU STOCK MOBILE (Uniquement Propriétaire ayant accès aux finances)
                 if (appState.isOwnerAccount && appState.hasPermission('Comptabilité & Finances')) ...[
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: cardBorder),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  if (appState.isDiscoveredPlan) ...[
+                    // Cadenas et grisé au lieu de masquer en Découverte
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF132238) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: cardBorder),
+                      ),
+                      child: InkWell(
+                        onTap: () => _showUpgradeLockDialog(context, 'Valeur du stock & Marges'),
+                        child: Row(
                           children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.trending_up_rounded, color: AppTheme.accentGold, size: 18),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'VALEUR DU STOCK'.tr,
-                                  style: TextStyle(
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryNavy.withValues(alpha: isDark ? 0.4 : 0.08),
+                                color: const Color(0xFFFEF3C7),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Text(
-                                _selectedStoreTab,
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.accentGold),
+                              child: const Icon(Icons.lock_rounded, color: Color(0xFFD97706), size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'VALEUR DU STOCK'.tr,
+                                        style: TextStyle(
+                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEF3C7),
+                                          borderRadius: BorderRadius.circular(5),
+                                        ),
+                                        child: const Text('PRO', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Vente, coût et marges brutes débloqués en Formule Pro.'.tr,
+                                    style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                  ),
+                                ],
                               ),
                             ),
+                            const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 18),
                           ],
                         ),
-                        const SizedBox(height: 14),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildStockValueCol('Vente'.tr, AppTheme.formatFCFA(totalVente), isDark, textColor),
-                            Container(width: 1, height: 32, color: cardBorder),
-                            _buildStockValueCol('Coût'.tr, AppTheme.formatFCFA(totalAchat), isDark, textColor),
-                            Container(width: 1, height: 32, color: cardBorder),
-                            _buildStockValueCol('Marge'.tr, '${AppTheme.formatFCFA(marge)} (${margePct.toStringAsFixed(0)}%)', isDark, const Color(0xFF10B981)),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 12),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: cardBorder),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.trending_up_rounded, color: AppTheme.accentGold, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'VALEUR DU STOCK'.tr,
+                                    style: TextStyle(
+                                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryNavy.withValues(alpha: isDark ? 0.4 : 0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  _selectedStoreTab,
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.accentGold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildStockValueCol('Vente'.tr, AppTheme.formatFCFA(totalVente), isDark, textColor),
+                              Container(width: 1, height: 32, color: cardBorder),
+                              _buildStockValueCol('Coût'.tr, AppTheme.formatFCFA(totalAchat), isDark, textColor),
+                              Container(width: 1, height: 32, color: cardBorder),
+                              _buildStockValueCol('Marge'.tr, '${AppTheme.formatFCFA(marge)} (${margePct.toStringAsFixed(0)}%)', isDark, const Color(0xFF10B981)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                 ],
 
                 // 2. BADGES D'ÉTAT DU STOCK
@@ -756,8 +900,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         label: 'Transférer'.tr,
                         icon: Icons.swap_horiz,
                         isDark: isDark,
+                        isLocked: appState.isDiscoveredPlan,
                         onTap: () {
                           setState(() => _isFabExpanded = false);
+                          if (appState.isDiscoveredPlan) {
+                            _showUpgradeLockDialog(context, 'Transfert de stock');
+                            return;
+                          }
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const StockTransfersScreen()));
                         },
                       ),
@@ -766,8 +915,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         label: 'Inventaires'.tr,
                         icon: Icons.fact_check_rounded,
                         isDark: isDark,
+                        isLocked: appState.isDiscoveredPlan,
                         onTap: () {
                           setState(() => _isFabExpanded = false);
+                          if (appState.isDiscoveredPlan) {
+                            _showUpgradeLockDialog(context, 'Inventaires physiques');
+                            return;
+                          }
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const PhysicalInventoryScreen()));
                         },
                       ),
@@ -776,8 +930,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         label: 'Dépréciation'.tr,
                         icon: Icons.trending_down,
                         isDark: isDark,
+                        isLocked: appState.isDiscoveredPlan,
                         onTap: () {
                           setState(() => _isFabExpanded = false);
+                          if (appState.isDiscoveredPlan) {
+                            _showUpgradeLockDialog(context, 'Dépréciation de stock');
+                            return;
+                          }
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
                         },
                       ),
@@ -1054,16 +1213,74 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  Widget _buildWebActionButton(IconData icon, String label, VoidCallback onTap) {
+  void _showUpgradeLockDialog(BuildContext context, String featureName) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.lock_rounded, color: Color(0xFFD97706), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Fonctionnalité Pro'.tr,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'La fonctionnalité "$featureName" est verrouillée en formule Découverte.\n\n'
+          'Elle est incluse dans la Formule Pro et la Formule Entreprise pour vous permettre de piloter votre stock et vos transferts sans restriction.\n\n'
+          'Rendez-vous sur le portail web Bricelo pour souscrire ou activer votre formule.',
+          style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Compris'.tr, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebActionButton(IconData icon, String label, VoidCallback onTap, {bool isLocked = false}) {
     return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 16),
-      label: Text(label),
+      onPressed: isLocked ? () => _showUpgradeLockDialog(context, label) : onTap,
+      icon: isLocked
+          ? const Icon(Icons.lock_rounded, size: 15, color: Color(0xFFD97706))
+          : Icon(icon, size: 16),
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: TextStyle(color: isLocked ? const Color(0xFF64748B) : const Color(0xFF0F172A))),
+          if (isLocked) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text('PRO', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
+            ),
+          ],
+        ],
+      ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F172A),
+        backgroundColor: isLocked ? const Color(0xFFF8FAFC) : Colors.white,
+        foregroundColor: isLocked ? const Color(0xFF64748B) : const Color(0xFF0F172A),
         elevation: 0,
-        side: const BorderSide(color: Color(0xFFCBD5E1)),
+        side: BorderSide(color: isLocked ? const Color(0xFFE2E8F0) : const Color(0xFFCBD5E1)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
@@ -1075,28 +1292,51 @@ class _InventoryScreenState extends State<InventoryScreen> {
     required IconData icon,
     required VoidCallback onTap,
     bool isDark = false,
+    bool isLocked = false,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: isLocked ? () {
+        setState(() => _isFabExpanded = false);
+        _showUpgradeLockDialog(context, label);
+      } : onTap,
       borderRadius: BorderRadius.circular(24),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? Colors.white : const Color(0xFF111827)),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: isLocked ? const Color(0xFF94A3B8) : (isDark ? Colors.white : const Color(0xFF111827)),
+                ),
+              ),
+              if (isLocked) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.lock_rounded, size: 14, color: Color(0xFFD97706)),
+              ],
+            ],
           ),
           const SizedBox(width: 12),
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF132238) : Colors.white,
+              color: isLocked
+                  ? (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9))
+                  : (isDark ? const Color(0xFF132238) : Colors.white),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.12), blurRadius: 8, offset: const Offset(0, 3))],
-              border: Border.all(color: isDark ? const Color(0xFF1E3352) : const Color(0xFFE5E7EB)),
+              border: Border.all(color: isLocked ? const Color(0xFFCBD5E1) : (isDark ? const Color(0xFF1E3352) : const Color(0xFFE5E7EB))),
             ),
-            child: Icon(icon, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 22),
+            child: Icon(
+              isLocked ? Icons.lock_outline_rounded : icon,
+              color: isLocked ? const Color(0xFFD97706) : (isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+              size: 20,
+            ),
           ),
         ],
       ),

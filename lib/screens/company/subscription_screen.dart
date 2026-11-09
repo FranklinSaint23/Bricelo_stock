@@ -380,15 +380,19 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           badge: 'Découverte',
           price: '0 F CFA',
           period: '/ mois',
-          isCurrent: currentPlan == 'Gratuit',
+          isCurrent: currentPlan == 'Gratuit' || currentPlan == 'Découverte',
           features: const [
             '1 Boutique & 1 Caisse active',
-            'Gestion jusqu\'à 50 produits en stock',
-            'Factures & Reçus de caisse standards',
-            'Historique des ventes basique',
+            'Max 30 produits en stock',
+            'Max 50 ventes par mois (verrouillé au-delà)',
+            '0 équipier invité (compte solo propriétaire)',
+            'Max 5 clients à crédit (sans rappels auto)',
+            'Historique des ventes limité à 14 jours',
+            'Filigrane Bricelo imposé sur les reçus',
+            'Pas de transferts de stock multi-boutiques',
           ],
-          buttonLabel: currentPlan == 'Gratuit' ? 'Formule active' : 'Revenir au Gratuit',
-          buttonAction: currentPlan == 'Gratuit'
+          buttonLabel: currentPlan == 'Gratuit' || currentPlan == 'Découverte' ? 'Formule active' : 'Revenir au Gratuit',
+          buttonAction: currentPlan == 'Gratuit' || currentPlan == 'Découverte'
               ? null
               : () async {
                   await _safeUpdateSubscription(appState, plan: 'Gratuit', billing: 'mensuel');
@@ -400,21 +404,21 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           title: 'Formule Pro',
           badge: 'LE PLUS POPULAIRE',
           badgeColor: AppTheme.accentGold,
-          price: _isAnnual ? '19 000 F CFA' : '1 900 F CFA',
-          period: _isAnnual ? '/ an (1 580 F CFA/mois)' : '/ mois',
+          price: _isAnnual ? '24 000 F CFA' : '2 500 F CFA',
+          period: _isAnnual ? '/ an (2 000 F CFA/mois)' : '/ mois',
           isCurrent: isPro,
           highlighted: true,
           features: const [
-            'Boutiques & Caisses illimitées (plusieurs points de vente)',
-            'Produits et ventes illimités (aucun blocage)',
+            'Articles & Ventes 100% ILLIMITÉS (aucun blocage)',
+            'Jusqu\'à 3 équipiers (Caissiers, Magasinier avec code PIN & shifts)',
+            'Jusqu\'à 2 Boutiques / Points de vente',
             'Factures & Reçus personnalisés avec le logo de votre boutique',
-            'Signature calligraphique automatique sur vos factures',
+            'Signature calligraphique automatique et SANS filigrane',
             'Partage direct des factures et reçus sur WhatsApp aux clients',
-            'Suivi précis des crédits / dettes clients et rappels',
-            'Suivi des dépenses et dettes fournisseurs',
-            'Gestion de l\'équipe (comptes caissiers, magasiniers, gérants)',
+            'Gestion illimitée des crédits clients et rappels WhatsApp',
             'Alertes automatiques de stock faible et dates de péremption',
             'Calcul des bénéfices nets et bilans de caisse journaliers',
+            'Exports des bilans et ventes sur Excel et PDF',
             'Sauvegarde automatique et sécurisée de vos données',
           ],
           buttonLabel: isPro ? 'Formule active' : 'Passer à la Formule Pro',
@@ -422,8 +426,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               ? null
               : () => _showPaymentModal(
                     planName: 'Formule Pro',
-                    monthlyPrice: 1900,
-                    annualPrice: 19000,
+                    monthlyPrice: 2500,
+                    annualPrice: 24000,
                   ),
         );
 
@@ -431,25 +435,26 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           title: 'Formule Entreprise',
           badge: 'GRANDES BOUTIQUES & RÉSEAUX',
           badgeColor: const Color(0xFF6366F1),
-          price: _isAnnual ? '59 000 F CFA' : '5 900 F CFA',
-          period: _isAnnual ? '/ an (4 900 F CFA/mois)' : '/ mois',
+          price: _isAnnual ? '75 000 F CFA' : '7 900 F CFA',
+          period: _isAnnual ? '/ an (6 250 F CFA/mois)' : '/ mois',
           isCurrent: isEnterprise,
           features: const [
             'Tout ce qui est inclus dans la Formule Pro',
-            'Plusieurs magasins ou dépôts reliés ensemble',
-            'Déplacer facilement des articles d\'un magasin à un autre',
-            'Données synchronisées en direct sur les téléphones de vos employés',
+            'Boutiques, Caisses & Dépôts ILLIMITÉS',
+            'Équipe complète ILLIMITÉE (Gérants, Magasiniers, Caissiers)',
+            'Transferts inter-boutiques avec workflow d\'approbation',
+            'Tableau de bord de supervision multi-boutiques en direct',
             'Conseiller intelligent Bricelo pour analyser et booster vos ventes',
             'Téléchargement de vos bilans et rapports sur Excel et PDF',
-            'Ligne WhatsApp prioritaire 7j/7 avec un conseiller dédié',
+            'Ligne WhatsApp prioritaire VIP 7j/7 avec un conseiller dédié',
           ],
           buttonLabel: isEnterprise ? 'Formule active' : 'Choisir la Formule Entreprise',
           buttonAction: isEnterprise
               ? null
               : () => _showPaymentModal(
                     planName: 'Formule Entreprise',
-                    monthlyPrice: 5900,
-                    annualPrice: 59000,
+                    monthlyPrice: 7900,
+                    annualPrice: 75000,
                   ),
         );
 

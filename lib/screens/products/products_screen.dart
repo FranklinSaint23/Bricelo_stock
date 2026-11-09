@@ -163,6 +163,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   icon: const Icon(Icons.add, color: AppTheme.accentGold, size: 18),
                   label: Text('Ajouter un produit'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   onPressed: () {
+                    if (appState.isDiscoveredPlan && appState.isProductQuotaReached) {
+                      _showProductQuotaDialog(context);
+                      return;
+                    }
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
                   },
                 ),
@@ -788,6 +792,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         textPrimary: textPrimary,
                         onTap: () {
                           setState(() => _isFabExpanded = false);
+                          if (appState.isDiscoveredPlan && appState.isProductQuotaReached) {
+                            _showProductQuotaDialog(context);
+                            return;
+                          }
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
                         },
                       ),
@@ -841,6 +849,45 @@ class _ProductsScreenState extends State<ProductsScreen> {
               border: Border.all(color: cardBorder),
             ),
             child: Icon(icon, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 22),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProductQuotaDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.lock_rounded, color: Color(0xFFD97706), size: 22),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Plafond Découverte atteint',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Votre catalogue en formule Découverte est limité à 30 articles (${appState.products.length}/30).\n\n'
+          'Pour enregistrer un nombre illimité de produits, ajouter des variantes et gérer des dépôts multiples, passez à la Formule Pro sur le portail web.',
+          style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Compris', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
           ),
         ],
       ),

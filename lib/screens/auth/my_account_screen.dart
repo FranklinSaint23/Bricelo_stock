@@ -896,27 +896,49 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                               ),
                               const SizedBox(width: 14),
                               Expanded(
-                                child: Row(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Flexible(
-                                      child: Text(
-                                        '${'Formule :'.tr} ${_getSubscriptionPlan(appState)}',
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1F2937)),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            '${'Formule :'.tr} ${_getSubscriptionPlan(appState)}',
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1F2937)),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFDCFCE7),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            'Actif'.tr,
+                                            style: const TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFDCFCE7),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        'Actif'.tr,
-                                        style: const TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
+                                    // Date d'expiration affichée UNIQUEMENT sur un abonnement différent de découverte
+                                    if (!appState.isDiscoveredPlan) ...[
+                                      const SizedBox(height: 3),
+                                      Builder(builder: (_) {
+                                        final exp = appState.subscriptionExpiresAt ?? DateTime.now().add(const Duration(days: 30));
+                                        final expDateStr = '${exp.day.toString().padLeft(2, '0')}/${exp.month.toString().padLeft(2, '0')}/${exp.year}';
+                                        final cycleText = appState.subscriptionBilling.toLowerCase() == 'annuel' ? 'Facturation annuelle' : 'Facturation mensuelle';
+                                        return Text(
+                                          'Expire le : $expDateStr • $cycleText',
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                          ),
+                                        );
+                                      }),
+                                    ],
                                   ],
                                 ),
                               ),

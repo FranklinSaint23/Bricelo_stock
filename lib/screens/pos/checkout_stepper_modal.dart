@@ -98,6 +98,46 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   }
 
   void _confirmSale() {
+    if (appState.isDiscoveredPlan && appState.isMonthlySalesQuotaReached) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.lock_rounded, color: Color(0xFFD97706), size: 22),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Plafond Découverte atteint',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Vous avez atteint le plafond mensuel de 50 ventes de la formule Découverte (${appState.currentMonthSalesCount}/50 ventes ce mois-ci).\n\n'
+            'Pour continuer à enregistrer vos ventes en illimité et retirer le filigrane, passez à la Formule Pro sur le portail web.',
+            style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF475569)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Compris', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final total = _calculatedTotal;
     final received = _isCredit ? _enteredAmount : (_enteredAmount >= total ? _enteredAmount : total);
     final change = _isCredit ? 0.0 : (received - total).clamp(0.0, double.infinity);

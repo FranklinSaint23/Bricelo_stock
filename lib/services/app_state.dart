@@ -113,6 +113,31 @@ class AppState extends ChangeNotifier {
     _globalSubscriptionExpiresAt = value;
   }
 
+  // --- Quotas & Contrôle des Formules d'Abonnement ---
+  bool get isDiscoveredPlan {
+    final p = subscriptionPlan.toLowerCase().trim();
+    return p == 'gratuit' || p == 'découverte' || p == 'decouverte' || p.isEmpty;
+  }
+
+  bool get isProPlan => subscriptionPlan.toLowerCase().contains('pro');
+  bool get isEnterprisePlan =>
+      subscriptionPlan.toLowerCase().contains('entreprise') ||
+      subscriptionPlan.toLowerCase().contains('enterprise');
+
+  int get maxProductsAllowed => isDiscoveredPlan ? 30 : 999999;
+  int get maxMonthlySalesAllowed => isDiscoveredPlan ? 50 : 999999;
+  int get maxTeamMembersAllowed => isDiscoveredPlan ? 0 : (isProPlan ? 3 : 999999);
+  int get maxCreditCustomersAllowed => isDiscoveredPlan ? 5 : 999999;
+
+  int get currentMonthSalesCount {
+    final now = DateTime.now();
+    return sales.where((s) => s.createdAt.year == now.year && s.createdAt.month == now.month).length;
+  }
+
+  bool get isProductQuotaReached => products.length >= maxProductsAllowed;
+  bool get isMonthlySalesQuotaReached => currentMonthSalesCount >= maxMonthlySalesAllowed;
+  bool get isTeamQuotaReached => teamMembers.length >= maxTeamMembersAllowed;
+
   // --- Profil Entreprise & Facturation Dynamique ---
   String companyLogo = '';
   String companyAddress = 'Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)';
