@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/inventory/stock_depreciation_screen.dart';
@@ -43,13 +44,14 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
   }
 
   void _openSetExpiryModal(Product product) {
+    final isDark = appState.isDarkMode;
     DateTime selectedDate = product.expiryDate ?? DateTime.now().add(const Duration(days: 30));
     final lotCtrl = TextEditingController(text: product.lotNumber ?? '');
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -70,31 +72,35 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Date de péremption : ${product.name}',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                      Expanded(
+                        child: Text(
+                          'Date de péremption : ${product.name}',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: Icon(Icons.close, color: isDark ? Colors.white70 : Colors.black54),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Numéro de lot (optionnel)',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151)),
                   ),
                   const SizedBox(height: 6),
                   Container(
                     height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF0F172A) : Colors.white,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFD1D5DB)),
+                      border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
                     ),
                     child: TextField(
                       controller: lotCtrl,
+                      style: TextStyle(fontSize: 14, color: isDark ? Colors.white : Colors.black87),
                       decoration: const InputDecoration(
                         hintText: 'Ex: LOT-2026-A12',
                         hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
@@ -104,9 +110,9 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  const Text(
+                  Text(
                     'Date d\'expiration *',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151)),
                   ),
                   const SizedBox(height: 6),
                   InkWell(
@@ -127,20 +133,20 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF0F172A) : Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFD1D5DB)),
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today, size: 18, color: Color(0xFF4B5563)),
+                          Icon(Icons.calendar_today, size: 18, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
                           const SizedBox(width: 10),
                           Text(
                             '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}',
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
                           ),
                           const Spacer(),
-                          const Text('Changer', style: TextStyle(color: Color(0xFFEA580C), fontWeight: FontWeight.w600)),
+                          Text('Changer', style: TextStyle(color: isDark ? AppTheme.accentGold : const Color(0xFFEA580C), fontWeight: FontWeight.w600)),
                         ],
                       ),
                     ),
@@ -159,8 +165,8 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                               );
                             },
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red,
-                              side: const BorderSide(color: Colors.red),
+                              foregroundColor: const Color(0xFFEF4444),
+                              side: const BorderSide(color: Color(0xFFEF4444)),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                             child: const Text('Supprimer'),
@@ -184,10 +190,11 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0D1B2E),
+                            backgroundColor: isDark ? AppTheme.accentGold : const Color(0xFF0D1B2E),
+                            foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Text('Enregistrer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          child: const Text('Enregistrer', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -237,8 +244,10 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
             displayedProducts = allProducts;
         }
 
+        final isDark = appState.isDarkMode;
+
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
+          backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF9FAFB),
           appBar: StockAppBar.forestGreen(
             title: 'Suivi de péremption',
             onBack: () => Navigator.pop(context),
@@ -247,14 +256,14 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
             children: [
               // 1. STRATÉGIE DE DÉSTOCKAGE
-              const Text(
+              Text(
                 'Stratégie de déstockage',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF111827)),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF111827)),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Change l\'ordre de sortie des lots et le coût attribué à chaque vente. Le coût moyen du produit reste inchangé.',
-                style: TextStyle(color: Color(0xFF4B5563), fontSize: 13, height: 1.3),
+                style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563), fontSize: 13, height: 1.3),
               ),
               const SizedBox(height: 16),
 
@@ -265,10 +274,14 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: strategy == 'FIFO' ? const Color(0xFFDCFCE7) : Colors.white,
+                    color: strategy == 'FIFO'
+                        ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFDCFCE7))
+                        : (isDark ? const Color(0xFF1E293B) : Colors.white),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: strategy == 'FIFO' ? const Color(0xFF0D1B2E) : const Color(0xFFD1D5DB),
+                      color: strategy == 'FIFO'
+                          ? (isDark ? const Color(0xFF10B981) : const Color(0xFF0D1B2E))
+                          : (isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
                       width: strategy == 'FIFO' ? 1.2 : 1,
                     ),
                   ),
@@ -277,7 +290,9 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                     children: [
                       Icon(
                         strategy == 'FIFO' ? Icons.radio_button_checked : Icons.radio_button_off,
-                        color: strategy == 'FIFO' ? const Color(0xFF0D1B2E) : const Color(0xFF6B7280),
+                        color: strategy == 'FIFO'
+                            ? (isDark ? const Color(0xFF34D399) : const Color(0xFF0D1B2E))
+                            : (isDark ? const Color(0xFF64748B) : const Color(0xFF6B7280)),
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -290,7 +305,9 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
-                                color: strategy == 'FIFO' ? const Color(0xFF0D1B2E) : const Color(0xFF111827),
+                                color: strategy == 'FIFO'
+                                    ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF0D1B2E))
+                                    : (isDark ? Colors.white : const Color(0xFF111827)),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -298,7 +315,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                               'Les ventes déstockent les lots les plus anciens d\'abord. Recommandé pour la plupart des commerces.',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: strategy == 'FIFO' ? const Color(0xFF0D1B2E) : const Color(0xFF6B7280),
+                                color: isDark ? const Color(0xFF94A3B8) : (strategy == 'FIFO' ? const Color(0xFF0D1B2E) : const Color(0xFF6B7280)),
                                 height: 1.3,
                               ),
                             ),
@@ -318,10 +335,14 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: strategy == 'FEFO' ? const Color(0xFFDCFCE7) : Colors.white,
+                    color: strategy == 'FEFO'
+                        ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFDCFCE7))
+                        : (isDark ? const Color(0xFF1E293B) : Colors.white),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: strategy == 'FEFO' ? const Color(0xFF0D1B2E) : const Color(0xFFD1D5DB),
+                      color: strategy == 'FEFO'
+                          ? (isDark ? const Color(0xFF10B981) : const Color(0xFF0D1B2E))
+                          : (isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
                       width: strategy == 'FEFO' ? 1.2 : 1,
                     ),
                   ),
@@ -330,7 +351,9 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                     children: [
                       Icon(
                         strategy == 'FEFO' ? Icons.radio_button_checked : Icons.radio_button_off,
-                        color: strategy == 'FEFO' ? const Color(0xFF0D1B2E) : const Color(0xFF6B7280),
+                        color: strategy == 'FEFO'
+                            ? (isDark ? const Color(0xFF34D399) : const Color(0xFF0D1B2E))
+                            : (isDark ? const Color(0xFF64748B) : const Color(0xFF6B7280)),
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -343,7 +366,9 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
-                                color: strategy == 'FEFO' ? const Color(0xFF0D1B2E) : const Color(0xFF111827),
+                                color: strategy == 'FEFO'
+                                    ? (isDark ? const Color(0xFF6EE7B7) : const Color(0xFF0D1B2E))
+                                    : (isDark ? Colors.white : const Color(0xFF111827)),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -351,7 +376,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                               'Les ventes déstockent les lots qui périment le plus tôt. Indispensable pour l\'alimentaire et la cosmétique.',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: strategy == 'FEFO' ? const Color(0xFF0D1B2E) : const Color(0xFF6B7280),
+                                color: isDark ? const Color(0xFF94A3B8) : (strategy == 'FEFO' ? const Color(0xFF0D1B2E) : const Color(0xFF6B7280)),
                                 height: 1.3,
                               ),
                             ),
@@ -363,18 +388,18 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              Divider(height: 1, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
               const SizedBox(height: 20),
 
               // 2. FENÊTRE D'ALERTE DE PÉREMPTION
-              const Text(
+              Text(
                 'Fenêtre d\'alerte de péremption',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF111827)),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF111827)),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Un lot qui périme dans ce nombre de jours est signalé « bientôt périmé » sur le tableau de bord.',
-                style: TextStyle(color: Color(0xFF4B5563), fontSize: 13, height: 1.3),
+                style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563), fontSize: 13, height: 1.3),
               ),
               const SizedBox(height: 14),
 
@@ -386,9 +411,9 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                       height: 48,
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF6B7280)),
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280)),
                       ),
                       child: Row(
                         children: [
@@ -396,7 +421,7 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                             child: TextField(
                               controller: _daysController,
                               keyboardType: TextInputType.number,
-                              style: const TextStyle(fontSize: 15, color: Color(0xFF111827), fontWeight: FontWeight.w500),
+                              style: TextStyle(fontSize: 15, color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w500),
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.zero,
@@ -404,9 +429,9 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                               onSubmitted: (_) => _saveAlertDays(),
                             ),
                           ),
-                          const Text(
+                          Text(
                             'jours',
-                            style: TextStyle(color: Color(0xFF6B7280), fontSize: 15),
+                            style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 15),
                           ),
                         ],
                       ),
@@ -419,30 +444,30 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                     child: Container(
                       width: 44,
                       height: 44,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF0D1B2E),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppTheme.accentGold : const Color(0xFF0D1B2E),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.check, color: Colors.white, size: 22),
+                      child: Icon(Icons.check, color: isDark ? const Color(0xFF0F172A) : Colors.white, size: 22),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 28),
-              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              Divider(height: 1, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
               const SizedBox(height: 20),
 
               // 3. STATUT DES PRODUITS & ARTICLES EN STOCK
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Suivi des dates d\'expiration',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF111827)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF111827)),
                   ),
                   Text(
                     '${allProducts.length} produit(s)',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                   ),
                 ],
               ),
@@ -452,19 +477,20 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
               Container(
                 height: 42,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFD1D5DB)),
+                  border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
                 ),
                 child: TextField(
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(
+                  style: TextStyle(fontSize: 13, color: isDark ? Colors.white : Colors.black87),
+                  decoration: InputDecoration(
                     hintText: 'Rechercher un produit, lot...',
-                    hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-                    prefixIcon: Icon(Icons.search, size: 20, color: Color(0xFF6B7280)),
+                    hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
+                    prefixIcon: Icon(Icons.search, size: 20, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
               ),
@@ -475,13 +501,13 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildTabChip('Tous', allProducts.length),
+                    _buildTabChip('Tous', allProducts.length, isDark: isDark),
                     const SizedBox(width: 8),
-                    _buildTabChip('Périmés', expiredProducts.length, isAlert: expiredProducts.isNotEmpty),
+                    _buildTabChip('Périmés', expiredProducts.length, isAlert: expiredProducts.isNotEmpty, isDark: isDark),
                     const SizedBox(width: 8),
-                    _buildTabChip('Bientôt périmés', expiringSoonProducts.length, isWarning: expiringSoonProducts.isNotEmpty),
+                    _buildTabChip('Bientôt périmés', expiringSoonProducts.length, isWarning: expiringSoonProducts.isNotEmpty, isDark: isDark),
                     const SizedBox(width: 8),
-                    _buildTabChip('Sans date', withoutDateProducts.length),
+                    _buildTabChip('Sans date', withoutDateProducts.length, isDark: isDark),
                   ],
                 ),
               ),
@@ -492,13 +518,14 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                   ),
                   child: Center(
                     child: Text(
                       'Aucun produit dans la catégorie « $_filterTab »',
-                      style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                      style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13),
                     ),
                   ),
                 )
@@ -508,22 +535,22 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                   final isSoon = p.isExpiringSoon(alertDays);
                   final days = p.daysUntilExpiry();
 
-                  Color badgeColor = const Color(0xFFF3F4F6);
-                  Color textColor = const Color(0xFF4B5563);
+                  Color badgeColor = isDark ? const Color(0xFF334155) : const Color(0xFFF3F4F6);
+                  Color textColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563);
                   String badgeText = 'Date non définie';
 
                   if (p.expiryDate != null) {
                     if (isExpired) {
-                      badgeColor = const Color(0xFFFEE2E2);
-                      textColor = const Color(0xFFDC2626);
+                      badgeColor = isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.5) : const Color(0xFFFEE2E2);
+                      textColor = const Color(0xFFEF4444);
                       badgeText = 'Périmé (${days?.abs()} j)';
                     } else if (isSoon) {
-                      badgeColor = const Color(0xFFFEF3C7);
-                      textColor = const Color(0xFFD97706);
+                      badgeColor = isDark ? const Color(0xFF78350F).withValues(alpha: 0.5) : const Color(0xFFFEF3C7);
+                      textColor = const Color(0xFFF59E0B);
                       badgeText = 'Périme dans $days j';
                     } else {
-                      badgeColor = const Color(0xFFDCFCE7);
-                      textColor = const Color(0xFF16A34A);
+                      badgeColor = isDark ? const Color(0xFF064E3B).withValues(alpha: 0.5) : const Color(0xFFDCFCE7);
+                      textColor = const Color(0xFF10B981);
                       badgeText = 'Valide ($days j)';
                     }
                   }
@@ -532,12 +559,12 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isExpired
-                            ? const Color(0xFFFECACA)
-                            : (isSoon ? const Color(0xFFFDE68A) : const Color(0xFFE5E7EB)),
+                            ? const Color(0xFFEF4444).withValues(alpha: 0.5)
+                            : (isSoon ? const Color(0xFFF59E0B).withValues(alpha: 0.5) : (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB))),
                       ),
                     ),
                     child: Column(
@@ -551,12 +578,12 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                                 children: [
                                   Text(
                                     p.name,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF111827)),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     'Stock: ${p.stock} ${p.unit}${p.lotNumber != null && p.lotNumber!.isNotEmpty ? " • Lot: ${p.lotNumber}" : ""}',
-                                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                                   ),
                                 ],
                               ),
@@ -580,10 +607,10 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
                           children: [
                             TextButton.icon(
                               onPressed: () => _openSetExpiryModal(p),
-                              icon: const Icon(Icons.edit_calendar, size: 16),
+                              icon: Icon(Icons.edit_calendar, size: 16, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                               label: Text(
                                 p.expiryDate == null ? 'Définir la date' : 'Modifier',
-                                style: const TextStyle(fontSize: 12),
+                                style: TextStyle(fontSize: 12, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                               ),
                             ),
                             if (isExpired || isSoon) ...[
@@ -630,20 +657,20 @@ class _ExpiryTrackingScreenState extends State<ExpiryTrackingScreen> {
     );
   }
 
-  Widget _buildTabChip(String title, int count, {bool isAlert = false, bool isWarning = false}) {
+  Widget _buildTabChip(String title, int count, {bool isAlert = false, bool isWarning = false, bool isDark = false}) {
     final isSelected = _filterTab == title;
-    Color bg = const Color(0xFFF3F4F6);
-    Color txt = const Color(0xFF4B5563);
+    Color bg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF3F4F6);
+    Color txt = isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563);
 
     if (isSelected) {
-      bg = const Color(0xFF0D1B2E);
-      txt = Colors.white;
+      bg = isDark ? AppTheme.accentGold : const Color(0xFF0D1B2E);
+      txt = isDark ? const Color(0xFF0F172A) : Colors.white;
     } else if (isAlert) {
-      bg = const Color(0xFFFEE2E2);
-      txt = const Color(0xFFDC2626);
+      bg = isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFEE2E2);
+      txt = const Color(0xFFEF4444);
     } else if (isWarning) {
-      bg = const Color(0xFFFEF3C7);
-      txt = const Color(0xFFD97706);
+      bg = isDark ? const Color(0xFF78350F) : const Color(0xFFFEF3C7);
+      txt = const Color(0xFFF59E0B);
     }
 
     return InkWell(

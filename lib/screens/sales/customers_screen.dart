@@ -23,6 +23,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   // --- MODAL D'AJOUT DE CLIENT ---
   void _showAddCustomerModal() {
+    final isDark = appState.isDarkMode;
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
@@ -34,9 +35,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 24),
         child: SingleChildScrollView(
@@ -48,19 +49,19 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               const SizedBox(height: 14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Nouveau client',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryNavy),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : AppTheme.primaryNavy),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.grey),
+                    icon: Icon(Icons.close, color: isDark ? Colors.white70 : Colors.grey),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
@@ -69,9 +70,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
               TextField(
                 controller: nameCtrl,
                 textCapitalization: TextCapitalization.words,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Nom complet *',
-                  prefixIcon: const Icon(Icons.person_outline),
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                  prefixIcon: Icon(Icons.person_outline, color: isDark ? const Color(0xFF94A3B8) : null),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
@@ -80,9 +83,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Numéro de téléphone *',
-                  prefixIcon: const Icon(Icons.phone_outlined),
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                  prefixIcon: Icon(Icons.phone_outlined, color: isDark ? const Color(0xFF94A3B8) : null),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
@@ -90,9 +95,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
               const SizedBox(height: 10),
               TextField(
                 controller: addressCtrl,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Adresse / Quartier',
-                  prefixIcon: const Icon(Icons.location_on_outlined),
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                  prefixIcon: Icon(Icons.location_on_outlined, color: isDark ? const Color(0xFF94A3B8) : null),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
@@ -101,9 +108,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
               TextField(
                 controller: emailCtrl,
                 keyboardType: TextInputType.emailAddress,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Adresse e-mail',
-                  prefixIcon: const Icon(Icons.email_outlined),
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                  prefixIcon: Icon(Icons.email_outlined, color: isDark ? const Color(0xFF94A3B8) : null),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
@@ -112,9 +121,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
               TextField(
                 controller: debtCtrl,
                 keyboardType: TextInputType.number,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Solde de dette initial (optionnel)',
-                  prefixIcon: const Icon(Icons.money_off_outlined),
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                  prefixIcon: Icon(Icons.money_off_outlined, color: isDark ? const Color(0xFF94A3B8) : null),
                   suffixText: 'FCFA',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -127,7 +138,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.accentGold,
-                    foregroundColor: AppTheme.primaryNavy,
+                    foregroundColor: const Color(0xFF0F172A),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
@@ -189,129 +200,137 @@ class _CustomersScreenState extends State<CustomersScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+        builder: (context, setModalState) {
+          final isDark = appState.isDarkMode;
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 26,
-                    backgroundColor: customer.isArchived ? Colors.grey.shade300 : const Color(0xFFFEF3C7),
-                    child: Text(
-                      customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: customer.isArchived ? Colors.grey.shade700 : const Color(0xFF92400E),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 26,
+                      backgroundColor: customer.isArchived
+                          ? (isDark ? const Color(0xFF334155) : Colors.grey.shade300)
+                          : (isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7)),
+                      child: Text(
+                        customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: customer.isArchived
+                              ? (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700)
+                              : (isDark ? AppTheme.accentGold : const Color(0xFF92400E)),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          customer.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF0F172A)),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          customer.phone.isNotEmpty ? customer.phone : 'Aucun numéro',
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (customer.isArchived)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(10)),
-                      child: const Text('Archivé', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Divider(height: 1),
-              const SizedBox(height: 14),
-
-              // STATS DU CLIENT
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(width: 14),
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Total achats', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                          const SizedBox(height: 3),
-                          Text('${totalSpent.toInt()} FCFA', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryNavy)),
-                          Text('${clientSales.length} commande(s)', style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: clientDebt > 0 ? const Color(0xFFFEF2F2) : const Color(0xFFF0FDF4),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Dette en cours', style: TextStyle(fontSize: 11, color: clientDebt > 0 ? const Color(0xFFDC2626) : const Color(0xFF16A34A))),
-                          const SizedBox(height: 3),
                           Text(
-                            '${clientDebt.toInt()} FCFA',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: clientDebt > 0 ? const Color(0xFFDC2626) : const Color(0xFF16A34A)),
+                            customer.name,
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                           ),
-                          Text(clientDebt > 0 ? 'À recouvrer' : 'À jour', style: TextStyle(fontSize: 11, color: clientDebt > 0 ? const Color(0xFFEF4444) : const Color(0xFF22C55E))),
+                          const SizedBox(height: 2),
+                          Text(
+                            customer.phone.isNotEmpty ? customer.phone : 'Aucun numéro',
+                            style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                          ),
                         ],
                       ),
                     ),
+                    if (customer.isArchived)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(color: isDark ? const Color(0xFF334155) : Colors.grey.shade200, borderRadius: BorderRadius.circular(10)),
+                        child: Text('Archivé', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : Colors.grey, fontWeight: FontWeight.bold)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                const SizedBox(height: 14),
+
+                // STATS DU CLIENT
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Total achats', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                            const SizedBox(height: 3),
+                            Text('${totalSpent.toInt()} FCFA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy)),
+                            Text('${clientSales.length} commande(s)', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8))),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: clientDebt > 0
+                              ? (isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.3) : const Color(0xFFFEF2F2))
+                              : (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFF0FDF4)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Dette en cours', style: TextStyle(fontSize: 11, color: clientDebt > 0 ? const Color(0xFFDC2626) : const Color(0xFF16A34A))),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${clientDebt.toInt()} FCFA',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: clientDebt > 0 ? const Color(0xFFDC2626) : const Color(0xFF16A34A)),
+                            ),
+                            Text(clientDebt > 0 ? 'À recouvrer' : 'À jour', style: TextStyle(fontSize: 11, color: clientDebt > 0 ? const Color(0xFFEF4444) : const Color(0xFF22C55E))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (customer.address.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 16, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      const SizedBox(width: 6),
+                      Text(customer.address, style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155))),
+                    ],
                   ),
                 ],
-              ),
-              if (customer.address.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF64748B)),
-                    const SizedBox(width: 6),
-                    Text(customer.address, style: const TextStyle(fontSize: 13, color: Color(0xFF334155))),
-                  ],
-                ),
-              ],
-              if (customer.email.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.email_outlined, size: 16, color: Color(0xFF64748B)),
-                    const SizedBox(width: 6),
-                    Text(customer.email, style: const TextStyle(fontSize: 13, color: Color(0xFF334155))),
-                  ],
-                ),
-              ],
+                if (customer.email.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.email_outlined, size: 16, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      const SizedBox(width: 6),
+                      Text(customer.email, style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155))),
+                    ],
+                  ),
+                ],
 
               const SizedBox(height: 20),
 
@@ -348,9 +367,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
+        );
+      },
+    ),
+  );
   }
 
   @override
