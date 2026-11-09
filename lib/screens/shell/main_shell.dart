@@ -150,20 +150,6 @@ class _MainShellState extends State<MainShell> {
           badgeColor: const Color(0xFF059669),
         ));
       }
-
-      // Console Super Administrateur Bricelo (Gestion des abonnements, comptes et monitoring)
-      if (isDesktop && (appState.isSuperAdmin || isOwner)) {
-        tabs.add(const _DynamicNavTab(
-          id: 'super_admin',
-          screen: SuperAdminScreen(),
-          label: 'Super Admin',
-          webTitle: 'Console Super Administrateur • Abonnements & Monitoring',
-          icon: Icons.admin_panel_settings_outlined,
-          activeIcon: Icons.admin_panel_settings_rounded,
-          badge: 'ADMIN',
-          badgeColor: Color(0xFFD97706),
-        ));
-      }
     }
 
     tabs.add(_DynamicNavTab(

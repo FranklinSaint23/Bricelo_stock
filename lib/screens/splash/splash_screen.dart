@@ -5,6 +5,7 @@ import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/shell/main_shell.dart';
 import 'package:stock_prime/screens/auth/language_onboarding_screen.dart';
 import 'package:stock_prime/screens/auth/login_screen.dart';
+import 'package:stock_prime/screens/admin/super_admin_portal_shell.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -48,6 +49,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       nextScreen = const LanguageOnboardingScreen();
     } else if (!state.isLoggedIn) {
       nextScreen = const LoginScreen();
+    } else if (state.isSuperAdmin) {
+      nextScreen = const SuperAdminPortalShell();
     } else {
       nextScreen = const MainShell();
     }

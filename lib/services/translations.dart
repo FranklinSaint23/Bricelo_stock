@@ -700,6 +700,12 @@ class AppTranslations {
     "Êtes-vous sûr de vouloir supprimer définitivement": "Are you sure you want to permanently delete",
     "Ses accès et identifiants seront définitivement révoqués.": "Their access and credentials will be permanently revoked.",
     "Membre supprimé et accès révoqués définitivement !": "Member deleted and access permanently revoked!",
+    "Boutique rattachée": "Attached Store",
+    "Boutique rattachée (Ventes autorisées)": "Assigned Store (Sales Authorized)",
+    "Attribuée": "Assigned",
+    "Caissier de session verrouillé (sécurité)": "Session Cashier Locked (Security)",
+    "Stock insuffisant ! Le stock disponible pour": "Insufficient stock! Available stock for",
+    "est de": "is",
   };
 
   static String translate(String text) {

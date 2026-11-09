@@ -124,7 +124,7 @@ class AppState extends ChangeNotifier {
       subscriptionPlan.toLowerCase().contains('entreprise') ||
       subscriptionPlan.toLowerCase().contains('enterprise');
 
-  int get maxProductsAllowed => isDiscoveredPlan ? 30 : 999999;
+  int get maxProductsAllowed => isDiscoveredPlan ? 25 : 999999;
   int get maxMonthlySalesAllowed => isDiscoveredPlan ? 50 : 999999;
   int get maxTeamMembersAllowed => isDiscoveredPlan ? 0 : (isProPlan ? 3 : 999999);
   int get maxCreditCustomersAllowed => isDiscoveredPlan ? 5 : 999999;
@@ -312,6 +312,18 @@ class AppState extends ChangeNotifier {
         r.contains('super-admin') ||
         r.contains('super_administrateur');
   }
+
+  /// Indique si l'utilisateur actuellement connecté est un Caissier invité
+  bool get isCashierAccount =>
+      !isOwnerAccount && userRole.toLowerCase().trim() == 'caissier';
+
+  /// Indique si l'utilisateur actuellement connecté est un Magasinier invité
+  bool get isMagasinierAccount =>
+      !isOwnerAccount && userRole.toLowerCase().trim() == 'magasinier';
+
+  /// Indique si l'utilisateur actuellement connecté est un Gérant invité
+  bool get isGerantAccount =>
+      !isOwnerAccount && userRole.toLowerCase().trim() == 'gérant';
 
   /// Collaborateur invité actuellement connecté (null si Propriétaire)
   TeamMember? get currentCollaborator {
@@ -1305,8 +1317,12 @@ class AppState extends ChangeNotifier {
           final rEmail = (r['email'] ?? '').toString().toLowerCase().trim();
 
           final phoneMatches = phonesMatch(rPhone, cleanPhone) ||
-              (normDigits.isNotEmpty && normalizePhoneDigits(rId) == normDigits);
-          final emailMatches = cleanEmail.isNotEmpty && rEmail.isNotEmpty && rEmail == cleanEmail.toLowerCase();
+              (normDigits.isNotEmpty && normalizePhoneDigits(rId) == normDigits) ||
+              cleanPhone == rPhone ||
+              cleanPhone == rId;
+          final emailMatches = (cleanEmail.isNotEmpty && rEmail.isNotEmpty && rEmail == cleanEmail.toLowerCase()) ||
+              (cleanPhone.contains('@') && rEmail.isNotEmpty && rEmail == cleanPhone.toLowerCase()) ||
+              (rId.toLowerCase() == cleanPhone.toLowerCase());
 
           if (phoneMatches || emailMatches) {
             matchedRemoteProfile = r;
@@ -1323,7 +1339,7 @@ class AppState extends ChangeNotifier {
       final storedHash = (matchedRemoteProfile['password_hash'] ?? '').toString().trim();
 
       if (storedHash.isNotEmpty) {
-        if (storedHash != inputHash) {
+        if (storedHash != inputHash && storedHash != cleanPwd) {
           return 'Mot de passe incorrect. Veuillez vérifier votre mot de passe.';
         }
       } else {
@@ -2532,10 +2548,11 @@ class AppState extends ChangeNotifier {
 
   int getAvailableStockForProduct(Product product) {
     if (product.productType == 'Service') return 999999;
-    if (currentStore == 'Toutes' || currentStore == 'Tous') {
+    final effectiveStore = isCashierAccount ? assignedStoreForCurrentUser : currentStore;
+    if (effectiveStore == 'Toutes' || effectiveStore == 'Tous') {
       return product.stock;
     }
-    final sStock = product.stockForStore(currentStore);
+    final sStock = product.stockForStore(effectiveStore);
     return sStock < product.stock ? sStock : product.stock;
   }
 
@@ -2675,9 +2692,13 @@ class AppState extends ChangeNotifier {
     final effectiveTotal = overrideTotal ?? ((cartTotal - (globalDiscount ?? 0.0)).clamp(0.0, double.infinity));
     final effectiveDiscountTotal = cart.fold(0.0, (sum, i) => sum + i.discount) + (globalDiscount ?? 0.0);
 
-    final storeForSale = (currentStore == 'Toutes' || currentStore == 'Tous') ? 'Boutique principale' : currentStore;
+    final storeForSale = isCashierAccount
+        ? assignedStoreForCurrentUser
+        : ((currentStore == 'Toutes' || currentStore == 'Tous') ? 'Boutique principale' : currentStore);
     final effectivePayment = (paymentMethod == 'Caisse 1' || paymentMethod.startsWith('Caisse 1') || paymentMethod == 'Caisse')
-        ? 'Caisse $storeForSale'
+        ? ((isCashierAccount && userAssignedCashDesk != null && userAssignedCashDesk!.isNotEmpty)
+            ? userAssignedCashDesk!
+            : 'Caisse $storeForSale')
         : paymentMethod;
 
     final sale = Sale(

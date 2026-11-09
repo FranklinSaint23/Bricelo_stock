@@ -383,7 +383,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           isCurrent: currentPlan == 'Gratuit' || currentPlan == 'Découverte',
           features: const [
             '1 Boutique & 1 Caisse active',
-            'Max 30 produits en stock',
+            'Max 25 produits en stock',
             'Max 50 ventes par mois (verrouillé au-delà)',
             '0 équipier invité (compte solo propriétaire)',
             'Max 5 clients à crédit (sans rappels auto)',

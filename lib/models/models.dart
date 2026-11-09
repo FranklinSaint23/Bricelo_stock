@@ -81,6 +81,7 @@ class Product {
         return entry.value;
       }
     }
+    if (stockByStore.isNotEmpty) return 0;
     return stock;
   }
 

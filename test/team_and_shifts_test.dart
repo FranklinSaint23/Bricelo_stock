@@ -195,6 +195,45 @@ void main() {
       );
       expect(successError, null);
     });
+
+    test('Cashier is restricted to assigned store and cannot see all stores', () {
+      appState.userRole = 'Caissier';
+      expect(appState.isCashierAccount, true);
+      expect(appState.isMagasinierAccount, false);
+      expect(appState.isGerantAccount, false);
+
+      // Magasinier et Gérant peuvent voir les autres boutiques
+      appState.userRole = 'Magasinier';
+      expect(appState.isCashierAccount, false);
+      expect(appState.isMagasinierAccount, true);
+
+      appState.userRole = 'Gérant';
+      expect(appState.isCashierAccount, false);
+      expect(appState.isGerantAccount, true);
+
+      // Rétablissement rôle Propriétaire
+      appState.userRole = 'Propriétaire';
+    });
+
+    test('Product stockForStore isolates stock per store correctly', () {
+      final p = Product(
+        id: 'p_test',
+        name: 'Tissu Jericho',
+        category: 'Textile',
+        barcode: '123456',
+        buyPrice: 1000,
+        sellPrice: 1800,
+        stock: 20,
+        stockByStore: {
+          'Franklin Athletics': 20,
+        },
+      );
+
+      // Dans sa boutique, le stock est de 20
+      expect(p.stockForStore('Franklin Athletics'), 20);
+      // Dans une autre boutique où le produit n'a pas été alloué, le stock est 0 (pas de fuite de stock)
+      expect(p.stockForStore('Autre Boutique'), 0);
+    });
   });
 }
 

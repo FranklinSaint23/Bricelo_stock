@@ -1092,9 +1092,13 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                         children: [
                           Row(
                             children: [
-                              Text(
-                                '${activeShift.cashDeskName} ${'ouvert'.tr}',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.5, color: isDark ? Colors.white : const Color(0xFF111827)),
+                              Expanded(
+                                child: Text(
+                                  '${activeShift.cashDeskName} ${'ouvert'.tr}',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.5, color: isDark ? Colors.white : const Color(0xFF111827)),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
                               ),
                               const SizedBox(width: 8),
                               ShiftDurationBadge(
@@ -1109,6 +1113,8 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           Text(
                             '${'Caissier :'.tr} ${activeShift.cashierName} · ${activeShift.storeName}',
                             style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ],
                       ),

@@ -880,7 +880,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ],
         ),
         content: Text(
-          'Votre catalogue en formule Découverte est limité à 30 articles (${appState.products.length}/30).\n\n'
+          'Votre catalogue en formule Découverte est limité à 25 articles (${appState.products.length}/25).\n\n'
           'Pour enregistrer un nombre illimité de produits, ajouter des variantes et gérer des dépôts multiples, passez à la Formule Pro sur le portail web.',
           style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF475569)),
         ),

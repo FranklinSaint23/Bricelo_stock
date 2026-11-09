@@ -87,3 +87,4 @@ export 'sales/sale_detail_screen.dart';
 export 'pos/checkout_stepper_modal.dart';
 export 'finance/supplier_payment_flow.dart';
 export 'admin/super_admin_screen.dart';
+export 'admin/super_admin_portal_shell.dart';

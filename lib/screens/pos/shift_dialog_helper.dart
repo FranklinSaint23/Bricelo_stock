@@ -9,18 +9,29 @@ class ShiftDialogHelper {
   static Future<bool> showOpenShiftDialog(BuildContext context) async {
     final appState = AppState.instance;
     final isDark = appState.isDarkMode;
-    final isCashier = appState.userRole.toLowerCase() == 'caissier';
+    final isCashier = appState.isCashierAccount || appState.userRole.toLowerCase() == 'caissier';
     final cashiers = appState.teamMembers.isNotEmpty
         ? appState.teamMembers.map((m) => m.name).toList()
         : [appState.displayUserName];
-    String selectedCashier = (isCashier && cashiers.contains(appState.displayUserName))
+    if (isCashier && !cashiers.contains(appState.displayUserName)) {
+      cashiers.insert(0, appState.displayUserName);
+    }
+    String selectedCashier = isCashier
         ? appState.displayUserName
-        : cashiers.first;
+        : (cashiers.contains(appState.displayUserName) ? appState.displayUserName : cashiers.first);
 
     final desks = appState.cashDesks.isNotEmpty
         ? appState.cashDesks.map((d) => d.name).toList()
         : ['Caisse Principale'];
-    String selectedDesk = (isCashier && appState.userAssignedCashDesk != null && desks.contains(appState.userAssignedCashDesk))
+    if (appState.userAssignedCashDesk != null &&
+        appState.userAssignedCashDesk!.isNotEmpty &&
+        !desks.contains(appState.userAssignedCashDesk!)) {
+      desks.insert(0, appState.userAssignedCashDesk!);
+    }
+    final isDeskAssigned = isCashier &&
+        appState.userAssignedCashDesk != null &&
+        appState.userAssignedCashDesk!.isNotEmpty;
+    String selectedDesk = isDeskAssigned
         ? appState.userAssignedCashDesk!
         : desks.first;
 
@@ -69,14 +80,25 @@ class ShiftDialogHelper {
                       style: TextStyle(
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                         fontSize: 14,
+                        fontWeight: isCashier ? FontWeight.bold : FontWeight.normal,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Caissier responsable'.tr,
                         labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                        fillColor: isCashier
+                            ? (isDark ? const Color(0xFF0F1B2E) : const Color(0xFFF1F5F9))
+                            : (isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC)),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        suffixIcon: isCashier
+                            ? const Padding(
+                                padding: EdgeInsets.only(right: 8),
+                                child: Icon(Icons.lock_rounded, size: 18, color: Color(0xFF10B981)),
+                              )
+                            : null,
+                        helperText: isCashier ? 'Caissier de session verrouillé (sécurité)'.tr : null,
+                        helperStyle: const TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                       items: cashiers
                           .map((c) => DropdownMenuItem(
@@ -84,9 +106,11 @@ class ShiftDialogHelper {
                                 child: Text(c, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A))),
                               ))
                           .toList(),
-                      onChanged: (val) {
-                        if (val != null) setDlgState(() => selectedCashier = val);
-                      },
+                      onChanged: isCashier
+                          ? null
+                          : (val) {
+                              if (val != null) setDlgState(() => selectedCashier = val);
+                            },
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
@@ -95,14 +119,25 @@ class ShiftDialogHelper {
                       style: TextStyle(
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                         fontSize: 14,
+                        fontWeight: isDeskAssigned ? FontWeight.bold : FontWeight.normal,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Poste de caisse'.tr,
                         labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                        fillColor: isDeskAssigned
+                            ? (isDark ? const Color(0xFF0F1B2E) : const Color(0xFFF1F5F9))
+                            : (isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC)),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        suffixIcon: isDeskAssigned
+                            ? const Padding(
+                                padding: EdgeInsets.only(right: 8),
+                                child: Icon(Icons.lock_rounded, size: 18, color: Color(0xFF10B981)),
+                              )
+                            : null,
+                        helperText: isDeskAssigned ? 'Caisse attribuée'.tr : null,
+                        helperStyle: const TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                       items: desks
                           .map((d) => DropdownMenuItem(
@@ -110,9 +145,11 @@ class ShiftDialogHelper {
                                 child: Text(d, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A))),
                               ))
                           .toList(),
-                      onChanged: (val) {
-                        if (val != null) setDlgState(() => selectedDesk = val);
-                      },
+                      onChanged: isDeskAssigned
+                          ? null
+                          : (val) {
+                              if (val != null) setDlgState(() => selectedDesk = val);
+                            },
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -149,10 +186,13 @@ class ShiftDialogHelper {
                   ),
                   onPressed: () async {
                     final openAmt = double.tryParse(openingCashCtrl.text.trim()) ?? 0.0;
+                    final effectiveStore = isCashier
+                        ? appState.assignedStoreForCurrentUser
+                        : appState.currentStore;
                     await appState.openCashShift(
                       cashierName: selectedCashier,
                       cashDeskName: selectedDesk,
-                      storeName: appState.currentStore,
+                      storeName: effectiveStore,
                       openingCash: openAmt,
                     );
                     if (ctx.mounted) Navigator.pop(ctx, true);

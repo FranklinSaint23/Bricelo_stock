@@ -24,6 +24,10 @@ class _PosScreenState extends State<PosScreen> {
   @override
   void initState() {
     super.initState();
+    if (appState.isCashierAccount) {
+      _selectedStore = appState.assignedStoreForCurrentUser;
+      appState.setCurrentStore(appState.assignedStoreForCurrentUser);
+    }
     // Actualisation du chronomètre de shift toutes les 15 secondes
     _shiftTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted && appState.activeCashShift != null) {
@@ -39,7 +43,12 @@ class _PosScreenState extends State<PosScreen> {
     super.dispose();
   }
 
-  List<String> get _storeOptions => ['Toutes', ...appState.availableStores];
+  List<String> get _storeOptions {
+    if (appState.isCashierAccount) {
+      return [appState.assignedStoreForCurrentUser];
+    }
+    return ['Toutes', ...appState.availableStores];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,15 +56,24 @@ class _PosScreenState extends State<PosScreen> {
       animation: appState,
       builder: (context, _) {
         final isDesktop = MediaQuery.of(context).size.width >= 800;
+        final isCashier = appState.isCashierAccount;
         final stores = _storeOptions;
-        if (!stores.contains(_selectedStore)) {
+        if (isCashier) {
+          _selectedStore = appState.assignedStoreForCurrentUser;
+        } else if (!stores.contains(_selectedStore)) {
           _selectedStore = 'Toutes';
         }
+
+        final effectiveStore = isCashier ? appState.assignedStoreForCurrentUser : _selectedStore;
 
         final products = appState.products.where((p) {
           final matchesSearch = p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
               p.barcode.contains(_searchQuery);
-          final matchesStore = _selectedStore == 'Toutes' || (p.stockForStore(_selectedStore) >= 0);
+          final matchesStore = effectiveStore == 'Toutes'
+              ? true
+              : (p.stockForStore(effectiveStore) > 0 ||
+                  p.stockByStore.containsKey(effectiveStore) ||
+                  (p.stockByStore.isEmpty && p.stock > 0));
           return matchesSearch && matchesStore;
         }).toList();
 
@@ -135,41 +153,81 @@ class _PosScreenState extends State<PosScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  SizedBox(
-                    height: 38,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: stores.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 8),
-                      itemBuilder: (context, idx) {
-                        final store = stores[idx];
-                        final isSelected = _selectedStore == store;
-                        return ChoiceChip(
-                          label: Text(store),
-                          selected: isSelected,
-                          selectedColor: AppTheme.primaryNavy,
-                          backgroundColor: cardBg,
-                          labelStyle: TextStyle(
-                            color: isSelected ? AppTheme.accentGold : (isDark ? Colors.white : const Color(0xFF475569)),
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            fontSize: 12,
+                  if (appState.isCashierAccount)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: cardBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.storefront_rounded, size: 16, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                          const SizedBox(width: 8),
+                          Text(
+                            appState.assignedStoreForCurrentUser,
+                            style: TextStyle(color: textPrimary, fontWeight: FontWeight.bold, fontSize: 12.5),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(
-                              color: isSelected ? AppTheme.primaryNavy : cardBorder,
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.lock_rounded, size: 10, color: Color(0xFF10B981)),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Boutique rattachée'.tr,
+                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                                ),
+                              ],
                             ),
                           ),
-                          onSelected: (_) => setState(() {
-                            _selectedStore = store;
-                            if (store != 'Toutes') {
-                              appState.setCurrentStore(store);
-                            }
-                          }),
-                        );
-                      },
+                        ],
+                      ),
+                    )
+                  else
+                    SizedBox(
+                      height: 38,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: stores.length,
+                        separatorBuilder: (context, index) => const SizedBox(width: 8),
+                        itemBuilder: (context, idx) {
+                          final store = stores[idx];
+                          final isSelected = _selectedStore == store;
+                          return ChoiceChip(
+                            label: Text(store == 'Toutes' ? 'Toutes les boutiques'.tr : store),
+                            selected: isSelected,
+                            selectedColor: AppTheme.primaryNavy,
+                            backgroundColor: cardBg,
+                            labelStyle: TextStyle(
+                              color: isSelected ? AppTheme.accentGold : (isDark ? Colors.white : const Color(0xFF475569)),
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: isSelected ? AppTheme.primaryNavy : cardBorder,
+                              ),
+                            ),
+                            onSelected: (_) => setState(() {
+                              _selectedStore = store;
+                              if (store != 'Toutes') {
+                                appState.setCurrentStore(store);
+                              }
+                            }),
+                          );
+                        },
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 16),
 
                   Expanded(
@@ -232,7 +290,7 @@ class _PosScreenState extends State<PosScreen> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         backgroundColor: const Color(0xFFDC2626),
-                                        content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de ${p.stockForStore(appState.currentStore)}.'),
+                                        content: Text('${'Stock insuffisant ! Le stock disponible pour'.tr} "${p.name}" ${'est de'.tr} ${p.stockForStore(appState.isCashierAccount ? appState.assignedStoreForCurrentUser : appState.currentStore)}.'),
                                         duration: const Duration(seconds: 2),
                                       ),
                                     );
@@ -425,7 +483,7 @@ class _PosScreenState extends State<PosScreen> {
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
                                               backgroundColor: const Color(0xFFDC2626),
-                                              content: Text('Stock insuffisant ! Le stock disponible pour "${item.product.name}" est de ${item.product.stockForStore(appState.currentStore)}.'),
+                                              content: Text('${'Stock insuffisant ! Le stock disponible pour'.tr} "${item.product.name}" ${'est de'.tr} ${item.product.stockForStore(appState.isCashierAccount ? appState.assignedStoreForCurrentUser : appState.currentStore)}.'),
                                               duration: const Duration(seconds: 2),
                                             ),
                                           );
@@ -610,62 +668,119 @@ class _PosScreenState extends State<PosScreen> {
             ),
           ),
 
-          // 2. SÉLECTION DES BOUTIQUES (DROPDOWN COMMENÇANT PAR TOUTES)
+          // 2. SÉLECTION DES BOUTIQUES (VERROUILLÉE POUR CAISSIER, DROPDOWN POUR AUTRES)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cardBorder),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.02), blurRadius: 4, offset: const Offset(0, 1)),
-                ],
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  dropdownColor: cardBg,
-                  value: stores.contains(_selectedStore) ? _selectedStore : 'Toutes',
-                  isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.accentGold),
-                  items: stores.map((store) {
-                    return DropdownMenuItem<String>(
-                      value: store,
-                      child: Row(
-                        children: [
-                          Icon(
-                            store == 'Toutes' ? Icons.storefront_rounded : Icons.store_rounded,
-                            size: 18,
-                            color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            store == 'Toutes' ? 'Toutes les boutiques'.tr : store,
+            child: appState.isCashierAccount
+                ? Container(
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cardBorder),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.02), blurRadius: 4, offset: const Offset(0, 1)),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.storefront_rounded,
+                          size: 18,
+                          color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            appState.assignedStoreForCurrentUser,
                             style: TextStyle(
                               color: textPrimary,
                               fontWeight: FontWeight.w700,
                               fontSize: 13.5,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.lock_rounded, size: 11, color: Color(0xFF10B981)),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Boutique rattachée'.tr,
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF10B981),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Container(
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cardBorder),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.02), blurRadius: 4, offset: const Offset(0, 1)),
+                      ],
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        dropdownColor: cardBg,
+                        value: stores.contains(_selectedStore) ? _selectedStore : 'Toutes',
+                        isExpanded: true,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.accentGold),
+                        items: stores.map((store) {
+                          return DropdownMenuItem<String>(
+                            value: store,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  store == 'Toutes' ? Icons.storefront_rounded : Icons.store_rounded,
+                                  size: 18,
+                                  color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  store == 'Toutes' ? 'Toutes les boutiques'.tr : store,
+                                  style: TextStyle(
+                                    color: textPrimary,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (newStore) {
+                          if (newStore != null) {
+                            setState(() {
+                              _selectedStore = newStore;
+                              if (newStore != 'Toutes') {
+                                appState.setCurrentStore(newStore);
+                              }
+                            });
+                          }
+                        },
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (newStore) {
-                    if (newStore != null) {
-                      setState(() {
-                        _selectedStore = newStore;
-                        if (newStore != 'Toutes') {
-                          appState.setCurrentStore(newStore);
-                        }
-                      });
-                    }
-                  },
-                ),
-              ),
-            ),
+                    ),
+                  ),
           ),
           const SizedBox(height: 8),
 

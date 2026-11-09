@@ -75,20 +75,6 @@ class CompanyAndTeamScreen extends StatelessWidget {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyProfileScreen()));
                       },
                     ),
-                    if (isWebPortal) ...[
-                      _buildDivider(dividerCol),
-                      _buildRow(
-                        icon: Icons.workspace_premium_rounded,
-                        title: 'Abonnement & Formules (Portail Web)',
-                        badge: appState.subscriptionPlan,
-                        badgeColor: const Color(0xFF059669),
-                        textPrimary: textPrimary,
-                        isDark: isDark,
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionScreen()));
-                        },
-                      ),
-                    ],
                     _buildDivider(dividerCol),
                     _buildRow(
                       icon: Icons.auto_awesome_motion_rounded,

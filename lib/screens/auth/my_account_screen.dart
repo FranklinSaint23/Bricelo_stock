@@ -1009,77 +1009,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 22),
-
-                    // 5B. CONSOLE SUPER ADMINISTRATEUR (Monitoring & Abonnements Cloud)
-                    if (isOwner || appState.isSuperAdmin) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Console Super Administrateur'.tr,
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1F2937)),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.accentGold.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text('SUPER ADMIN', style: TextStyle(color: AppTheme.accentGold, fontSize: 10, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SuperAdminScreen()),
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppTheme.darkSurface : Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.5)),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.accentGold.withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.admin_panel_settings_rounded, color: AppTheme.accentGold, size: 22),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Console Cloud & Performances'.tr,
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1F2937)),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Gérer tous les abonnements, comptes et surveiller la latence Supabase'.tr,
-                                      style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Icon(Icons.chevron_right_rounded, color: AppTheme.accentGold),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+                    const SizedBox(height: 24),
 
                     // 6. ACTIONS ROUGES (DÉCONNEXION & SUPPRESSION POUR LE PROPRIÉTAIRE UNIQUEMENT)
                     Container(
