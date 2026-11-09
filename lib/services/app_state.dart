@@ -107,6 +107,99 @@ class AppState extends ChangeNotifier {
   int expiryAlertDays = 30;
   List<Quote> quotes = [];
 
+  // --- Ma Marque (Identité & Storytelling) ---
+  String brandSlogan = '';
+  String brandDistinction = '';
+  String brandStory = '';
+  String brandCity = '';
+  String brandQuarter = '';
+  String brandDelivery = '';
+  String brandClients = '';
+  String brandTone = 'Dynamique';
+  String brandAddressing = '« vous »';
+  String brandGoodWords = '';
+  String brandBadWords = '';
+  int brandPaletteIndex = 0;
+  List<String> brandPhotos = [];
+
+  // --- Comptes de Paiement Personnalisés ---
+  List<PaymentAccount> paymentAccounts = [
+    PaymentAccount(id: 'momo_default', title: 'Orange Money & MTN MoMo', type: 'Mobile Money', balance: 0.0, isActive: true),
+    PaymentAccount(id: 'card_default', title: 'Carte Bancaire (TPE)', type: 'Carte', balance: 0.0, isActive: true),
+    PaymentAccount(id: 'bank_default', title: 'Compte Bancaire / Virement', type: 'Banque', balance: 0.0, isActive: true),
+  ];
+
+  // --- Approbations (Workflow de validation de caisse & stock) ---
+  List<ApprovalRequest> approvalRequests = [
+    ApprovalRequest(
+      id: 'appr_1',
+      title: 'Remise exceptionnelle de 15%',
+      type: 'Remise',
+      requesterName: 'Caissier 1',
+      storeName: 'Boutique Principale',
+      amount: 15000.0,
+      details: 'Demande de remise de 15% sur un matelas orthopédique pour un client fidèle.',
+      date: DateTime.now().subtract(const Duration(minutes: 45)),
+      status: 'pending',
+    ),
+    ApprovalRequest(
+      id: 'appr_2',
+      title: 'Sortie de caisse imprévue (Fournitures)',
+      type: 'Dépense',
+      requesterName: 'Gérant Adjoint',
+      storeName: 'Boutique Principale',
+      amount: 8500.0,
+      details: 'Achat de rouleaux thermiques de caisse et papier d\'emballage.',
+      date: DateTime.now().subtract(const Duration(hours: 3)),
+      status: 'pending',
+    ),
+  ];
+
+  // --- Suivi des Shifts (Sessions de Caisse) ---
+  bool isShiftsTrackingEnabled = false;
+  CashShift? activeCashShift;
+  List<CashShift> cashShiftsHistory = [];
+
+  // --- Groupes d'accès & Permissions ---
+  List<Map<String, dynamic>> accessGroups = [
+    {
+      'role': 'Propriétaire',
+      'description': 'Accès complet et illimité à toute l\'application',
+      'isDefault': true,
+      'permissions': {
+        'Point de vente (POS)': true,
+        'Gestion du stock & Prix': true,
+        'Comptabilité & Finances': true,
+        'Suppression de données': true,
+        'Gestion des collaborateurs': true,
+      },
+    },
+    {
+      'role': 'Responsable de magasin',
+      'description': 'Gestion des stocks, ventes et validation des transferts',
+      'isDefault': false,
+      'permissions': {
+        'Point de vente (POS)': true,
+        'Gestion du stock & Prix': true,
+        'Comptabilité & Finances': false,
+        'Suppression de données': false,
+        'Gestion des collaborateurs': true,
+      },
+    },
+    {
+      'role': 'Caissier',
+      'description': 'Encaissement des ventes, devis et consultation des stocks',
+      'isDefault': false,
+      'permissions': {
+        'Point de vente (POS)': true,
+        'Gestion du stock & Prix': false,
+        'Comptabilité & Finances': false,
+        'Suppression de données': false,
+        'Gestion des collaborateurs': false,
+      },
+    },
+  ];
+
   // --- Getters d'affichage sécurisés ---
   String get language => currentLanguage;
   String get displayUserName => userName.trim().isNotEmpty ? userName.trim() : (currentLanguage == 'en' ? 'Manager' : 'Gérant');
@@ -297,6 +390,53 @@ class AppState extends ChangeNotifier {
         quotes = (data['quotes'] as List<dynamic>? ?? [])
             .map((e) => Quote.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
+
+        // Ma Marque
+        brandSlogan = (data['brandSlogan'] ?? '').toString();
+        brandDistinction = (data['brandDistinction'] ?? '').toString();
+        brandStory = (data['brandStory'] ?? '').toString();
+        brandCity = (data['brandCity'] ?? '').toString();
+        brandQuarter = (data['brandQuarter'] ?? '').toString();
+        brandDelivery = (data['brandDelivery'] ?? '').toString();
+        brandClients = (data['brandClients'] ?? '').toString();
+        brandTone = (data['brandTone'] ?? 'Dynamique').toString();
+        brandAddressing = (data['brandAddressing'] ?? '« vous »').toString();
+        brandGoodWords = (data['brandGoodWords'] ?? '').toString();
+        brandBadWords = (data['brandBadWords'] ?? '').toString();
+        brandPaletteIndex = (data['brandPaletteIndex'] as num?)?.toInt() ?? 0;
+        brandPhotos = (data['brandPhotos'] as List<dynamic>? ?? []).map((e) => e.toString()).toList();
+
+        // Comptes de Paiement
+        if (data['paymentAccounts'] != null) {
+          paymentAccounts = (data['paymentAccounts'] as List<dynamic>)
+              .map((e) => PaymentAccount.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList();
+        }
+
+        // Approbations
+        if (data['approvalRequests'] != null) {
+          approvalRequests = (data['approvalRequests'] as List<dynamic>)
+              .map((e) => ApprovalRequest.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList();
+        }
+
+        // Shifts de caisse
+        isShiftsTrackingEnabled = data['isShiftsTrackingEnabled'] as bool? ?? false;
+        if (data['activeCashShift'] != null) {
+          activeCashShift = CashShift.fromJson(Map<String, dynamic>.from(data['activeCashShift'] as Map));
+        }
+        if (data['cashShiftsHistory'] != null) {
+          cashShiftsHistory = (data['cashShiftsHistory'] as List<dynamic>)
+              .map((e) => CashShift.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList();
+        }
+
+        // Groupes d'accès
+        if (data['accessGroups'] != null) {
+          accessGroups = (data['accessGroups'] as List<dynamic>)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+        }
         notifyListeners();
       }
     } catch (e) {
@@ -357,6 +497,25 @@ class AppState extends ChangeNotifier {
         'expiryAlertDays': expiryAlertDays,
         'stockDepreciations': stockDepreciations.map((e) => e.toJson()).toList(),
         'quotes': quotes.map((e) => e.toJson()).toList(),
+        'brandSlogan': brandSlogan,
+        'brandDistinction': brandDistinction,
+        'brandStory': brandStory,
+        'brandCity': brandCity,
+        'brandQuarter': brandQuarter,
+        'brandDelivery': brandDelivery,
+        'brandClients': brandClients,
+        'brandTone': brandTone,
+        'brandAddressing': brandAddressing,
+        'brandGoodWords': brandGoodWords,
+        'brandBadWords': brandBadWords,
+        'brandPaletteIndex': brandPaletteIndex,
+        'brandPhotos': brandPhotos,
+        'paymentAccounts': paymentAccounts.map((e) => e.toJson()).toList(),
+        'approvalRequests': approvalRequests.map((e) => e.toJson()).toList(),
+        'isShiftsTrackingEnabled': isShiftsTrackingEnabled,
+        'activeCashShift': activeCashShift?.toJson(),
+        'cashShiftsHistory': cashShiftsHistory.map((e) => e.toJson()).toList(),
+        'accessGroups': accessGroups,
       };
       await prefs.setString(_storageKey, jsonEncode(payload));
     } catch (e) {
@@ -1518,6 +1677,15 @@ class AppState extends ChangeNotifier {
     }
 
     sales.insert(0, sale);
+
+    // Mise à jour de la session de caisse active (shift) si paiement en espèces
+    if (isShiftsTrackingEnabled && activeCashShift != null && !activeCashShift!.isClosed) {
+      final method = sale.paymentMethod.toLowerCase();
+      if (method.contains('esp') || method.contains('cash')) {
+        activeCashShift!.cashSalesTotal += sale.total;
+      }
+    }
+
     cart.clear();
     _saveToPrefs();
     notifyListeners();
@@ -2091,5 +2259,199 @@ class AppState extends ChangeNotifier {
   void toggleBossMode() {
     isBossMode = !isBossMode;
     notifyListeners();
+  }
+
+  // --- MA MARQUE ---
+  Future<void> updateBrandProfile({
+    String? slogan,
+    String? distinction,
+    String? story,
+    String? city,
+    String? quarter,
+    String? delivery,
+    String? clients,
+    String? tone,
+    String? addressing,
+    String? goodWords,
+    String? badWords,
+    int? paletteIndex,
+    List<String>? photos,
+  }) async {
+    if (slogan != null) brandSlogan = slogan;
+    if (distinction != null) brandDistinction = distinction;
+    if (story != null) brandStory = story;
+    if (city != null) brandCity = city;
+    if (quarter != null) brandQuarter = quarter;
+    if (delivery != null) brandDelivery = delivery;
+    if (clients != null) brandClients = clients;
+    if (tone != null) brandTone = tone;
+    if (addressing != null) brandAddressing = addressing;
+    if (goodWords != null) brandGoodWords = goodWords;
+    if (badWords != null) brandBadWords = badWords;
+    if (paletteIndex != null) brandPaletteIndex = paletteIndex;
+    if (photos != null) brandPhotos = List.from(photos);
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  // --- COMPTES DE PAIEMENT ---
+  Future<void> addPaymentAccount(PaymentAccount account) async {
+    paymentAccounts.add(account);
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> removePaymentAccount(String id) async {
+    paymentAccounts.removeWhere((a) => a.id == id);
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> updatePaymentAccountBalance(String id, double newBalance) async {
+    final idx = paymentAccounts.indexWhere((a) => a.id == id);
+    if (idx != -1) {
+      paymentAccounts[idx].balance = newBalance;
+      notifyListeners();
+      await _saveToPrefs();
+    }
+  }
+
+  Future<void> togglePaymentAccountActive(String id) async {
+    final idx = paymentAccounts.indexWhere((a) => a.id == id);
+    if (idx != -1) {
+      paymentAccounts[idx].isActive = !paymentAccounts[idx].isActive;
+      notifyListeners();
+      await _saveToPrefs();
+    }
+  }
+
+  // --- APPROBATIONS ---
+  Future<void> createApprovalRequest(ApprovalRequest req) async {
+    approvalRequests.insert(0, req);
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> approveApprovalRequest(String id, {String? note}) async {
+    final idx = approvalRequests.indexWhere((r) => r.id == id);
+    if (idx != -1) {
+      approvalRequests[idx].status = 'approved';
+      approvalRequests[idx].decisionNote = note;
+      approvalRequests[idx].decisionDate = DateTime.now();
+      notifyListeners();
+      await _saveToPrefs();
+    }
+  }
+
+  Future<void> rejectApprovalRequest(String id, {String? note}) async {
+    final idx = approvalRequests.indexWhere((r) => r.id == id);
+    if (idx != -1) {
+      approvalRequests[idx].status = 'rejected';
+      approvalRequests[idx].decisionNote = note;
+      approvalRequests[idx].decisionDate = DateTime.now();
+      notifyListeners();
+      await _saveToPrefs();
+    }
+  }
+
+  // --- SUIVI DES SHIFTS (CAISSE) ---
+  Future<void> setShiftsTrackingEnabled(bool enabled) async {
+    isShiftsTrackingEnabled = enabled;
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> openCashShift({
+    required String cashierName,
+    required String cashDeskName,
+    required String storeName,
+    required double openingCash,
+  }) async {
+    activeCashShift = CashShift(
+      id: 'shift_${DateTime.now().millisecondsSinceEpoch}',
+      cashierName: cashierName,
+      cashDeskName: cashDeskName,
+      storeName: storeName,
+      openedAt: DateTime.now(),
+      openingCash: openingCash,
+      cashSalesTotal: 0.0,
+      isClosed: false,
+    );
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> closeCashShift({
+    required double closingCashCounted,
+    String note = '',
+  }) async {
+    if (activeCashShift == null) return;
+    final shift = activeCashShift!;
+    shift.closedAt = DateTime.now();
+    shift.closingCashCounted = closingCashCounted;
+    final expected = shift.openingCash + shift.cashSalesTotal;
+    shift.discrepancy = closingCashCounted - expected;
+    shift.note = note;
+    shift.isClosed = true;
+
+    cashShiftsHistory.insert(0, shift);
+    activeCashShift = null;
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  // --- GROUPES D'ACCÈS ---
+  Future<void> saveAccessGroups(List<Map<String, dynamic>> groups) async {
+    accessGroups = List.from(groups);
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  // --- RÉINITIALISATION DES DONNÉES ---
+  Future<void> resetTestDataOnly() async {
+    sales.clear();
+    debts.clear();
+    supplierDebts.clear();
+    purchaseOrders.clear();
+    expenses.clear();
+    stockMovements.clear();
+    stockDepreciations.clear();
+    quotes.clear();
+    activeCashShift = null;
+    cashShiftsHistory.clear();
+    approvalRequests.removeWhere((r) => r.status != 'pending');
+    cart.clear();
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  Future<void> resetAllStoreData() async {
+    sales.clear();
+    debts.clear();
+    supplierDebts.clear();
+    purchaseOrders.clear();
+    expenses.clear();
+    stockMovements.clear();
+    stockDepreciations.clear();
+    quotes.clear();
+    activeCashShift = null;
+    cashShiftsHistory.clear();
+    approvalRequests.clear();
+    cart.clear();
+    products.clear();
+    customers.clear();
+    suppliers.clear();
+    inventorySessions.clear();
+    categories = [
+      CategoryItem(id: 'cat_1', name: 'Alimentation'),
+      CategoryItem(id: 'cat_2', name: 'Boissons'),
+      CategoryItem(id: 'cat_3', name: 'Divers'),
+    ];
+    cashDesks = [
+      CashDesk(id: 'cd_1', name: 'Caisse Principale', storeName: currentStore, isDefault: true),
+    ];
+    openingCash = 0.0;
+    notifyListeners();
+    await _saveToPrefs();
   }
 }

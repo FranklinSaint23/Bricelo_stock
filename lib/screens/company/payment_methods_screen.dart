@@ -13,28 +13,15 @@ class PaymentMethodsScreen extends StatefulWidget {
 class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   final appState = AppState.instance;
 
-  final List<Map<String, dynamic>> _customAccounts = [
-    {
-      'id': 'momo_1',
-      'title': 'Mobile Money',
-      'subtitle': null,
-      'balance': '0 F CFA',
-      'icon': Icons.smartphone,
-      'type': 'Mobile Money',
-    },
-    {
-      'id': 'card_1',
-      'title': 'Carte',
-      'subtitle': null,
-      'balance': '0 F CFA',
-      'icon': Icons.credit_card,
-      'type': 'Carte',
-    },
-  ];
-
   bool _isAdding = false;
   String _selectedType = 'Mobile Money'; // 'Mobile Money', 'Banque', 'Carte'
   final _nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   void _showHelpDialog() {
     showDialog(
@@ -62,28 +49,29 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     );
   }
 
-  void _addAccount() {
+  Future<void> _addAccount() async {
     final name = _nameController.text.trim();
     if (name.isNotEmpty) {
-      IconData icon = Icons.smartphone;
-      if (_selectedType == 'Banque') icon = Icons.account_balance;
-      if (_selectedType == 'Carte') icon = Icons.credit_card;
-
+      final newAcc = PaymentAccount(
+        id: 'acc_${DateTime.now().millisecondsSinceEpoch}',
+        title: name,
+        balance: 0.0,
+        type: _selectedType,
+        isActive: true,
+      );
+      await appState.addPaymentAccount(newAcc);
+      _nameController.clear();
       setState(() {
-        _customAccounts.add({
-          'id': DateTime.now().millisecondsSinceEpoch.toString(),
-          'title': name,
-          'subtitle': null,
-          'balance': '0 F CFA',
-          'icon': icon,
-          'type': _selectedType,
-        });
-        _nameController.clear();
         _isAdding = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Compte "$name" ajouté')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Compte "$name" ajouté avec succès'),
+            backgroundColor: const Color(0xFF059669),
+          ),
+        );
+      }
     }
   }
 
@@ -95,13 +83,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         return 'Nom (ex. Carte Visa, Mastercard, TPE)';
       case 'Mobile Money':
       default:
-        return 'Nom (ex. Orange Money, Wave)';
+        return 'Nom (ex. Orange Money, Wave, MTN MoMo)';
     }
   }
 
-  // MODALE CONFORME AUX IMAGES 1 ET 2
+  // MODALE CAISSE
   void _showCashDeskModal(BuildContext context, CashDesk desk) {
-    String activeTab = 'Solde initial'; // 'Solde initial' ou 'Ajuster'
+    String activeTab = 'Solde initial';
     final initialBalanceCtrl = TextEditingController(
       text: desk.balance > 0 ? desk.balance.toInt().toString() : '',
     );
@@ -131,7 +119,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Titre : Nom de la caisse
                       Text(
                         desk.name,
                         style: const TextStyle(
@@ -142,7 +129,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       ),
                       const SizedBox(height: 18),
 
-                      // Segmented Button : [ Solde initial ] [ Ajuster ] (Exactement comme dans la capture)
                       Container(
                         height: 44,
                         decoration: BoxDecoration(
@@ -151,7 +137,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         ),
                         child: Row(
                           children: [
-                            // 1. SOLDE INITIAL
                             Expanded(
                               child: InkWell(
                                 onTap: () => setDlgState(() => activeTab = 'Solde initial'),
@@ -175,8 +160,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                               ),
                             ),
                             Container(width: 0.9, color: const Color(0xFF6B7280)),
-
-                            // 2. AJUSTER
                             Expanded(
                               child: InkWell(
                                 onTap: () => setDlgState(() => activeTab = 'Ajuster'),
@@ -204,7 +187,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Sous-texte explicatif selon l'onglet
                       Text(
                         isInitial
                             ? 'À définir une seule fois — le solde de départ du compte.'
@@ -213,7 +195,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Solde actuel
                       Text(
                         'Solde actuel: ${AppTheme.formatFCFA(desk.balance)}',
                         style: const TextStyle(
@@ -225,7 +206,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       const SizedBox(height: 14),
 
                       if (isInitial) ...[
-                        // Champ : Solde initial
                         TextField(
                           controller: initialBalanceCtrl,
                           keyboardType: TextInputType.number,
@@ -238,8 +218,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           onChanged: (_) => setDlgState(() {}),
                         ),
                         const SizedBox(height: 12),
-
-                        // Champ : Motif (optionnel)
                         TextField(
                           controller: initialReasonCtrl,
                           decoration: InputDecoration(
@@ -249,7 +227,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           ),
                         ),
                       ] else ...[
-                        // Champ : Solde réel compté
                         TextField(
                           controller: adjustCountedCtrl,
                           keyboardType: TextInputType.number,
@@ -262,8 +239,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           onChanged: (_) => setDlgState(() {}),
                         ),
                         const SizedBox(height: 12),
-
-                        // Champ : Motif (obligatoire)
                         TextField(
                           controller: adjustReasonCtrl,
                           decoration: InputDecoration(
@@ -277,7 +252,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       ],
                       const SizedBox(height: 22),
 
-                      // Boutons d'action : Annuler / Confirmer (Image 1 & 2)
                       Row(
                         children: [
                           Expanded(
@@ -289,10 +263,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                               ),
                               onPressed: () => Navigator.pop(dialogCtx),
-                              child: const Text(
-                                'Annuler',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                              ),
+                              child: const Text('Annuler', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -335,10 +306,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                       }
                                     }
                                   : null,
-                              child: const Text(
-                                'Confirmer',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                              ),
+                              child: const Text('Confirmer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                             ),
                           ),
                         ],
@@ -354,6 +322,71 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     );
   }
 
+  // MODALE COMPTE DE PAIEMENT PERSONNALISÉ
+  void _showPaymentAccountModal(BuildContext context, PaymentAccount acc) {
+    final balanceCtrl = TextEditingController(text: acc.balance.toInt().toString());
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(
+          acc.title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Type: ${acc.type}',
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Solde actuel: ${AppTheme.formatFCFA(acc.balance)}',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: balanceCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Nouveau solde (FCFA)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Annuler', style: TextStyle(color: Color(0xFF6B7280))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryNavy,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () async {
+              final newBal = double.tryParse(balanceCtrl.text.trim()) ?? acc.balance;
+              await appState.updatePaymentAccountBalance(acc.id, newBal);
+              if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Solde de "${acc.title}" mis à jour')),
+                );
+              }
+            },
+            child: const Text('Enregistrer', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   bool _canConfirm(bool isInitial, String initVal, String adjustVal, String adjustReason) {
     if (isInitial) {
       return initVal.trim().isNotEmpty && double.tryParse(initVal.trim()) != null;
@@ -364,12 +397,25 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     }
   }
 
+  IconData _iconForType(String type) {
+    switch (type.toLowerCase()) {
+      case 'banque':
+        return Icons.account_balance;
+      case 'carte':
+        return Icons.credit_card;
+      case 'mobile money':
+      default:
+        return Icons.phone_android;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: appState,
       builder: (context, _) {
         final desks = appState.cashDesks;
+        final customAccounts = appState.paymentAccounts;
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -423,7 +469,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 1. LISTE DES VRAIES CAISSES DYNAMIQUES DU SYSTÈME (Image 1)
+              // 1. LISTE DES CAISSES (Espèces)
               ...desks.map((desk) {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -441,19 +487,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Text(
-                                  desk.name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF111827)),
-                                ),
-                                if (desk.storeName.isNotEmpty) ...[
-                                  Text(
-                                    ' · ${desk.storeName}',
-                                    style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-                                  ),
-                                ],
-                              ],
+                            // Titre avec troncature sécurisée pour éliminer tout overflow
+                            Text(
+                              desk.storeName.isNotEmpty ? '${desk.name} · ${desk.storeName}' : desk.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: Color(0xFF111827),
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -467,7 +510,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           ],
                         ),
                       ),
-                      // Icône modifier / ajuster le solde (Exactement comme dans la capture)
+                      // Icône modifier / ajuster le solde
                       InkWell(
                         onTap: () => _showCashDeskModal(context, desk),
                         borderRadius: BorderRadius.circular(8),
@@ -481,8 +524,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 );
               }),
 
-              // 2. LISTE DES AUTRES COMPTES (Mobile Money, Carte, etc.)
-              ..._customAccounts.map((acc) {
+              // 2. LISTE DES AUTRES COMPTES (Mobile Money, Carte, Banque, etc.)
+              ...customAccounts.map((acc) {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(16),
@@ -493,19 +536,43 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(acc['icon'] as IconData, size: 24, color: const Color(0xFF1F2937)),
+                      Icon(_iconForType(acc.type), size: 24, color: const Color(0xFF1F2937)),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              acc['title'] as String,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF111827)),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    acc.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: Color(0xFF111827),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF3F4F6),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    acc.type,
+                                    style: const TextStyle(fontSize: 10, color: Color(0xFF4B5563)),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              acc['balance'] as String,
+                              AppTheme.formatFCFA(acc.balance),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
@@ -515,12 +582,43 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           ],
                         ),
                       ),
+                      // Modifier le solde
+                      InkWell(
+                        onTap: () => _showPaymentAccountModal(context, acc),
+                        borderRadius: BorderRadius.circular(8),
+                        child: const Padding(
+                          padding: EdgeInsets.all(6.0),
+                          child: Icon(Icons.edit_note, size: 22, color: Color(0xFF4B5563)),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      // Supprimer / Archiver
                       IconButton(
-                        icon: const Icon(Icons.archive_outlined, size: 18, color: Color(0xFF4B5563)),
+                        icon: const Icon(Icons.archive_outlined, size: 18, color: Color(0xFF6B7280)),
+                        tooltip: 'Archiver le compte',
                         onPressed: () {
-                          setState(() {
-                            _customAccounts.removeWhere((a) => a['id'] == acc['id']);
-                          });
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              title: const Text('Archiver le compte ?'),
+                              content: Text('Voulez-vous archiver le compte de paiement "${acc.title}" ?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('Annuler'),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+                                  onPressed: () {
+                                    appState.removePaymentAccount(acc.id);
+                                    Navigator.pop(ctx);
+                                  },
+                                  child: const Text('Archiver', style: TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            ),
+                          );
                         },
                       ),
                     ],

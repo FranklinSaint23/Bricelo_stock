@@ -1342,4 +1342,156 @@ class InvoiceHeaderLine {
       );
 }
 
+class PaymentAccount {
+  final String id;
+  String title;
+  double balance;
+  String type; // 'Mobile Money', 'Banque', 'Carte'
+  String? accountNumber;
+  bool isActive;
+
+  PaymentAccount({
+    required this.id,
+    required this.title,
+    this.balance = 0.0,
+    required this.type,
+    this.accountNumber,
+    this.isActive = true,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'balance': balance,
+        'type': type,
+        'accountNumber': accountNumber,
+        'isActive': isActive,
+      };
+
+  factory PaymentAccount.fromJson(Map<String, dynamic> j) => PaymentAccount(
+        id: (j['id'] ?? '').toString(),
+        title: (j['title'] ?? '').toString(),
+        balance: (j['balance'] as num?)?.toDouble() ?? 0.0,
+        type: (j['type'] ?? 'Mobile Money').toString(),
+        accountNumber: j['accountNumber']?.toString(),
+        isActive: j['isActive'] as bool? ?? true,
+      );
+}
+
+class ApprovalRequest {
+  final String id;
+  final String title;
+  final String type; // 'Remise', 'Dépense', 'Dépréciation', 'Crédit', 'Annulation'
+  final String requesterName;
+  final String storeName;
+  final double amount;
+  final String details;
+  final DateTime date;
+  String status; // 'pending', 'approved', 'rejected'
+  String? decisionNote;
+  DateTime? decisionDate;
+
+  ApprovalRequest({
+    required this.id,
+    required this.title,
+    required this.type,
+    required this.requesterName,
+    required this.storeName,
+    required this.amount,
+    required this.details,
+    required this.date,
+    this.status = 'pending',
+    this.decisionNote,
+    this.decisionDate,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'type': type,
+        'requesterName': requesterName,
+        'storeName': storeName,
+        'amount': amount,
+        'details': details,
+        'date': date.toIso8601String(),
+        'status': status,
+        'decisionNote': decisionNote,
+        'decisionDate': decisionDate?.toIso8601String(),
+      };
+
+  factory ApprovalRequest.fromJson(Map<String, dynamic> j) => ApprovalRequest(
+        id: (j['id'] ?? '').toString(),
+        title: (j['title'] ?? '').toString(),
+        type: (j['type'] ?? 'Remise').toString(),
+        requesterName: (j['requesterName'] ?? 'Employé').toString(),
+        storeName: (j['storeName'] ?? 'Boutique Principale').toString(),
+        amount: (j['amount'] as num?)?.toDouble() ?? 0.0,
+        details: (j['details'] ?? '').toString(),
+        date: DateTime.tryParse((j['date'] ?? '').toString()) ?? DateTime.now(),
+        status: (j['status'] ?? 'pending').toString(),
+        decisionNote: j['decisionNote']?.toString(),
+        decisionDate: j['decisionDate'] != null ? DateTime.tryParse(j['decisionDate'].toString()) : null,
+      );
+}
+
+class CashShift {
+  final String id;
+  final String cashierName;
+  final String cashDeskName;
+  final String storeName;
+  final DateTime openedAt;
+  final double openingCash;
+  DateTime? closedAt;
+  double cashSalesTotal;
+  double closingCashCounted;
+  double discrepancy;
+  String note;
+  bool isClosed;
+
+  CashShift({
+    required this.id,
+    required this.cashierName,
+    required this.cashDeskName,
+    required this.storeName,
+    required this.openedAt,
+    required this.openingCash,
+    this.closedAt,
+    this.cashSalesTotal = 0.0,
+    this.closingCashCounted = 0.0,
+    this.discrepancy = 0.0,
+    this.note = '',
+    this.isClosed = false,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'cashierName': cashierName,
+        'cashDeskName': cashDeskName,
+        'storeName': storeName,
+        'openedAt': openedAt.toIso8601String(),
+        'openingCash': openingCash,
+        'closedAt': closedAt?.toIso8601String(),
+        'cashSalesTotal': cashSalesTotal,
+        'closingCashCounted': closingCashCounted,
+        'discrepancy': discrepancy,
+        'note': note,
+        'isClosed': isClosed,
+      };
+
+  factory CashShift.fromJson(Map<String, dynamic> j) => CashShift(
+        id: (j['id'] ?? '').toString(),
+        cashierName: (j['cashierName'] ?? '').toString(),
+        cashDeskName: (j['cashDeskName'] ?? '').toString(),
+        storeName: (j['storeName'] ?? '').toString(),
+        openedAt: DateTime.tryParse((j['openedAt'] ?? '').toString()) ?? DateTime.now(),
+        openingCash: (j['openingCash'] as num?)?.toDouble() ?? 0.0,
+        closedAt: j['closedAt'] != null ? DateTime.tryParse(j['closedAt'].toString()) : null,
+        cashSalesTotal: (j['cashSalesTotal'] as num?)?.toDouble() ?? 0.0,
+        closingCashCounted: (j['closingCashCounted'] as num?)?.toDouble() ?? 0.0,
+        discrepancy: (j['discrepancy'] as num?)?.toDouble() ?? 0.0,
+        note: (j['note'] ?? '').toString(),
+        isClosed: j['isClosed'] as bool? ?? false,
+      );
+}
+
 
