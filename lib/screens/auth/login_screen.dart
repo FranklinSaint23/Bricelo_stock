@@ -59,14 +59,28 @@ class _LoginScreenState extends State<LoginScreen> {
       final email = _emailCtrl.text.trim();
       final pwd = _passwordCtrl.text.trim();
 
-      if (name.isEmpty || shop.isEmpty || phone.isEmpty) {
+      if (name.isEmpty || shop.isEmpty || phone.isEmpty || pwd.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppTheme.danger,
             content: Text(
               isEn
-                  ? 'Please enter your name, store name and phone number.'
-                  : 'Veuillez renseigner votre nom, le nom de votre boutique et votre téléphone.',
+                  ? 'Please enter your name, store name, phone number and password.'
+                  : 'Veuillez renseigner votre nom, le nom de votre boutique, votre téléphone et un mot de passe.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      if (pwd.length < 4) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppTheme.danger,
+            content: Text(
+              isEn
+                  ? 'Password must contain at least 4 characters.'
+                  : 'Le mot de passe doit contenir au moins 4 caractères.',
             ),
           ),
         );
@@ -143,17 +157,18 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => const MainShell()),
       );
     } else {
-      final identifier = _phoneCtrl.text.trim();
+      final phone = _phoneCtrl.text.trim();
+      final email = _emailCtrl.text.trim();
       final pwd = _passwordCtrl.text.trim();
 
-      if (identifier.isEmpty) {
+      if (phone.isEmpty || pwd.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppTheme.danger,
             content: Text(
               isEn
-                  ? 'Please enter your phone number or email.'
-                  : 'Veuillez entrer votre numéro de téléphone ou email.',
+                  ? 'Please enter your phone number and your password.'
+                  : 'Veuillez entrer votre numéro de téléphone (obligatoire) et votre mot de passe.',
             ),
           ),
         );
@@ -161,16 +176,25 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       setState(() => _isSubmitting = true);
-      state.userRole = 'Propriétaire';
-      state.userAssignedCashDesk = null;
-      await state.loginUser(
-        identifier: identifier,
+      final errorMsg = await state.loginUser(
+        identifier: phone,
+        email: email,
         password: pwd,
         fallbackName: _fullNameCtrl.text.trim(),
         fallbackShop: _shopNameCtrl.text.trim(),
       );
       if (!mounted) return;
       setState(() => _isSubmitting = false);
+
+      if (errorMsg != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppTheme.danger,
+            content: Text(errorMsg),
+          ),
+        );
+        return;
+      }
 
       Navigator.pushReplacement(
         context,
@@ -450,9 +474,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ] else ...[
                       _buildInput(
                         controller: _phoneCtrl,
-                        icon: Icons.person_outline_rounded,
-                        label: isEn ? 'Phone number or Email *' : 'Téléphone ou Email *',
-                        hint: isEn ? 'Enter phone or email' : 'Votre numéro ou adresse email',
+                        icon: Icons.phone_android_rounded,
+                        label: isEn ? 'Phone number *' : 'Numéro de téléphone *',
+                        hint: isEn ? 'Enter your phone number' : 'Ex: +237 699 00 11 22',
+                        keyboardType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 14),
+                      _buildInput(
+                        controller: _emailCtrl,
+                        icon: Icons.alternate_email_rounded,
+                        label: isEn ? 'Email address (optional)' : 'Adresse email (optionnel)',
+                        hint: 'contact@maboutique.cm',
+                        keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 14),
                     ],

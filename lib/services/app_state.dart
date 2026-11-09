@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,8 @@ class AppState extends ChangeNotifier {
   AppState._internal();
 
   bool _initialized = false;
+  Timer? _autoSyncTimer;
+  bool isOnlineSyncing = false;
 
   // --- Onboarding & Authentification ---
   bool hasSelectedLanguage = false;
@@ -25,6 +28,55 @@ class AppState extends ChangeNotifier {
   String userName = '';
   String companyName = '';
   String userEmail = '';
+  String ownerPasswordHash = '';
+  List<Map<String, dynamic>> pendingSyncQueue = [];
+
+  /// Hachage déterministe salé pour vérifier strictement le mot de passe en ligne et hors-ligne
+  static String hashPassword(String raw) {
+    final clean = 'bricelo_stock_salt_v2:${raw.trim()}';
+    final bytes = utf8.encode(clean);
+    int h1 = 0x811c9dc5;
+    int h2 = 0xcbf29ce4;
+    int h3 = 0x9e3779b9;
+    int h4 = 0x85ebca6b;
+    for (int round = 0; round < 4; round++) {
+      for (final b in bytes) {
+        h1 = ((h1 ^ b) * 0x01000193) & 0xFFFFFFFF;
+        h2 = ((h2 + (b ^ round)) * 0x85ebca6b) & 0xFFFFFFFF;
+        h3 = ((h3 ^ (h1 >> 7)) * 0xc2b2ae35) & 0xFFFFFFFF;
+        h4 = ((h4 + (h2 ^ b)) * 0x27d4eb2f) & 0xFFFFFFFF;
+      }
+    }
+    return [h1, h2, h3, h4]
+        .map((v) => v.toRadixString(16).padLeft(8, '0'))
+        .join();
+  }
+
+  static String normalizePhoneDigits(String raw) {
+    return raw.replaceAll(RegExp(r'[^0-9]'), '');
+  }
+
+  static bool phonesMatch(String a, String b) {
+    final da = normalizePhoneDigits(a);
+    final db = normalizePhoneDigits(b);
+    if (da.isEmpty || db.isEmpty) return false;
+    if (da == db) return true;
+    if (da.length >= 8 && db.length >= 8) {
+      final tailA = da.length >= 9 ? da.substring(da.length - 9) : da.substring(da.length - 8);
+      final tailB = db.length >= 9 ? db.substring(db.length - 9) : db.substring(db.length - 8);
+      return tailA == tailB;
+    }
+    return false;
+  }
+
+  static String buildSyntheticAuthEmail(String phone, String email) {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isNotEmpty && cleanEmail.contains('@')) {
+      return cleanEmail;
+    }
+    final digits = normalizePhoneDigits(phone);
+    return 'phone_$digits@auth.bricelo.com';
+  }
   static bool _globalEmailVerified = false;
   bool get isEmailVerified => _globalEmailVerified;
   set isEmailVerified(bool value) {
@@ -504,16 +556,34 @@ class AppState extends ChangeNotifier {
           }
         }
         userAssignedCashDesk = data['userAssignedCashDesk']?.toString();
+        ownerPasswordHash = (data['ownerPasswordHash'] ?? '').toString();
+        if (data['pendingSyncQueue'] != null) {
+          pendingSyncQueue = (data['pendingSyncQueue'] as List<dynamic>)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+        }
         notifyListeners();
       }
     } catch (e) {
       debugPrint('Erreur chargement local: $e');
     }
 
-    // Synchronisation asynchrone depuis Supabase si connecté
-    if (isLoggedIn) {
+    // Démarrer le moteur de synchronisation automatique (toutes les 20s) pour vider la file hors-ligne et tirer les nouveautés
+    startAutoSyncEngine();
+
+    // Synchronisation asynchrone immédiate depuis Supabase si connecté ou si des éléments sont en attente
+    if (isLoggedIn || pendingSyncQueue.isNotEmpty) {
       syncFromSupabase();
     }
+  }
+
+  void startAutoSyncEngine() {
+    _autoSyncTimer?.cancel();
+    _autoSyncTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (isLoggedIn || pendingSyncQueue.isNotEmpty) {
+        syncFromSupabase();
+      }
+    });
   }
 
   /// Sauvegarde explicite des paramètres de l'application
@@ -640,6 +710,8 @@ class AppState extends ChangeNotifier {
         'cashShiftsHistory': cashShiftsHistory.map((e) => e.toJson()).toList(),
         'accessGroups': accessGroups,
         'userAssignedCashDesk': userAssignedCashDesk,
+        'ownerPasswordHash': ownerPasswordHash,
+        'pendingSyncQueue': pendingSyncQueue,
       };
       await prefs.setString(_storageKey, jsonEncode(payload));
     } catch (e) {
@@ -647,11 +719,303 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// Envoie immédiatement à Supabase si en ligne, ou met en file d'attente locale persistante (Outbox) si hors-ligne
+  Future<void> enqueueOrSendSupabase({
+    required String table,
+    required String action, // 'upsert', 'insert', 'update', 'delete'
+    Map<String, dynamic>? payload,
+    String? matchCol,
+    String? matchVal,
+    String? onConflict,
+  }) async {
+    final op = <String, dynamic>{
+      'id': 'op_${DateTime.now().microsecondsSinceEpoch}',
+      'table': table,
+      'action': action,
+      'payload': payload,
+      'matchCol': matchCol,
+      'matchVal': matchVal,
+      'onConflict': onConflict,
+      'queuedAt': DateTime.now().toIso8601String(),
+    };
+
+    final sb = _supabase;
+    if (sb == null) {
+      pendingSyncQueue.add(op);
+      await _saveToPrefs();
+      return;
+    }
+
+    try {
+      await _executeSupabaseOp(sb, op);
+    } catch (_) {
+      // Échec réseau / hors-ligne : on persiste dans la file d'attente pour envoi automatique dès retour d'Internet
+      pendingSyncQueue.add(op);
+      await _saveToPrefs();
+    }
+  }
+
+  Future<void> _executeSupabaseOp(SupabaseClient sb, Map<String, dynamic> op) async {
+    final table = (op['table'] ?? '').toString();
+    final action = (op['action'] ?? 'upsert').toString();
+    final rawPayload = op['payload'];
+    final payload = rawPayload is Map ? Map<String, dynamic>.from(rawPayload) : <String, dynamic>{};
+    final matchCol = op['matchCol']?.toString();
+    final matchVal = op['matchVal']?.toString();
+    final onConflict = op['onConflict']?.toString();
+
+    if (action == 'upsert') {
+      if (onConflict != null && onConflict.isNotEmpty) {
+        await sb.from(table).upsert(payload, onConflict: onConflict);
+      } else {
+        await sb.from(table).upsert(payload);
+      }
+    } else if (action == 'insert') {
+      await sb.from(table).insert(payload);
+    } else if (action == 'update' && matchCol != null && matchVal != null) {
+      await sb.from(table).update(payload).eq(matchCol, matchVal);
+    } else if (action == 'delete' && matchCol != null && matchVal != null) {
+      await sb.from(table).delete().eq(matchCol, matchVal);
+    }
+  }
+
+  /// Vide la file d'attente hors-ligne dès que la connexion Internet est rétablie
+  Future<void> flushPendingSyncQueue() async {
+    final sb = _supabase;
+    if (sb == null || pendingSyncQueue.isEmpty) return;
+
+    final copy = List<Map<String, dynamic>>.from(pendingSyncQueue);
+    bool changed = false;
+    for (final op in copy) {
+      try {
+        await _executeSupabaseOp(sb, op);
+        pendingSyncQueue.removeWhere((item) => item['id'] == op['id']);
+        changed = true;
+      } catch (_) {
+        // Toujours hors-ligne ou erreur réseau : on arrête le flush jusqu'au prochain cycle
+        break;
+      }
+    }
+    if (changed) {
+      await _saveToPrefs();
+      notifyListeners();
+    }
+  }
+
+  /// Synchronise la configuration de la boutique du propriétaire vers user_profiles Supabase
+  Future<void> syncOwnerWorkspaceConfigToCloud() async {
+    if (companyName.trim().isEmpty && userPhone.trim().isEmpty) return;
+    final isOwner = userRole.toLowerCase().contains('propriétaire') || userRole.toLowerCase().contains('owner');
+    if (!isOwner) return;
+
+    final profileId = normalizePhoneDigits(userPhone).isNotEmpty
+        ? normalizePhoneDigits(userPhone)
+        : (userEmail.trim().isNotEmpty ? userEmail.trim().toLowerCase() : companyName.trim());
+
+    await enqueueOrSendSupabase(
+      table: 'user_profiles',
+      action: 'upsert',
+      payload: {
+        'id': profileId,
+        'full_name': userName,
+        'company_name': companyName,
+        'email': userEmail,
+        'phone': userPhone,
+        'role': 'Propriétaire',
+        'language': currentLanguage,
+        if (ownerPasswordHash.isNotEmpty) 'password_hash': ownerPasswordHash,
+        'subscription_plan': subscriptionPlan,
+        'subscription_status': subscriptionStatus,
+        'access_groups': accessGroups,
+        'cash_desks': cashDesks.map((e) => e.toJson()).toList(),
+        'available_stores': availableStores,
+        'is_shifts_tracking_enabled': isShiftsTrackingEnabled,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
   Future<void> syncFromSupabase() async {
     final sb = _supabase;
-    if (sb == null) return;
+    if (sb == null || isOnlineSyncing) return;
+    isOnlineSyncing = true;
     try {
-      // 1. Catégories
+      // 0. D'abord envoyer toutes les opérations enregistrées hors-ligne (Outbox -> Cloud)
+      await flushPendingSyncQueue();
+
+      // 1. Profil Boutique, Abonnement (portail web) & Groupes d'accès
+      if (companyName.trim().isNotEmpty || userPhone.trim().isNotEmpty) {
+        try {
+          List<dynamic> profRows = [];
+          if (companyName.trim().isNotEmpty) {
+            profRows = await sb
+                .from('user_profiles')
+                .select()
+                .eq('company_name', companyName.trim())
+                .limit(1);
+          }
+          if (profRows.isEmpty && userPhone.trim().isNotEmpty) {
+            final cleanDigits = normalizePhoneDigits(userPhone);
+            profRows = await sb
+                .from('user_profiles')
+                .select()
+                .or('id.eq.$cleanDigits,phone.eq.${userPhone.trim()}')
+                .limit(1);
+          }
+          if (profRows.isNotEmpty) {
+            final prof = Map<String, dynamic>.from(profRows.first as Map);
+            if (prof['subscription_plan'] != null && prof['subscription_plan'].toString().trim().isNotEmpty) {
+              subscriptionPlan = prof['subscription_plan'].toString().trim();
+            }
+            if (prof['subscription_status'] != null && prof['subscription_status'].toString().trim().isNotEmpty) {
+              subscriptionStatus = prof['subscription_status'].toString().trim();
+            }
+            if (prof['access_groups'] is List && (prof['access_groups'] as List).isNotEmpty) {
+              accessGroups = (prof['access_groups'] as List)
+                  .map((e) => Map<String, dynamic>.from(e as Map))
+                  .toList();
+            }
+            if (prof['cash_desks'] is List && (prof['cash_desks'] as List).isNotEmpty && cashDesks.isEmpty) {
+              cashDesks = (prof['cash_desks'] as List)
+                  .map((e) => CashDesk.fromJson(Map<String, dynamic>.from(e as Map)))
+                  .toList();
+            }
+            if (prof['available_stores'] is List && (prof['available_stores'] as List).isNotEmpty) {
+              final remoteStores = (prof['available_stores'] as List).map((e) => e.toString()).toList();
+              for (final s in remoteStores) {
+                if (!availableStores.contains(s)) availableStores.add(s);
+              }
+            }
+            if (prof['is_shifts_tracking_enabled'] is bool) {
+              isShiftsTrackingEnabled = prof['is_shifts_tracking_enabled'] as bool;
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 2. Équipiers invités & Codes PIN (team_members)
+      if (companyName.trim().isNotEmpty) {
+        try {
+          final rows = await sb
+              .from('team_members')
+              .select()
+              .eq('company_name', companyName.trim())
+              .order('created_at');
+          if ((rows as List).isNotEmpty) {
+            for (final raw in rows) {
+              final r = Map<String, dynamic>.from(raw as Map);
+              final tm = TeamMember(
+                id: (r['id'] ?? '').toString(),
+                name: (r['name'] ?? '').toString(),
+                phone: (r['phone'] ?? '').toString(),
+                email: r['email']?.toString(),
+                role: (r['role'] ?? 'Caissier').toString(),
+                storeName: (r['store_name'] ?? 'Toutes les boutiques').toString(),
+                pinCode: (r['pin_code'] ?? '').toString(),
+                assignedCashDesk: r['assigned_cash_desk']?.toString(),
+                isActive: r['is_active'] as bool? ?? true,
+              );
+              final idx = teamMembers.indexWhere((m) => m.id == tm.id || phonesMatch(m.phone, tm.phone));
+              if (idx == -1) {
+                teamMembers.add(tm);
+              } else {
+                teamMembers[idx] = tm;
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 3. Demandes d'approbation (approval_requests : Magasinier/Gérant <-> Propriétaire)
+      if (companyName.trim().isNotEmpty) {
+        try {
+          final rows = await sb
+              .from('approval_requests')
+              .select()
+              .eq('company_name', companyName.trim())
+              .order('created_at', ascending: false);
+          if ((rows as List).isNotEmpty) {
+            for (final raw in rows) {
+              final r = Map<String, dynamic>.from(raw as Map);
+              final req = ApprovalRequest(
+                id: (r['id'] ?? '').toString(),
+                title: (r['title'] ?? '').toString(),
+                type: (r['type'] ?? 'Approvisionnement').toString(),
+                requesterName: (r['requester_name'] ?? '').toString(),
+                storeName: (r['store_name'] ?? currentStore).toString(),
+                amount: (r['amount'] as num?)?.toDouble() ?? 0.0,
+                details: (r['details'] ?? '').toString(),
+                date: DateTime.tryParse((r['created_at'] ?? '').toString()) ?? DateTime.now(),
+                status: (r['status'] ?? 'pending').toString(),
+                paymentStatus: (r['payment_status'] ?? 'unpaid').toString(),
+              );
+              final idx = approvalRequests.indexWhere((a) => a.id == req.id);
+              if (idx == -1) {
+                approvalRequests.add(req);
+              } else {
+                approvalRequests[idx].status = req.status;
+                approvalRequests[idx].paymentStatus = req.paymentStatus;
+              }
+            }
+            approvalRequests.sort((a, b) => b.date.compareTo(a.date));
+          }
+        } catch (_) {}
+      }
+
+      // 4. Shifts de caisse (cash_shifts_sync : Caissiers <-> Propriétaire)
+      if (companyName.trim().isNotEmpty) {
+        try {
+          final rows = await sb
+              .from('cash_shifts_sync')
+              .select()
+              .eq('company_name', companyName.trim())
+              .order('opened_at', ascending: false);
+          if ((rows as List).isNotEmpty) {
+            for (final raw in rows) {
+              final r = Map<String, dynamic>.from(raw as Map);
+              final rawBreakdown = r['payment_methods_breakdown'];
+              final Map<String, double> breakdown = {};
+              if (rawBreakdown is Map) {
+                rawBreakdown.forEach((k, v) {
+                  breakdown[k.toString()] = (v as num?)?.toDouble() ?? 0.0;
+                });
+              }
+              final shift = CashShift(
+                id: (r['id'] ?? '').toString(),
+                cashierName: (r['cashier_name'] ?? '').toString(),
+                cashDeskName: (r['cash_desk_name'] ?? 'Caisse Principale').toString(),
+                storeName: (r['store_name'] ?? currentStore).toString(),
+                openedAt: DateTime.tryParse((r['opened_at'] ?? '').toString()) ?? DateTime.now(),
+                closedAt: r['closed_at'] != null ? DateTime.tryParse(r['closed_at'].toString()) : null,
+                openingCash: (r['opening_cash'] as num?)?.toDouble() ?? 0.0,
+                closingCashCounted: (r['closing_cash'] as num?)?.toDouble() ?? 0.0,
+                salesCount: (r['sales_count'] as num?)?.toInt() ?? 0,
+                totalSalesAmount: (r['total_sales_amount'] as num?)?.toDouble() ?? 0.0,
+                paymentMethodsBreakdown: breakdown,
+                isClosed: r['is_closed'] as bool? ?? false,
+              );
+              if (!shift.isClosed) {
+                if (activeCashShift == null || activeCashShift!.id == shift.id) {
+                  activeCashShift = shift;
+                }
+              } else {
+                if (activeCashShift?.id == shift.id) {
+                  activeCashShift = null;
+                }
+                final idx = cashShiftsHistory.indexWhere((s) => s.id == shift.id);
+                if (idx == -1) {
+                  cashShiftsHistory.add(shift);
+                } else {
+                  cashShiftsHistory[idx] = shift;
+                }
+              }
+            }
+            cashShiftsHistory.sort((a, b) => b.openedAt.compareTo(a.openedAt));
+          }
+        } catch (_) {}
+      }
+
+      // 5. Catégories
       try {
         final rows = await sb.from('categories').select().order('created_at');
         if (rows.isNotEmpty) {
@@ -664,7 +1028,7 @@ class AppState extends ChangeNotifier {
         }
       } catch (_) {}
 
-      // 2. Produits
+      // 6. Produits
       try {
         final rows = await sb.from('products').select().order('created_at', ascending: false);
         if (rows.isNotEmpty) {
@@ -673,12 +1037,14 @@ class AppState extends ChangeNotifier {
             final idx = products.indexWhere((p) => p.id == rp.id);
             if (idx == -1) {
               products.add(rp);
+            } else {
+              products[idx].stock = rp.stock;
             }
           }
         }
       } catch (_) {}
 
-      // 3. Clients
+      // 7. Clients
       try {
         final rows = await sb.from('customers').select().order('created_at', ascending: false);
         if (rows.isNotEmpty) {
@@ -691,7 +1057,7 @@ class AppState extends ChangeNotifier {
         }
       } catch (_) {}
 
-      // 4. Fournisseurs
+      // 8. Fournisseurs
       try {
         final rows = await sb.from('suppliers').select().order('created_at', ascending: false);
         if (rows.isNotEmpty) {
@@ -708,6 +1074,8 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Info sync Supabase: $e');
+    } finally {
+      isOnlineSyncing = false;
     }
   }
 
@@ -746,9 +1114,19 @@ class AppState extends ChangeNotifier {
     userPhone = phone.trim();
     userEmail = email.trim();
     userRole = 'Propriétaire';
+    userAssignedCashDesk = null;
+    ownerPasswordHash = hashPassword(password);
     currentStore = companyName;
     if (!availableStores.contains(currentStore)) {
       availableStores.insert(0, currentStore);
+    }
+    if (cashDesks.isEmpty) {
+      cashDesks.add(CashDesk(
+        id: 'caisse_${DateTime.now().millisecondsSinceEpoch}',
+        name: 'Caisse $currentStore',
+        storeName: currentStore,
+        isDefault: true,
+      ));
     }
     isLoggedIn = true;
     hasSelectedLanguage = true;
@@ -756,145 +1134,195 @@ class AppState extends ChangeNotifier {
     await _saveToPrefs();
     notifyListeners();
 
-    // Enregistrement asynchrone sur Supabase
+    // Enregistrement sur Supabase Auth + Table user_profiles + Table stores (avec file d'attente hors-ligne)
     final sb = _supabase;
-    if (sb != null) {
+    final authEmail = buildSyntheticAuthEmail(userPhone, userEmail);
+    if (sb != null && password.trim().length >= 6) {
       () async {
         try {
-          if (userEmail.isNotEmpty && password.length >= 6) {
-            await sb.auth.signUp(
-              email: userEmail,
-              password: password,
-              data: {
-                'full_name': userName,
-                'company_name': companyName,
-                'phone': userPhone,
-              },
-            );
-          }
-        } catch (_) {}
-        try {
-          await sb.from('stores').upsert({
-            'name': currentStore,
-            'phone': userPhone,
-          }, onConflict: 'name');
-        } catch (_) {}
-        try {
-          await sb.from('user_profiles').upsert({
-            'id': userPhone.isNotEmpty ? userPhone : (userEmail.isNotEmpty ? userEmail : 'user_${DateTime.now().millisecondsSinceEpoch}'),
-            'full_name': userName,
-            'company_name': companyName,
-            'email': userEmail,
-            'phone': userPhone,
-            'language': currentLanguage,
-          });
+          await sb.auth.signUp(
+            email: authEmail,
+            password: password.trim(),
+            data: {
+              'full_name': userName,
+              'company_name': companyName,
+              'phone': userPhone,
+            },
+          );
         } catch (_) {}
       }();
     }
+
+    await enqueueOrSendSupabase(
+      table: 'stores',
+      action: 'upsert',
+      onConflict: 'name',
+      payload: {
+        'name': currentStore,
+        'phone': userPhone,
+      },
+    );
+
+    await syncOwnerWorkspaceConfigToCloud();
   }
 
-  Future<void> loginUser({
+  /// Connexion Propriétaire avec vérification stricte du mot de passe (en ligne via Supabase + hors-ligne via hash local).
+  /// Retourne `null` si la connexion réussit, ou le message d'erreur à afficher si les identifiants sont invalides.
+  Future<String?> loginUser({
     required String identifier,
+    String email = '',
     required String password,
     String? fallbackName,
     String? fallbackShop,
   }) async {
-    final cleanId = identifier.trim();
+    final cleanPhone = identifier.trim();
+    final cleanEmail = email.trim();
+    final cleanPwd = password.trim();
+
+    if (cleanPhone.isEmpty || cleanPwd.isEmpty) {
+      return 'Veuillez renseigner votre numéro de téléphone et votre mot de passe.';
+    }
+
+    final inputHash = hashPassword(cleanPwd);
+    final normDigits = normalizePhoneDigits(cleanPhone);
     final sb = _supabase;
 
-    if (sb != null) {
-      // 1. Tentative connexion Supabase Auth si email
-      if (cleanId.contains('@') && password.isNotEmpty) {
-        try {
-          final res = await sb.auth.signInWithPassword(email: cleanId, password: password);
-          final meta = res.user?.userMetadata ?? {};
-          if (meta['full_name'] != null) userName = meta['full_name'].toString();
-          if (meta['company_name'] != null) companyName = meta['company_name'].toString();
-          if (meta['phone'] != null) userPhone = meta['phone'].toString();
-          userEmail = cleanId;
-        } catch (_) {}
-      }
+    bool checkedOnline = false;
+    Map<String, dynamic>? matchedRemoteProfile;
 
-      // 2. Recherche dans user_profiles Supabase
+    if (sb != null) {
       try {
-        final rows = await sb
-            .from('user_profiles')
-            .select()
-            .or('phone.eq.$cleanId,email.eq.$cleanId,id.eq.$cleanId')
-            .limit(1);
-        if ((rows as List).isNotEmpty) {
-          final prof = rows.first;
-          userName = (prof['full_name'] ?? userName).toString();
-          companyName = (prof['company_name'] ?? companyName).toString();
-          userEmail = (prof['email'] ?? userEmail).toString();
-          userPhone = (prof['phone'] ?? userPhone).toString();
+        // Recherche du compte propriétaire sur Supabase (par téléphone normalisé, téléphone brut ou email)
+        final rows = await sb.from('user_profiles').select();
+        checkedOnline = true;
+
+        for (final raw in (rows as List)) {
+          final r = Map<String, dynamic>.from(raw as Map);
+          final rPhone = (r['phone'] ?? '').toString();
+          final rId = (r['id'] ?? '').toString();
+          final rEmail = (r['email'] ?? '').toString().toLowerCase().trim();
+
+          final phoneMatches = phonesMatch(rPhone, cleanPhone) ||
+              (normDigits.isNotEmpty && normalizePhoneDigits(rId) == normDigits);
+          final emailMatches = cleanEmail.isNotEmpty && rEmail.isNotEmpty && rEmail == cleanEmail.toLowerCase();
+
+          if (phoneMatches || emailMatches) {
+            matchedRemoteProfile = r;
+            break;
+          }
         }
-      } catch (_) {}
+      } catch (_) {
+        // Appareil hors-ligne ou erreur réseau : on basculera sur la vérification locale hors-ligne
+        checkedOnline = false;
+      }
     }
 
-    // Recherche par identifiant équipier (téléphone ou email) et code PIN
-    final normPhone = cleanId.replaceAll(RegExp(r'\s+'), '');
-    final memberMatch = teamMembers.firstWhereOrNull((m) {
-      final mPhone = m.phone.replaceAll(RegExp(r'\s+'), '');
-      final mEmail = (m.email ?? '').toLowerCase().trim();
-      final matchesId = mPhone == normPhone || mEmail == cleanId.toLowerCase();
-      if (!matchesId) return false;
-      if (password.isNotEmpty && m.pinCode.isNotEmpty) {
-        return m.pinCode.trim() == password.trim();
-      }
-      return true;
-    });
+    if (matchedRemoteProfile != null) {
+      final storedHash = (matchedRemoteProfile['password_hash'] ?? '').toString().trim();
 
-    if (memberMatch != null) {
-      userName = memberMatch.name;
-      userPhone = memberMatch.phone;
-      userEmail = memberMatch.email ?? userEmail;
-      userRole = memberMatch.role;
-      userAssignedCashDesk = memberMatch.assignedCashDesk;
-      if (memberMatch.storeName.isNotEmpty && memberMatch.storeName != 'Toutes les boutiques') {
-        currentStore = memberMatch.storeName;
-      }
-    } else {
-      // 3. Si profil local ou identifiant saisi
-      if (userName.trim().isEmpty) {
-        if (fallbackName != null && fallbackName.trim().isNotEmpty) {
-          userName = fallbackName.trim();
-        } else if (cleanId.contains('@')) {
-          final localPart = cleanId.split('@').first.replaceAll(RegExp(r'[._-]'), ' ');
-          userName = localPart.isNotEmpty
-              ? localPart.split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ')
-              : 'Gérant';
-          userEmail = cleanId;
-        } else {
-          userName = 'Gérant';
-          userPhone = cleanId;
+      if (storedHash.isNotEmpty) {
+        if (storedHash != inputHash) {
+          return 'Mot de passe incorrect. Veuillez vérifier votre mot de passe.';
         }
       } else {
-        if (cleanId.contains('@') && userEmail.isEmpty) userEmail = cleanId;
-        if (!cleanId.contains('@') && userPhone.isEmpty) userPhone = cleanId;
+        // Si ancien profil sans password_hash dans user_profiles, tenter Supabase Auth
+        if (sb != null) {
+          final authEmail = buildSyntheticAuthEmail(cleanPhone, cleanEmail.isNotEmpty ? cleanEmail : (matchedRemoteProfile['email'] ?? '').toString());
+          try {
+            await sb.auth.signInWithPassword(email: authEmail, password: cleanPwd);
+          } catch (_) {
+            // Si un hash local existe et ne correspond pas non plus -> rejet
+            if (ownerPasswordHash.isNotEmpty && ownerPasswordHash != inputHash) {
+              return 'Mot de passe incorrect.';
+            }
+          }
+        }
       }
+
+      // Authentification réussie : restauration des informations du propriétaire depuis Supabase
+      userName = (matchedRemoteProfile['full_name'] ?? userName).toString().trim();
+      companyName = (matchedRemoteProfile['company_name'] ?? companyName).toString().trim();
+      userPhone = (matchedRemoteProfile['phone'] ?? cleanPhone).toString().trim();
+      final remoteEmail = (matchedRemoteProfile['email'] ?? '').toString().trim();
+      userEmail = cleanEmail.isNotEmpty ? cleanEmail : remoteEmail;
+      userRole = 'Propriétaire';
+      userAssignedCashDesk = null;
+      ownerPasswordHash = inputHash;
+
+      if (matchedRemoteProfile['subscription_plan'] != null &&
+          matchedRemoteProfile['subscription_plan'].toString().trim().isNotEmpty) {
+        subscriptionPlan = matchedRemoteProfile['subscription_plan'].toString().trim();
+      }
+      if (matchedRemoteProfile['access_groups'] is List &&
+          (matchedRemoteProfile['access_groups'] as List).isNotEmpty) {
+        accessGroups = (matchedRemoteProfile['access_groups'] as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+      }
+      if (matchedRemoteProfile['cash_desks'] is List &&
+          (matchedRemoteProfile['cash_desks'] as List).isNotEmpty) {
+        cashDesks = (matchedRemoteProfile['cash_desks'] as List)
+            .map((e) => CashDesk.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+      }
+      if (matchedRemoteProfile['available_stores'] is List &&
+          (matchedRemoteProfile['available_stores'] as List).isNotEmpty) {
+        availableStores = (matchedRemoteProfile['available_stores'] as List)
+            .map((e) => e.toString())
+            .toList();
+      }
+      if (matchedRemoteProfile['is_shifts_tracking_enabled'] is bool) {
+        isShiftsTrackingEnabled = matchedRemoteProfile['is_shifts_tracking_enabled'] as bool;
+      }
+
+      if (companyName.isNotEmpty) {
+        currentStore = companyName;
+        if (!availableStores.contains(currentStore)) {
+          availableStores.insert(0, currentStore);
+        }
+      }
+
+      isLoggedIn = true;
+      hasSelectedLanguage = true;
+      await _saveToPrefs();
+      notifyListeners();
+
+      // Mettre à jour le password_hash sur le cloud s'il était vide auparavant
+      if (storedHash.isEmpty) {
+        await syncOwnerWorkspaceConfigToCloud();
+      }
+      await syncFromSupabase();
+      return null;
     }
 
-    if (companyName.trim().isEmpty) {
-      companyName = (fallbackShop != null && fallbackShop.trim().isNotEmpty)
-          ? fallbackShop.trim()
-          : 'Boutique $displayUserName';
+    // Cas où aucun profil distant n'a été trouvé (ou appareil hors-ligne) : vérification stricte sur le cache local de l'appareil
+    final hasLocalOwner = userPhone.trim().isNotEmpty && phonesMatch(userPhone, cleanPhone);
+    if (hasLocalOwner) {
+      if (ownerPasswordHash.isNotEmpty && ownerPasswordHash != inputHash) {
+        return 'Mot de passe incorrect.';
+      }
+      ownerPasswordHash = inputHash;
+      if (cleanEmail.isNotEmpty) userEmail = cleanEmail;
+      userRole = 'Propriétaire';
+      userAssignedCashDesk = null;
+      isLoggedIn = true;
+      hasSelectedLanguage = true;
+      await _saveToPrefs();
+      notifyListeners();
+      await syncOwnerWorkspaceConfigToCloud();
+      await syncFromSupabase();
+      return null;
     }
 
-    currentStore = companyName;
-    if (!availableStores.contains(currentStore)) {
-      availableStores.insert(0, currentStore);
+    if (checkedOnline) {
+      return 'Aucun compte propriétaire trouvé pour ce numéro ($cleanPhone). Si vous êtes nouveau, utilisez l\'onglet "Nouveau".';
+    } else {
+      return 'Impossible de vérifier votre compte hors-ligne sur cet appareil. Connectez-vous à Internet pour votre première connexion.';
     }
-
-    isLoggedIn = true;
-    hasSelectedLanguage = true;
-    await _saveToPrefs();
-    notifyListeners();
-
-    await syncFromSupabase();
   }
 
   /// Connexion dédiée aux comptes invités (Équipiers : Caissier, Magasinier, Gérant, Vendeur, etc.)
+  /// Vérifie d'abord en ligne sur Supabase (table `team_members`) puis en cache local hors-ligne.
   Future<TeamMember?> loginInvitedMember({
     required String identifier,
     required String pinCode,
@@ -903,47 +1331,96 @@ class AppState extends ChangeNotifier {
     final cleanPin = pinCode.trim();
     if (cleanId.isEmpty || cleanPin.isEmpty) return null;
 
-    final normInputPhone = cleanId.replaceAll(RegExp(r'[^0-9]'), '');
+    TeamMember? matchedMember;
+    String? matchedCompanyName;
 
-    final memberMatch = teamMembers.firstWhereOrNull((m) {
+    // 1. Vérification en ligne dans la base de données Supabase (table team_members)
+    final sb = _supabase;
+    if (sb != null) {
+      try {
+        final rows = await sb
+            .from('team_members')
+            .select()
+            .eq('is_active', true)
+            .eq('pin_code', cleanPin);
+
+        for (final raw in (rows as List)) {
+          final r = Map<String, dynamic>.from(raw as Map);
+          final rPhone = (r['phone'] ?? '').toString();
+          final rEmail = (r['email'] ?? '').toString().toLowerCase().trim();
+          final rName = (r['name'] ?? '').toString().toLowerCase().trim();
+
+          if (phonesMatch(rPhone, cleanId) ||
+              (rEmail.isNotEmpty && rEmail == cleanId.toLowerCase()) ||
+              (rName.isNotEmpty && rName == cleanId.toLowerCase())) {
+            matchedCompanyName = (r['company_name'] ?? '').toString().trim();
+            matchedMember = TeamMember(
+              id: (r['id'] ?? '').toString(),
+              name: (r['name'] ?? '').toString(),
+              phone: rPhone,
+              email: r['email']?.toString(),
+              role: (r['role'] ?? 'Caissier').toString(),
+              storeName: (r['store_name'] ?? 'Toutes les boutiques').toString(),
+              pinCode: cleanPin,
+              assignedCashDesk: r['assigned_cash_desk']?.toString(),
+              isActive: true,
+            );
+            break;
+          }
+        }
+      } catch (_) {
+        // Hors-ligne : on bascule sur la vérification locale ci-dessous
+      }
+    }
+
+    // 2. Fallback hors-ligne sur les équipiers déjà synchronisés sur l'appareil
+    matchedMember ??= teamMembers.firstWhereOrNull((m) {
       if (!m.isActive) return false;
-      final mPhoneDigits = m.phone.replaceAll(RegExp(r'[^0-9]'), '');
       final mEmail = (m.email ?? '').toLowerCase().trim();
-      final matchesPhone = normInputPhone.isNotEmpty &&
-          mPhoneDigits.isNotEmpty &&
-          (mPhoneDigits == normInputPhone ||
-              mPhoneDigits.endsWith(normInputPhone) ||
-              normInputPhone.endsWith(mPhoneDigits));
+      final matchesPhone = phonesMatch(m.phone, cleanId);
       final matchesEmail = mEmail.isNotEmpty && mEmail == cleanId.toLowerCase();
       final matchesName = m.name.toLowerCase().trim() == cleanId.toLowerCase();
 
       if (!matchesPhone && !matchesEmail && !matchesName) return false;
-      if (m.pinCode.isNotEmpty) {
-        return m.pinCode.trim() == cleanPin;
-      }
-      return true;
+      return m.pinCode.trim() == cleanPin;
     });
 
-    if (memberMatch == null) {
+    if (matchedMember == null) {
       return null;
     }
 
-    userName = memberMatch.name;
-    userPhone = memberMatch.phone;
-    userEmail = memberMatch.email ?? '';
-    userRole = memberMatch.role;
-    userAssignedCashDesk = memberMatch.assignedCashDesk;
-    if (memberMatch.storeName.isNotEmpty && memberMatch.storeName != 'Toutes les boutiques') {
-      currentStore = memberMatch.storeName;
+    // Mise à jour de la session pour l'équipier invité
+    if (matchedCompanyName != null && matchedCompanyName.isNotEmpty) {
+      companyName = matchedCompanyName;
     }
-    if (memberMatch.role != 'Propriétaire') {
+    final existingIdx = teamMembers.indexWhere((m) => m.id == matchedMember!.id || phonesMatch(m.phone, matchedMember.phone));
+    if (existingIdx == -1) {
+      teamMembers.add(matchedMember);
+    } else {
+      teamMembers[existingIdx] = matchedMember;
+    }
+
+    userName = matchedMember.name;
+    userPhone = matchedMember.phone;
+    userEmail = matchedMember.email ?? '';
+    userRole = matchedMember.role;
+    userAssignedCashDesk = matchedMember.assignedCashDesk;
+    if (matchedMember.storeName.isNotEmpty && matchedMember.storeName != 'Toutes les boutiques') {
+      currentStore = matchedMember.storeName;
+    } else if (companyName.isNotEmpty) {
+      currentStore = companyName;
+    }
+    if (matchedMember.role != 'Propriétaire') {
       isShiftsTrackingEnabled = true;
     }
     isLoggedIn = true;
     hasSelectedLanguage = true;
     await _saveToPrefs();
     notifyListeners();
-    return memberMatch;
+
+    // Synchroniser les produits, caisses, groupes d'accès et shifts de la boutique du propriétaire
+    await syncFromSupabase();
+    return matchedMember;
   }
 
   Future<void> updateUserProfile({
@@ -972,20 +1449,7 @@ class AppState extends ChangeNotifier {
 
     await _saveToPrefs();
     notifyListeners();
-
-    final sb = _supabase;
-    if (sb != null) {
-      try {
-        await sb.from('user_profiles').upsert({
-          'id': userPhone.isNotEmpty ? userPhone : (userEmail.isNotEmpty ? userEmail : 'user_default'),
-          'full_name': userName,
-          'company_name': companyName,
-          'email': userEmail,
-          'phone': userPhone,
-          'language': currentLanguage,
-        });
-      } catch (_) {}
-    }
+    await syncOwnerWorkspaceConfigToCloud();
   }
 
   Future<void> logout() async {
@@ -997,7 +1461,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- GESTION DE L'ÉQUIPE (100% Dynamique & Réel) ---
+  // --- GESTION DE L'ÉQUIPE (100% Dynamique & Synchronisée avec Supabase) ---
   List<TeamMember> get effectiveTeamMembers {
     if (teamMembers.isEmpty) {
       return [
@@ -1041,7 +1505,7 @@ class AppState extends ChangeNotifier {
       email: email?.trim().isNotEmpty == true ? email!.trim() : null,
       role: role,
       storeName: storeName,
-      pinCode: pinCode,
+      pinCode: pinCode.trim(),
       assignedCashDesk: assignedCashDesk,
       isActive: true,
     );
@@ -1054,6 +1518,27 @@ class AppState extends ChangeNotifier {
 
     notifyListeners();
     await _saveToPrefs();
+
+    // Sauvegarder l'équipier et son Code PIN dans Supabase (ou file d'attente hors-ligne)
+    await enqueueOrSendSupabase(
+      table: 'team_members',
+      action: 'upsert',
+      payload: {
+        'id': member.id,
+        'owner_phone': userPhone,
+        'company_name': displayCompanyName,
+        'name': member.name,
+        'phone': member.phone,
+        'email': member.email,
+        'role': member.role,
+        'store_name': member.storeName,
+        'pin_code': member.pinCode,
+        'assigned_cash_desk': member.assignedCashDesk,
+        'is_active': member.isActive,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+    );
+    await syncOwnerWorkspaceConfigToCloud();
   }
 
   Future<void> updateTeamMember({
@@ -1074,11 +1559,31 @@ class AppState extends ChangeNotifier {
       teamMembers[idx].email = email?.trim().isNotEmpty == true ? email!.trim() : null;
       teamMembers[idx].role = role;
       teamMembers[idx].storeName = storeName;
-      if (pinCode != null) teamMembers[idx].pinCode = pinCode;
+      if (pinCode != null) teamMembers[idx].pinCode = pinCode.trim();
       if (assignedCashDesk != null) teamMembers[idx].assignedCashDesk = assignedCashDesk;
       if (isActive != null) teamMembers[idx].isActive = isActive;
       notifyListeners();
       await _saveToPrefs();
+
+      final member = teamMembers[idx];
+      await enqueueOrSendSupabase(
+        table: 'team_members',
+        action: 'upsert',
+        payload: {
+          'id': member.id,
+          'owner_phone': userPhone,
+          'company_name': displayCompanyName,
+          'name': member.name,
+          'phone': member.phone,
+          'email': member.email,
+          'role': member.role,
+          'store_name': member.storeName,
+          'pin_code': member.pinCode,
+          'assigned_cash_desk': member.assignedCashDesk,
+          'is_active': member.isActive,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+      );
     }
   }
 
@@ -1142,6 +1647,7 @@ class AppState extends ChangeNotifier {
     approvalRequests.insert(0, req);
     notifyListeners();
     await _saveToPrefs();
+    await _syncApprovalToCloud(req);
     return req;
   }
 
@@ -1172,7 +1678,29 @@ class AppState extends ChangeNotifier {
     approvalRequests.insert(0, req);
     notifyListeners();
     await _saveToPrefs();
+    await _syncApprovalToCloud(req);
     return req;
+  }
+
+  Future<void> _syncApprovalToCloud(ApprovalRequest req) async {
+    await enqueueOrSendSupabase(
+      table: 'approval_requests',
+      action: 'upsert',
+      payload: {
+        'id': req.id,
+        'company_name': displayCompanyName,
+        'title': req.title,
+        'type': req.type,
+        'requester_name': req.requesterName,
+        'store_name': req.storeName,
+        'amount': req.amount,
+        'details': req.details,
+        'status': req.status,
+        'payment_status': req.paymentStatus,
+        'created_at': req.date.toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+    );
   }
 
   Future<void> approveAndPaySupplier(String requestId, {String paymentMethod = 'Espèces'}) async {
@@ -1186,7 +1714,7 @@ class AppState extends ChangeNotifier {
 
       // Enregistrer une dépense d'approvisionnement
       if (req.amount > 0) {
-        expenses.insert(0, Expense(
+        final exp = Expense(
           id: 'exp_${DateTime.now().millisecondsSinceEpoch}',
           category: 'Achat marchandises',
           description: req.title,
@@ -1195,11 +1723,24 @@ class AppState extends ChangeNotifier {
           paidBy: displayUserName,
           paidFromCaisse: paymentMethod,
           reference: req.id,
-        ));
+        );
+        expenses.insert(0, exp);
+        await enqueueOrSendSupabase(
+          table: 'expenses',
+          action: 'upsert',
+          payload: {
+            'id': exp.id,
+            'title': exp.description,
+            'category': exp.category,
+            'amount': exp.amount,
+            'beneficiary': exp.paidBy,
+          },
+        );
       }
 
       notifyListeners();
       await _saveToPrefs();
+      await _syncApprovalToCloud(req);
     }
   }
 
@@ -1207,6 +1748,12 @@ class AppState extends ChangeNotifier {
     teamMembers.removeWhere((m) => m.id == id);
     notifyListeners();
     await _saveToPrefs();
+    await enqueueOrSendSupabase(
+      table: 'team_members',
+      action: 'delete',
+      matchCol: 'id',
+      matchVal: id,
+    );
   }
 
   // --- GESTION DU PROFIL ENTREPRISE & FACTURATION ---
@@ -2318,19 +2865,23 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('products').upsert({
-      'id': product.id,
-      'name': product.name,
-      'category': product.category,
-      'price': product.sellPrice,
-      'purchase_price': product.buyPrice,
-      'stock': product.stock,
-      'min_stock': product.minStockAlert,
-      'barcode': product.barcode,
-      'unit': product.unit,
-      'product_type': product.productType,
-      'store_name': currentStore,
-    }).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'products',
+      action: 'upsert',
+      payload: {
+        'id': product.id,
+        'name': product.name,
+        'category': product.category,
+        'price': product.sellPrice,
+        'purchase_price': product.buyPrice,
+        'stock': product.stock,
+        'min_stock': product.minStockAlert,
+        'barcode': product.barcode,
+        'unit': product.unit,
+        'product_type': product.productType,
+        'store_name': currentStore,
+      },
+    );
   }
 
   void updateProduct(Product updated) {
@@ -2340,19 +2891,23 @@ class AppState extends ChangeNotifier {
       _saveToPrefs();
       notifyListeners();
 
-      _supabase?.from('products').upsert({
-        'id': updated.id,
-        'name': updated.name,
-        'category': updated.category,
-        'price': updated.sellPrice,
-        'purchase_price': updated.buyPrice,
-        'stock': updated.stock,
-        'min_stock': updated.minStockAlert,
-        'barcode': updated.barcode,
-        'unit': updated.unit,
-        'product_type': updated.productType,
-        'store_name': currentStore,
-      }).then((_) {}, onError: (_) {});
+      enqueueOrSendSupabase(
+        table: 'products',
+        action: 'upsert',
+        payload: {
+          'id': updated.id,
+          'name': updated.name,
+          'category': updated.category,
+          'price': updated.sellPrice,
+          'purchase_price': updated.buyPrice,
+          'stock': updated.stock,
+          'min_stock': updated.minStockAlert,
+          'barcode': updated.barcode,
+          'unit': updated.unit,
+          'product_type': updated.productType,
+          'store_name': currentStore,
+        },
+      );
     }
   }
 
@@ -2362,7 +2917,12 @@ class AppState extends ChangeNotifier {
     _saveToPrefs();
     notifyListeners();
 
-    _supabase?.from('products').delete().eq('id', productId).then((_) {}, onError: (_) {});
+    enqueueOrSendSupabase(
+      table: 'products',
+      action: 'delete',
+      matchCol: 'id',
+      matchVal: productId,
+    );
   }
 
   void restockProduct({
@@ -2674,6 +3234,7 @@ class AppState extends ChangeNotifier {
     approvalRequests.insert(0, req);
     notifyListeners();
     await _saveToPrefs();
+    await _syncApprovalToCloud(req);
   }
 
   Future<void> approveApprovalRequest(String id, {String? note}) async {
@@ -2684,6 +3245,7 @@ class AppState extends ChangeNotifier {
       approvalRequests[idx].decisionDate = DateTime.now();
       notifyListeners();
       await _saveToPrefs();
+      await _syncApprovalToCloud(approvalRequests[idx]);
     }
   }
 
@@ -2695,6 +3257,7 @@ class AppState extends ChangeNotifier {
       approvalRequests[idx].decisionDate = DateTime.now();
       notifyListeners();
       await _saveToPrefs();
+      await _syncApprovalToCloud(approvalRequests[idx]);
     }
   }
 
@@ -2703,6 +3266,30 @@ class AppState extends ChangeNotifier {
     isShiftsTrackingEnabled = enabled;
     notifyListeners();
     await _saveToPrefs();
+    await syncOwnerWorkspaceConfigToCloud();
+  }
+
+  Future<void> _syncShiftToCloud(CashShift shift) async {
+    await enqueueOrSendSupabase(
+      table: 'cash_shifts_sync',
+      action: 'upsert',
+      payload: {
+        'id': shift.id,
+        'company_name': displayCompanyName,
+        'cashier_name': shift.cashierName,
+        'cash_desk_name': shift.cashDeskName,
+        'store_name': shift.storeName,
+        'opened_at': shift.openedAt.toIso8601String(),
+        'closed_at': shift.closedAt?.toIso8601String(),
+        'opening_cash': shift.openingCash,
+        'closing_cash': shift.closingCashCounted,
+        'sales_count': shift.salesCount,
+        'total_sales_amount': shift.totalSalesAmount,
+        'payment_methods_breakdown': shift.paymentMethodsBreakdown,
+        'is_closed': shift.isClosed,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+    );
   }
 
   Future<void> openCashShift({
@@ -2711,7 +3298,7 @@ class AppState extends ChangeNotifier {
     required String storeName,
     required double openingCash,
   }) async {
-    activeCashShift = CashShift(
+    final shift = CashShift(
       id: 'shift_${DateTime.now().millisecondsSinceEpoch}',
       cashierName: cashierName,
       cashDeskName: cashDeskName,
@@ -2721,8 +3308,10 @@ class AppState extends ChangeNotifier {
       cashSalesTotal: 0.0,
       isClosed: false,
     );
+    activeCashShift = shift;
     notifyListeners();
     await _saveToPrefs();
+    await _syncShiftToCloud(shift);
   }
 
   Future<void> closeCashShift({
@@ -2756,6 +3345,7 @@ class AppState extends ChangeNotifier {
     activeCashShift = null;
     notifyListeners();
     await _saveToPrefs();
+    await _syncShiftToCloud(shift);
   }
 
   /// Supprimer un shift passé de l'historique
@@ -2763,6 +3353,12 @@ class AppState extends ChangeNotifier {
     cashShiftsHistory.removeWhere((s) => s.id == shiftId);
     notifyListeners();
     await _saveToPrefs();
+    await enqueueOrSendSupabase(
+      table: 'cash_shifts_sync',
+      action: 'delete',
+      matchCol: 'id',
+      matchVal: shiftId,
+    );
   }
 
   // --- GROUPES D'ACCÈS ---
@@ -2770,6 +3366,7 @@ class AppState extends ChangeNotifier {
     accessGroups = List.from(groups);
     notifyListeners();
     await _saveToPrefs();
+    await syncOwnerWorkspaceConfigToCloud();
   }
 
   // --- RÉINITIALISATION DES DONNÉES ---

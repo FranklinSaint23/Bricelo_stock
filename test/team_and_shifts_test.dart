@@ -144,6 +144,30 @@ void main() {
       // Nettoyage
       appState.approvalRequests.remove(req);
     });
+
+    test('Strict password hashing and verification rejects wrong password', () async {
+      final h1 = AppState.hashPassword('MonMotDePasse123');
+      final h2 = AppState.hashPassword('MonMotDePasse123');
+      final hWrong = AppState.hashPassword('MauvaisMotDePasse');
+
+      expect(h1, h2);
+      expect(h1 == hWrong, false);
+
+      appState.userPhone = '+237 699 00 11 22';
+      appState.ownerPasswordHash = h1;
+
+      final wrongError = await appState.loginUser(
+        identifier: '699001122',
+        password: 'MauvaisMotDePasse',
+      );
+      expect(wrongError != null, true);
+
+      final successError = await appState.loginUser(
+        identifier: '699001122',
+        password: 'MonMotDePasse123',
+      );
+      expect(successError, null);
+    });
   });
 }
 
