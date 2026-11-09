@@ -29,24 +29,13 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
 
   String _getSubscriptionPlan(AppState state) {
     try {
-      return state.subscriptionPlan;
+      final raw = state.subscriptionPlan.trim();
+      return raw.isNotEmpty ? raw : 'Gratuit';
     } catch (_) {
       try {
         return (state as dynamic).subscriptionPlan?.toString() ?? 'Gratuit';
       } catch (_) {
         return 'Gratuit';
-      }
-    }
-  }
-
-  String _getSubscriptionBilling(AppState state) {
-    try {
-      return state.subscriptionBilling;
-    } catch (_) {
-      try {
-        return (state as dynamic).subscriptionBilling?.toString() ?? 'mensuel';
-      } catch (_) {
-        return 'mensuel';
       }
     }
   }
@@ -711,99 +700,63 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 ),
                 const SizedBox(height: 22),
 
-                // 4. ABONNEMENT (FONCTIONNEL ET DYNAMIQUE)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Abonnement',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
-                    ),
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
-                        );
-                      },
-                      child: const Text(
-                        'Voir les formules',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
-                      ),
-                    ),
-                  ],
+                // 4. ABONNEMENT (LECTURE SEULE — SYNCHRONISÉ DEPUIS LE PORTAIL WEB / BD)
+                const Text(
+                  'Abonnement',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
                 ),
                 const SizedBox(height: 8),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentGold.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.accentGold.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.workspace_premium_rounded, color: AppTheme.accentGold, size: 24),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    'Formule : ${_getSubscriptionPlan(appState)}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: const Text(
-                                      'Actif',
-                                      style: TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ],
+                        child: const Icon(Icons.workspace_premium_rounded, color: AppTheme.accentGold, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'Formule : ${_getSubscriptionPlan(appState)}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _getSubscriptionPlan(appState) == 'Gratuit'
-                                    ? 'Découverte — touchez pour passer à Pro'
-                                    : (_getSubscriptionBilling(appState) == 'annuel' ? 'Facturation annuelle active' : 'Facturation mensuelle active'),
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                            ],
-                          ),
+                              child: const Text(
+                                'Actif',
+                                style: TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
                         ),
-                        const Icon(Icons.chevron_right_rounded, color: Color(0xFF9CA3AF), size: 20),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 22),
