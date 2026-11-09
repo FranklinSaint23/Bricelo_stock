@@ -756,11 +756,37 @@ class _QuotesScreenState extends State<QuotesScreen> {
               q.phone.toLowerCase().contains(query);
         }).toList();
 
+        final isDark = appState.isDarkMode;
+        final pageBg = isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC);
+        final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+        final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFD1D5DB);
+        final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+        final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFC),
-          appBar: StockAppBar.forestGreen(
-            title: 'Devis & Pro-formas',
-            onBack: () => Navigator.pop(context),
+          backgroundColor: pageBg,
+          appBar: AppBar(
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
+            elevation: 0,
+            centerTitle: true,
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: InkWell(
+                onTap: () => Navigator.pop(context),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
+                ),
+              ),
+            ),
+            title: Text(
+              'Devis & Pro-formas'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
+            ),
           ),
           body: Column(
             children: [
@@ -770,19 +796,20 @@ class _QuotesScreenState extends State<QuotesScreen> {
                 child: Container(
                   height: 42,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFD1D5DB)),
+                    border: Border.all(color: cardBorder),
                   ),
                   child: TextField(
                     controller: _searchCtrl,
+                    style: TextStyle(color: textPrimary, fontSize: 13),
                     onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      hintText: 'Rechercher par client, n° devis, téléphone...',
-                      hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-                      prefixIcon: Icon(Icons.search, size: 20, color: Color(0xFF6B7280)),
+                    decoration: InputDecoration(
+                      hintText: 'Rechercher par client, n° devis, téléphone...'.tr,
+                      hintStyle: TextStyle(fontSize: 13, color: textSecondary),
+                      prefixIcon: Icon(Icons.search, size: 20, color: isDark ? AppTheme.accentGold : const Color(0xFF6B7280)),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
                 ),
@@ -791,20 +818,20 @@ class _QuotesScreenState extends State<QuotesScreen> {
               // LISTE DYNAMIQUE DES DEVIS
               Expanded(
                 child: quotes.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.description_outlined, size: 64, color: Color(0xFFCBD5E1)),
-                            SizedBox(height: 14),
+                            Icon(Icons.description_outlined, size: 64, color: textSecondary),
+                            const SizedBox(height: 14),
                             Text(
-                              'Aucun devis enregistré',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                              'Aucun devis enregistré'.tr,
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary),
                             ),
-                            SizedBox(height: 6),
+                            const SizedBox(height: 6),
                             Text(
-                              'Touchez "+ Nouveau devis" pour créer un devis.',
-                              style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                              'Touchez "+ Nouveau devis" pour créer un devis.'.tr,
+                              style: TextStyle(fontSize: 13, color: textSecondary),
                             ),
                           ],
                         ),
@@ -814,20 +841,26 @@ class _QuotesScreenState extends State<QuotesScreen> {
                         itemCount: quotes.length,
                         itemBuilder: (context, idx) {
                           final q = quotes[idx];
-                          return Card(
-                            elevation: 1,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          return Container(
                             margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: cardBg,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: cardBorder),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), blurRadius: 4, offset: const Offset(0, 1)),
+                              ],
+                            ),
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              leading: const CircleAvatar(
-                                backgroundColor: Color(0xFFEFF6FF),
-                                child: Icon(Icons.description_outlined, color: AppTheme.primaryNavy),
+                              leading: CircleAvatar(
+                                backgroundColor: isDark ? const Color(0xFF1E3052) : const Color(0xFFEFF6FF),
+                                child: Icon(Icons.description_outlined, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                               ),
-                              title: Text(q.client, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              title: Text(q.client, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textPrimary)),
                               subtitle: Text(
-                                'Réf: ${q.id} • Valable jusqu\'au ${DateFormat('dd/MM/yyyy').format(q.validUntil)}',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                '${'Réf'.tr}: ${q.id} • ${'Valable jusqu\'au'.tr} ${DateFormat('dd/MM/yyyy').format(q.validUntil)}',
+                                style: TextStyle(fontSize: 12, color: textSecondary),
                               ),
                               trailing: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -835,11 +868,11 @@ class _QuotesScreenState extends State<QuotesScreen> {
                                 children: [
                                   Text(
                                     '${q.total.toInt()} F CFA',
-                                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppTheme.primaryNavy),
+                                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                                   ),
                                   Text(
-                                    '${q.items.length} article(s)',
-                                    style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                    '${q.items.length} ${'article(s)'.tr}',
+                                    style: TextStyle(fontSize: 11, color: textSecondary),
                                   ),
                                 ],
                               ),
@@ -857,9 +890,9 @@ class _QuotesScreenState extends State<QuotesScreen> {
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             icon: const Icon(Icons.add, size: 20),
-            label: const Text(
-              'Nouveau devis',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            label: Text(
+              'Nouveau devis'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
             onPressed: _showNewQuoteModal,
           ),

@@ -3,7 +3,8 @@ import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 
 class SubscriptionScreen extends StatefulWidget {
-  const SubscriptionScreen({super.key});
+  final bool showAppBar;
+  const SubscriptionScreen({super.key, this.showAppBar = true});
 
   @override
   State<SubscriptionScreen> createState() => _SubscriptionScreenState();
@@ -49,6 +50,203 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     final phoneCtrl = TextEditingController(text: appState.userPhone);
     bool isProcessing = false;
 
+    final isDesktop = MediaQuery.of(context).size.width >= 800;
+
+    Widget buildPaymentFormContent(BuildContext ctx, StateSetter setModalState) {
+      return SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isDesktop) ...[
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Activer la $planName',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryNavy,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Facturation $periodText • Synchronisation automatique sur Mobile',
+                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Récapitulatif du montant
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Total à payer :',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF334155)),
+                  ),
+                  Text(
+                    '${_formatCfa(priceToPay)} F CFA',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: AppTheme.primaryNavy,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            const Text(
+              'Moyen de paiement sécurisé',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+            ),
+            const SizedBox(height: 10),
+
+            // Sélection de l'opérateur
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildOperatorChip('Orange Money', Icons.phone_android_rounded, const Color(0xFFFF7900), selectedMethod, (val) => setModalState(() => selectedMethod = val)),
+                _buildOperatorChip('MTN MoMo', Icons.network_cell_rounded, const Color(0xFFFFCC00), selectedMethod, (val) => setModalState(() => selectedMethod = val)),
+                _buildOperatorChip('Wave', Icons.waves_rounded, const Color(0xFF1DA1F2), selectedMethod, (val) => setModalState(() => selectedMethod = val)),
+                _buildOperatorChip('Moov Money', Icons.mobile_screen_share_rounded, const Color(0xFF005BA6), selectedMethod, (val) => setModalState(() => selectedMethod = val)),
+                _buildOperatorChip('Carte Bancaire', Icons.credit_card_rounded, AppTheme.primaryNavy, selectedMethod, (val) => setModalState(() => selectedMethod = val)),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            if (selectedMethod != 'Carte Bancaire') ...[
+              TextField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Numéro de compte $selectedMethod *',
+                  hintText: 'Ex: +237 689 39 88 07',
+                  prefixIcon: const Icon(Icons.dialpad_rounded, size: 20, color: AppTheme.primaryNavy),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Vous recevrez un prompt USSD sur votre téléphone pour valider avec votre code secret.',
+                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+              ),
+            ] else ...[
+              TextField(
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Numéro de carte (16 chiffres) *',
+                  hintText: '4000 1234 5678 9010',
+                  prefixIcon: const Icon(Icons.credit_card_rounded, size: 20, color: AppTheme.primaryNavy),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 22),
+
+            // Bouton de confirmation
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryNavy,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: isProcessing
+                    ? null
+                    : () async {
+                        setModalState(() => isProcessing = true);
+                        await Future.delayed(const Duration(milliseconds: 1200));
+
+                        // Mise à jour de l'abonnement + synchronisation immédiate vers Supabase
+                        await _safeUpdateSubscription(
+                          appState,
+                          plan: planName,
+                          billing: isYear ? 'annuel' : 'mensuel',
+                          durationMonths: isYear ? 12 : 1,
+                        );
+
+                        if (!ctx.mounted) return;
+                        Navigator.pop(ctx);
+                        if (!mounted) return;
+
+                        _showSuccessDialog(planName, isYear ? '1 an' : '1 mois');
+                      },
+                child: isProcessing
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                      )
+                    : Text(
+                        'Payer ${_formatCfa(priceToPay)} F CFA',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (isDesktop) {
+      showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: StatefulBuilder(builder: buildPaymentFormContent),
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -64,176 +262,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             top: 20,
             bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Activer la $planName',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryNavy,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Facturation $periodText',
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Récapitulatif du montant
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total à payer :',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF334155)),
-                      ),
-                      Text(
-                        '${_formatCfa(priceToPay)} F CFA',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: AppTheme.primaryNavy,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                const Text(
-                  'Moyen de paiement sécurisé',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
-                ),
-                const SizedBox(height: 10),
-
-                // Sélection de l'opérateur
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildOperatorChip('Orange Money', Icons.phone_android_rounded, const Color(0xFFFF7900), selectedMethod, (val) => setModalState(() => selectedMethod = val)),
-                    _buildOperatorChip('MTN MoMo', Icons.network_cell_rounded, const Color(0xFFFFCC00), selectedMethod, (val) => setModalState(() => selectedMethod = val)),
-                    _buildOperatorChip('Wave', Icons.waves_rounded, const Color(0xFF1DA1F2), selectedMethod, (val) => setModalState(() => selectedMethod = val)),
-                    _buildOperatorChip('Moov Money', Icons.mobile_screen_share_rounded, const Color(0xFF005BA6), selectedMethod, (val) => setModalState(() => selectedMethod = val)),
-                    _buildOperatorChip('Carte Bancaire', Icons.credit_card_rounded, AppTheme.primaryNavy, selectedMethod, (val) => setModalState(() => selectedMethod = val)),
-                  ],
-                ),
-                const SizedBox(height: 18),
-
-                if (selectedMethod != 'Carte Bancaire') ...[
-                  TextField(
-                    controller: phoneCtrl,
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      labelText: 'Numéro de compte $selectedMethod *',
-                      hintText: 'Ex: +237 689 39 88 07',
-                      prefixIcon: const Icon(Icons.dialpad_rounded, size: 20, color: AppTheme.primaryNavy),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Vous recevrez un prompt USSD sur votre téléphone pour valider avec votre code secret.',
-                    style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
-                  ),
-                ] else ...[
-                  TextField(
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Numéro de carte (16 chiffres) *',
-                      hintText: '4000 1234 5678 9010',
-                      prefixIcon: const Icon(Icons.credit_card_rounded, size: 20, color: AppTheme.primaryNavy),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 22),
-
-                // Bouton de confirmation
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryNavy,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: isProcessing
-                        ? null
-                        : () async {
-                            setModalState(() => isProcessing = true);
-                            await Future.delayed(const Duration(milliseconds: 1200));
-
-                            // Mise à jour de l'abonnement
-                            await _safeUpdateSubscription(
-                              appState,
-                              plan: planName,
-                              billing: isYear ? 'annuel' : 'mensuel',
-                              durationMonths: isYear ? 12 : 1,
-                            );
-
-                            if (!ctx.mounted) return;
-                            Navigator.pop(ctx);
-                            if (!mounted) return;
-
-                            _showSuccessDialog(planName, isYear ? '1 an' : '1 mois');
-                          },
-                    child: isProcessing
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
-                          )
-                        : Text(
-                            'Payer ${_formatCfa(priceToPay)} F CFA',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          child: buildPaymentFormContent(ctx, setModalState),
         ),
       ),
     );
@@ -304,7 +333,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Votre boutique est maintenant passée sur la $plan ($period). Toutes les fonctionnalités avancées sont activées.',
+              'Votre boutique est maintenant passée sur la $plan ($period). Toutes les fonctionnalités avancées sont activées et synchronisées automatiquement sur votre application mobile via la base de données.',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 13.5, color: Color(0xFF4B5563), height: 1.4),
             ),
@@ -337,294 +366,343 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentPlan = _safeSubscriptionPlan(appState);
-    final isPro = currentPlan.toLowerCase().contains('pro');
-    final isEnterprise = currentPlan.toLowerCase().contains('entreprise');
-    final expiresAt = _safeSubscriptionExpiresAt(appState);
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final currentPlan = _safeSubscriptionPlan(appState);
+        final isPro = currentPlan.toLowerCase().contains('pro');
+        final isEnterprise = currentPlan.toLowerCase().contains('entreprise');
+        final expiresAt = _safeSubscriptionExpiresAt(appState);
+        final isWideWeb = MediaQuery.of(context).size.width >= 960;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: AppTheme.primaryNavy,
-        elevation: 0,
-        centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
-            ),
-          ),
-        ),
-        title: const Text(
-          'Formules & Abonnement',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // CARTE STATUT ACTUEL
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppTheme.primaryNavy, Color(0xFF1E3A8A)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryNavy.withValues(alpha: 0.25),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
+        final freeCard = _buildPlanCard(
+          title: 'Gratuit',
+          badge: 'Découverte',
+          price: '0 F CFA',
+          period: '/ mois',
+          isCurrent: currentPlan == 'Gratuit',
+          features: const [
+            '1 Boutique & 1 Caisse active',
+            'Gestion jusqu\'à 50 produits en stock',
+            'Factures & Reçus de caisse standards',
+            'Historique des ventes basique',
+          ],
+          buttonLabel: currentPlan == 'Gratuit' ? 'Formule active' : 'Revenir au Gratuit',
+          buttonAction: currentPlan == 'Gratuit'
+              ? null
+              : () async {
+                  await _safeUpdateSubscription(appState, plan: 'Gratuit', billing: 'mensuel');
+                  if (mounted) setState(() {});
+                },
+        );
+
+        final proCard = _buildPlanCard(
+          title: 'Formule Pro',
+          badge: 'LE PLUS POPULAIRE',
+          badgeColor: AppTheme.accentGold,
+          price: _isAnnual ? '19 000 F CFA' : '1 900 F CFA',
+          period: _isAnnual ? '/ an (1 580 F CFA/mois)' : '/ mois',
+          isCurrent: isPro,
+          highlighted: true,
+          features: const [
+            'Boutiques & Caisses illimitées (plusieurs points de vente)',
+            'Produits et ventes illimités (aucun blocage)',
+            'Factures & Reçus personnalisés avec le logo de votre boutique',
+            'Signature calligraphique automatique sur vos factures',
+            'Partage direct des factures et reçus sur WhatsApp aux clients',
+            'Suivi précis des crédits / dettes clients et rappels',
+            'Suivi des dépenses et dettes fournisseurs',
+            'Gestion de l\'équipe (comptes caissiers, magasiniers, gérants)',
+            'Alertes automatiques de stock faible et dates de péremption',
+            'Calcul des bénéfices nets et bilans de caisse journaliers',
+            'Sauvegarde automatique et sécurisée de vos données',
+          ],
+          buttonLabel: isPro ? 'Formule active' : 'Passer à la Formule Pro',
+          buttonAction: isPro
+              ? null
+              : () => _showPaymentModal(
+                    planName: 'Formule Pro',
+                    monthlyPrice: 1900,
+                    annualPrice: 19000,
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
+        );
+
+        final enterpriseCard = _buildPlanCard(
+          title: 'Formule Entreprise',
+          badge: 'GRANDES BOUTIQUES & RÉSEAUX',
+          badgeColor: const Color(0xFF6366F1),
+          price: _isAnnual ? '59 000 F CFA' : '5 900 F CFA',
+          period: _isAnnual ? '/ an (4 900 F CFA/mois)' : '/ mois',
+          isCurrent: isEnterprise,
+          features: const [
+            'Tout ce qui est inclus dans la Formule Pro',
+            'Plusieurs magasins ou dépôts reliés ensemble',
+            'Déplacer facilement des articles d\'un magasin à un autre',
+            'Données synchronisées en direct sur les téléphones de vos employés',
+            'Conseiller intelligent Bricelo pour analyser et booster vos ventes',
+            'Téléchargement de vos bilans et rapports sur Excel et PDF',
+            'Ligne WhatsApp prioritaire 7j/7 avec un conseiller dédié',
+          ],
+          buttonLabel: isEnterprise ? 'Formule active' : 'Choisir la Formule Entreprise',
+          buttonAction: isEnterprise
+              ? null
+              : () => _showPaymentModal(
+                    planName: 'Formule Entreprise',
+                    monthlyPrice: 5900,
+                    annualPrice: 59000,
+                  ),
+        );
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8FAFC),
+          appBar: widget.showAppBar
+              ? AppBar(
+                  backgroundColor: AppTheme.primaryNavy,
+                  elevation: 0,
+                  centerTitle: true,
+                  leading: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: InkWell(
+                      onTap: () => Navigator.pop(context),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
+                      ),
                     ),
-                    child: const Icon(Icons.verified_rounded, color: AppTheme.accentGold, size: 28),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'VOTRE FORMULE ACTUELLE',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1, color: Color(0xFF93C5FD)),
+                  title: const Text(
+                    'Portail Web • Formules & Abonnement',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
+                  ),
+                )
+              : null,
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1180),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // CARTE STATUT ACTUEL + SYNCHRONISATION MOBILE
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppTheme.primaryNavy, Color(0xFF1E3A8A)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              currentPlan,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Text(
-                                'Actif',
-                                style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (expiresAt != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Renouvellement : ${expiresAt.day}/${expiresAt.month}/${expiresAt.year}',
-                            style: const TextStyle(fontSize: 11.5, color: Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primaryNavy.withValues(alpha: 0.25),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // SÉLECTEUR MENSUEL / ANNUEL
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    InkWell(
-                      onTap: () => setState(() => _isAnnual = false),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: !_isAnnual ? AppTheme.primaryNavy : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'Mensuel',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: !_isAnnual ? Colors.white : const Color(0xFF475569),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.verified_rounded, color: AppTheme.accentGold, size: 30),
                           ),
-                        ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'VOTRE FORMULE ACTUELLE (SYNCHRONISÉE SUR MOBILE & WEB)',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1, color: Color(0xFF93C5FD)),
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  spacing: 10,
+                                  runSpacing: 6,
+                                  children: [
+                                    Text(
+                                      currentPlan,
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF10B981),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Text(
+                                        'Actif',
+                                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.14),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.cloud_sync_rounded, color: AppTheme.accentGold, size: 13),
+                                          SizedBox(width: 5),
+                                          Text(
+                                            'Synchronisé avec l\'app mobile (mode consommation)',
+                                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (expiresAt != null) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Renouvellement : ${expiresAt.day}/${expiresAt.month}/${expiresAt.year}',
+                                    style: const TextStyle(fontSize: 12, color: Color(0xFFE2E8F0)),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    InkWell(
-                      onTap: () => setState(() => _isAnnual = true),
-                      borderRadius: BorderRadius.circular(20),
+                    const SizedBox(height: 24),
+
+                    // SÉLECTEUR MENSUEL / ANNUEL
+                    Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: _isAnnual ? AppTheme.primaryNavy : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
+                          color: const Color(0xFFE2E8F0),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'Annuel',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: _isAnnual ? Colors.white : const Color(0xFF475569),
+                            InkWell(
+                              onTap: () => setState(() => _isAnnual = false),
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                                decoration: BoxDecoration(
+                                  color: !_isAnnual ? AppTheme.primaryNavy : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  'Mensuel',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: !_isAnnual ? Colors.white : const Color(0xFF475569),
+                                  ),
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppTheme.accentGold,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                '-20%',
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                            InkWell(
+                              onTap: () => setState(() => _isAnnual = true),
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                                decoration: BoxDecoration(
+                                  color: _isAnnual ? AppTheme.primaryNavy : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'Annuel',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: _isAnnual ? Colors.white : const Color(0xFF475569),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.accentGold,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Text(
+                                        '-20%',
+                                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
+                    const SizedBox(height: 24),
+
+                    // GRILLE 3 COLONNES SUR PORTAIL WEB OU LISTE VERTICALE SUR ÉCRAN ÉTROIT
+                    if (isWideWeb)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: freeCard),
+                          const SizedBox(width: 18),
+                          Expanded(child: proCard),
+                          const SizedBox(width: 18),
+                          Expanded(child: enterpriseCard),
+                        ],
+                      )
+                    else ...[
+                      freeCard,
+                      const SizedBox(height: 16),
+                      proCard,
+                      const SizedBox(height: 16),
+                      enterpriseCard,
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    // GARANTIE & ASSISTANCE
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.security_rounded, color: Color(0xFF059669), size: 28),
+                          SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              'Portail Web Officiel Bricelo Stock : Paiements sécurisés via Mobile Money & Carte. Toute formule souscrite ici est immédiatement synchronisée avec votre base de données Supabase et appliquée sur votre téléphone mobile.',
+                              style: TextStyle(fontSize: 12.5, color: Color(0xFF475563), height: 1.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-
-            // PLAN 1 : GRATUIT
-            _buildPlanCard(
-              title: 'Gratuit',
-              badge: 'Découverte',
-              price: '0 F CFA',
-              period: '/ mois',
-              isCurrent: currentPlan == 'Gratuit',
-              features: const [
-                '1 Boutique & 1 Caisse active',
-                'Gestion jusqu\'à 50 produits en stock',
-                'Factures & Reçus de caisse standards',
-                'Historique des ventes basique',
-              ],
-              buttonLabel: currentPlan == 'Gratuit' ? 'Formule active' : 'Revenir au Gratuit',
-              buttonAction: currentPlan == 'Gratuit'
-                  ? null
-                  : () async {
-                      await _safeUpdateSubscription(appState, plan: 'Gratuit', billing: 'mensuel');
-                      if (mounted) setState(() {});
-                    },
-            ),
-            const SizedBox(height: 16),
-
-            // PLAN 2 : PRO (RECOMMANDÉ)
-            _buildPlanCard(
-              title: 'Formule Pro',
-              badge: 'LE PLUS POPULAIRE',
-              badgeColor: AppTheme.accentGold,
-              price: _isAnnual ? '19 000 F CFA' : '1 900 F CFA',
-              period: _isAnnual ? '/ an (1 580 F CFA/mois)' : '/ mois',
-              isCurrent: isPro,
-              highlighted: true,
-              features: const [
-                'Boutiques & Caisses illimitées (plusieurs points de vente)',
-                'Produits et ventes illimités (aucun blocage)',
-                'Factures & Reçus personnalisés avec le logo de votre boutique',
-                'Signature calligraphique automatique sur vos factures',
-                'Partage direct des factures et reçus sur WhatsApp aux clients',
-                'Suivi précis des crédits / dettes clients et rappels',
-                'Suivi des dépenses et dettes fournisseurs',
-                'Gestion de l\'équipe (comptes caissiers, magasiniers, gérants)',
-                'Alertes automatiques de stock faible et dates de péremption',
-                'Calcul des bénéfices nets et bilans de caisse journaliers',
-                'Sauvegarde automatique et sécurisée de vos données',
-              ],
-              buttonLabel: isPro ? 'Formule active' : 'Passer à la Formule Pro',
-              buttonAction: isPro
-                  ? null
-                  : () => _showPaymentModal(
-                        planName: 'Formule Pro',
-                        monthlyPrice: 1900,
-                        annualPrice: 19000,
-                      ),
-            ),
-            const SizedBox(height: 16),
-
-            // PLAN 3 : ENTREPRISE
-            _buildPlanCard(
-              title: 'Formule Entreprise',
-              badge: 'GRANDES BOUTIQUES & RÉSEAUX',
-              badgeColor: const Color(0xFF6366F1),
-              price: _isAnnual ? '59 000 F CFA' : '5 900 F CFA',
-              period: _isAnnual ? '/ an (4 900 F CFA/mois)' : '/ mois',
-              isCurrent: isEnterprise,
-              features: const [
-                'Tout ce qui est inclus dans la Formule Pro',
-                'Plusieurs magasins ou dépôts reliés ensemble',
-                'Déplacer facilement des articles d\'un magasin à un autre',
-                'Données synchronisées en direct sur les téléphones de vos employés',
-                'Conseiller intelligent Bricelo pour analyser et booster vos ventes',
-                'Téléchargement de vos bilans et rapports sur Excel et PDF',
-                'Ligne WhatsApp prioritaire 7j/7 avec un conseiller dédié',
-              ],
-              buttonLabel: isEnterprise ? 'Formule active' : 'Choisir la Formule Entreprise',
-              buttonAction: isEnterprise
-                  ? null
-                  : () => _showPaymentModal(
-                        planName: 'Formule Entreprise',
-                        monthlyPrice: 5900,
-                        annualPrice: 59000,
-                      ),
-            ),
-            const SizedBox(height: 24),
-
-            // GARANTIE & ASSISTANCE
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                children: const [
-                  Icon(Icons.security_rounded, color: Color(0xFF059669), size: 28),
-                  SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      'Paiements sécurisés via Mobile Money & Carte. Vous pouvez changer de formule ou résilier à tout moment sans frais.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF475569), height: 1.4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 28),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

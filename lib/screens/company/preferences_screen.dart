@@ -282,8 +282,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                             activeThumbColor: Colors.white,
                             activeTrackColor: AppTheme.accentGold,
                             onChanged: (v) {
-                              appState.toggleDarkMode();
-                              setState(() {});
+                              appState.toggleDarkMode(v);
                             },
                           ),
                         ],
@@ -406,9 +405,5 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildDivider() {
-    return const Divider(height: 1, indent: 52, color: Color(0xFFF3F4F6));
   }
 }

@@ -14,6 +14,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   final appState = AppState.instance;
 
   void _showCategoryBottomSheet({CategoryItem? existing}) {
+    final isDark = appState.isDarkMode;
     final nameController = TextEditingController(text: existing?.name ?? '');
     String selectedParent = existing?.parent ?? 'Aucune (racine)';
     String selectedTva = existing != null ? (existing.tva == 0 ? 'Exonéré (hors champ TVA)' : 'TVA 19,25% (CEMAC)') : 'TVA 19,25% (CEMAC)';
@@ -38,7 +39,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -261,11 +262,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     return AnimatedBuilder(
       animation: appState,
       builder: (context, _) {
+        final isDark = appState.isDarkMode;
+        final pageBg = isDark ? AppTheme.darkScaffold : Colors.white;
+        final surfaceColor = isDark ? AppTheme.darkSurface : Colors.white;
+        final textPrimary = isDark ? Colors.white : const Color(0xFF111827);
+        final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280);
+        final dividerCol = isDark ? const Color(0xFF1E3052) : const Color(0xFFF3F4F6);
         final categories = appState.categories;
+
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: pageBg,
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             elevation: 0,
             centerTitle: true,
             leading: Padding(
@@ -294,25 +302,25 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     children: [
                       Transform.rotate(
                         angle: -0.785,
-                        child: const Icon(
+                        child: Icon(
                           Icons.local_offer,
                           size: 64,
-                          color: Color(0xFFD1D5DB),
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB),
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'Aucune catégorie'.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
-                          color: Color(0xFF9CA3AF),
+                          color: textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         'Appuyez sur "+ Ajouter" pour créer vos rayons.'.tr,
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                        style: TextStyle(fontSize: 13, color: textSecondary),
                       ),
                     ],
                   ),
@@ -320,35 +328,37 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: categories.length,
-                  separatorBuilder: (_, index) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                  separatorBuilder: (_, index) => Divider(height: 1, color: dividerCol),
                   itemBuilder: (context, index) {
                     final cat = categories[index];
                     final productCount = appState.products.where((p) => p.category == cat.name).length;
                     return ListTile(
+                      tileColor: surfaceColor,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       onTap: () => _showCategoryBottomSheet(existing: cat),
                       leading: Container(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryNavy.withValues(alpha: 0.08),
+                          color: isDark ? AppTheme.accentGold.withValues(alpha: 0.15) : AppTheme.primaryNavy.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.sell_outlined, color: AppTheme.primaryNavy, size: 20),
+                        child: Icon(Icons.sell_outlined, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 20),
                       ),
-                      title: Text(cat.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                      title: Text(cat.name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: textPrimary)),
                       subtitle: Text(
-                        '$productCount produit(s) • TVA: ${cat.tva}%',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                        '$productCount ${'produit(s)'.tr} • TVA: ${cat.tva}%',
+                        style: TextStyle(fontSize: 12, color: textSecondary),
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryNavy, size: 20),
+                            icon: Icon(Icons.edit_outlined, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 20),
                             onPressed: () => _showCategoryBottomSheet(existing: cat),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Color(0xFFDC2626), size: 20),
+                            icon: const Icon(Icons.delete_outline, color: Color(0xFFEF4444), size: 20),
                             onPressed: () => appState.removeCategory(cat.id),
                           ),
                         ],

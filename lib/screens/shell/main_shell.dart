@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/screens.dart';
+import 'package:stock_prime/screens/pos/shift_dialog_helper.dart';
 
 class _DynamicNavTab {
   final String id;
@@ -36,7 +37,7 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
   final appState = AppState.instance;
 
-  List<_DynamicNavTab> _buildDynamicTabs() {
+  List<_DynamicNavTab> _buildDynamicTabs({required bool isDesktop}) {
     final isOwner = appState.userRole.toLowerCase().contains('propriétaire') ||
         appState.userRole.toLowerCase().contains('owner');
     final canFinance = isOwner || appState.hasPermission('Comptabilité & Finances');
@@ -45,6 +46,7 @@ class _MainShellState extends State<MainShell> {
     final canStockAndPrice = isOwner || appState.hasPermission('Gestion du stock & Prix');
     final canRestockRequest = isOwner || appState.hasPermission('Demandes d\'approvisionnement & Transferts');
     final canApprove = isOwner || appState.hasPermission('Validation des approbations');
+    final canTeam = isOwner || appState.hasPermission('Gestion des collaborateurs');
 
     final List<_DynamicNavTab> tabs = [];
 
@@ -72,13 +74,14 @@ class _MainShellState extends State<MainShell> {
       ));
     }
 
-    // Pour les rôles invités ayant le droit de gérer leurs shifts (ex: Caissier), accès direct à leurs shifts
-    if (!isOwner && canShifts && !canFinance) {
+    // Sur Mobile : accès direct aux shifts pour les rôles invités (ex: Caissier)
+    // Sur Portail Web (isDesktop) : accès direct à Suivi Shifts & Activités pour le Propriétaire et les rôles autorisés
+    if ((!isOwner && canShifts && !canFinance) || (isDesktop && (isOwner || canShifts || canRestockRequest))) {
       tabs.add(_DynamicNavTab(
         id: 'shifts',
         screen: const ShiftsTrackingScreen(initialTabIndex: 0),
-        label: 'Shifts',
-        webTitle: 'Suivi de Caisse & Shifts',
+        label: isDesktop ? 'Shifts & Activités' : 'Shifts',
+        webTitle: 'Suivi des Shifts & Activités Équipe',
         icon: Icons.punch_clock_outlined,
         activeIcon: Icons.punch_clock_rounded,
       ));
@@ -108,6 +111,46 @@ class _MainShellState extends State<MainShell> {
       ));
     }
 
+    // Sections additionnelles dédiées au Portail Web (Sidebar Grand Écran)
+    if (isDesktop) {
+      if (canApprove) {
+        tabs.add(_DynamicNavTab(
+          id: 'approvals',
+          screen: const ApprovalsScreen(),
+          label: 'Approbations',
+          webTitle: 'Centre d\'Approbations & Validations',
+          icon: Icons.verified_user_outlined,
+          activeIcon: Icons.verified_user_rounded,
+          badge: appState.pendingApprovalsCount > 0 ? '${appState.pendingApprovalsCount}' : null,
+          badgeColor: AppTheme.danger,
+        ));
+      }
+
+      if (canTeam) {
+        tabs.add(_DynamicNavTab(
+          id: 'team',
+          screen: const TeamScreen(),
+          label: 'Équipe & Rôles',
+          webTitle: 'Gestion de l\'Équipe & Rôles',
+          icon: Icons.group_outlined,
+          activeIcon: Icons.group_rounded,
+        ));
+      }
+
+      if (isOwner) {
+        tabs.add(_DynamicNavTab(
+          id: 'subscription',
+          screen: const SubscriptionScreen(showAppBar: false),
+          label: 'Abonnement',
+          webTitle: 'Portail Web • Formules & Abonnement',
+          icon: Icons.workspace_premium_outlined,
+          activeIcon: Icons.workspace_premium_rounded,
+          badge: appState.subscriptionPlan,
+          badgeColor: const Color(0xFF059669),
+        ));
+      }
+    }
+
     tabs.add(_DynamicNavTab(
       id: 'more',
       screen: const MoreScreen(),
@@ -131,9 +174,15 @@ class _MainShellState extends State<MainShell> {
       builder: (context, _) {
         final isDesktop = MediaQuery.of(context).size.width >= 800;
         final isDark = appState.isDarkMode;
-        final tabs = _buildDynamicTabs();
+        final tabs = _buildDynamicTabs(isDesktop: isDesktop);
         final safeIndex = _currentIndex.clamp(0, tabs.length - 1);
         final posIndex = tabs.indexWhere((t) => t.id == 'pos');
+        final subIndex = tabs.indexWhere((t) => t.id == 'subscription');
+        final isOwner = appState.userRole.toLowerCase().contains('propriétaire') ||
+            appState.userRole.toLowerCase().contains('owner');
+        final activeShift = appState.activeCashShift;
+        final now = DateTime.now();
+        final isPast17h30 = now.hour > 17 || (now.hour == 17 && now.minute >= 30);
 
         if (isDesktop) {
           // Version Grand Écran Web Professionnelle Bricelo
@@ -218,10 +267,10 @@ class _MainShellState extends State<MainShell> {
                         ),
                       ),
 
-                      // Sélecteur de Boutique Rapide
+                      // Sélecteur de Boutique Rapide (Interactif sur le Portail Web)
                       Container(
                         margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFF131F33),
                           borderRadius: BorderRadius.circular(10),
@@ -232,12 +281,40 @@ class _MainShellState extends State<MainShell> {
                             const Icon(Icons.storefront_outlined, color: AppTheme.accentGold, size: 16),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text(
-                                appState.currentStore,
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              child: (isOwner && appState.availableStores.length > 1)
+                                  ? DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        dropdownColor: const Color(0xFF0F172A),
+                                        isDense: true,
+                                        isExpanded: true,
+                                        value: appState.availableStores.contains(appState.currentStore)
+                                            ? appState.currentStore
+                                            : appState.availableStores.first,
+                                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.accentGold, size: 16),
+                                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                                        items: appState.availableStores
+                                            .map((st) => DropdownMenuItem<String>(
+                                                  value: st,
+                                                  child: Text(st, overflow: TextOverflow.ellipsis),
+                                                ))
+                                            .toList(),
+                                        onChanged: (val) {
+                                          if (val != null) {
+                                            appState.setCurrentStore(val);
+                                          }
+                                        },
+                                      ),
+                                    )
+                                  : Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 4),
+                                      child: Text(
+                                        appState.currentStore,
+                                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
                             ),
+                            const SizedBox(width: 6),
                             Container(
                               width: 8,
                               height: 8,
@@ -314,7 +391,7 @@ class _MainShellState extends State<MainShell> {
                         ),
                       ),
 
-                      // Bas de Sidebar : Profil & Langue & Statut Cloud
+                      // Bas de Sidebar : Profil & Langue & Déconnexion & Statut Cloud
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: const BoxDecoration(
@@ -323,43 +400,56 @@ class _MainShellState extends State<MainShell> {
                         ),
                         child: Column(
                           children: [
-                            // Profil Utilisateur
+                            // Profil Utilisateur (cliquable vers Mon Compte)
                             Row(
                               children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.accentGold,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      appState.userInitials,
-                                      style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 13),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyAccountScreen()));
+                                    },
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.accentGold,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              appState.userInitials,
+                                              style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 13),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                appState.displayUserName,
+                                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              Text(
+                                                appState.userAssignedCashDesk != null && appState.userAssignedCashDesk!.isNotEmpty
+                                                    ? '${appState.userRole} • ${appState.userAssignedCashDesk}'
+                                                    : appState.userRole,
+                                                style: const TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w600),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        appState.displayUserName,
-                                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Text(
-                                        appState.userAssignedCashDesk != null && appState.userAssignedCashDesk!.isNotEmpty
-                                            ? '${appState.userRole} • ${appState.userAssignedCashDesk}'
-                                            : appState.userRole,
-                                        style: const TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w600),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                const SizedBox(width: 6),
                                 // Basculeur Rapide de Langue
                                 InkWell(
                                   onTap: () {
@@ -368,7 +458,7 @@ class _MainShellState extends State<MainShell> {
                                   },
                                   borderRadius: BorderRadius.circular(6),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF1E293B),
                                       borderRadius: BorderRadius.circular(6),
@@ -378,8 +468,34 @@ class _MainShellState extends State<MainShell> {
                                       style: const TextStyle(
                                         color: AppTheme.accentGold,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 11,
+                                        fontSize: 10.5,
                                       ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                // Bouton Déconnexion rapide sur le Portail Web
+                                Tooltip(
+                                  message: 'Déconnexion',
+                                  child: InkWell(
+                                    onTap: () async {
+                                      await appState.logout();
+                                      if (!context.mounted) return;
+                                      Navigator.pushAndRemoveUntil(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                        (route) => false,
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFDC2626).withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.5)),
+                                      ),
+                                      child: const Icon(Icons.logout_rounded, color: Color(0xFFFCA5A5), size: 14),
                                     ),
                                   ),
                                 ),
@@ -390,10 +506,16 @@ class _MainShellState extends State<MainShell> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.cloud_done, color: Color(0xFF10B981), size: 13),
+                                Icon(
+                                  appState.isDeviceOffline ? Icons.cloud_off_rounded : Icons.cloud_done,
+                                  color: appState.isDeviceOffline ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                                  size: 13,
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Connecté à Bricélo.cm'.tr,
+                                  appState.isDeviceOffline
+                                      ? 'Mode hors-ligne (${appState.pendingSyncQueue.length} en attente)'
+                                      : 'Synchronisé avec Bricélo Cloud'.tr,
                                   style: const TextStyle(color: Colors.white54, fontSize: 10),
                                 ),
                               ],
@@ -451,6 +573,94 @@ class _MainShellState extends State<MainShell> {
 
                             const Spacer(),
 
+                            // Statut du Shift de Caisse Actif (avec chronomètre & bouton Clôturer) sur le Portail Web
+                            if (activeShift != null) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0F172A),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '${activeShift.cashDeskName} ouvert • ${activeShift.formattedDuration}',
+                                      style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    InkWell(
+                                      onTap: () => ShiftDialogHelper.showCloseShiftDialog(context, activeShift),
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFDC2626),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: const Text(
+                                          'Clôturer',
+                                          style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                            ],
+
+                            // Badge Abonnement Portail Web (cliquable pour le Propriétaire)
+                            if (isOwner && subIndex != -1) ...[
+                              InkWell(
+                                onTap: () => setState(() => _currentIndex = subIndex),
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.accentGold.withValues(alpha: 0.16),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.6)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.workspace_premium_rounded, color: AppTheme.primaryNavy, size: 16),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Formule : ${appState.subscriptionPlan}',
+                                        style: const TextStyle(
+                                          color: AppTheme.primaryNavy,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF16A34A),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: const Text(
+                                          'Actif',
+                                          style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                            ],
+
                             // Bouton Action Rapide : + Vente POS (uniquement si autorisé)
                             if (posIndex != -1) ...[
                               ElevatedButton.icon(
@@ -485,6 +695,38 @@ class _MainShellState extends State<MainShell> {
                           ],
                         ),
                       ),
+
+                      // Alerte 17h30 sur le Portail Web si un shift de caisse est toujours ouvert après 17h30
+                      if (activeShift != null && isPast17h30)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          color: const Color(0xFFFEF2F2),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.alarm_on_rounded, color: Color(0xFFDC2626), size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '⚠️ Alerte 17h30 : La caisse "${activeShift.cashDeskName}" (${activeShift.cashierName}) est toujours ouverte. Pensez à clôturer la caisse.',
+                                  style: const TextStyle(color: Color(0xFF991B1B), fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFDC2626),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                ),
+                                onPressed: () => ShiftDialogHelper.showCloseShiftDialog(context, activeShift),
+                                child: const Text('Clôturer la caisse', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        ),
 
                       if (appState.showReconnectedSyncBanner)
                         Container(

@@ -1099,9 +1099,10 @@ class AppState extends ChangeNotifier {
   }
 
   // --- LANGUE & THÈME ---
-  void toggleDarkMode(bool val) {
-    if (isDarkMode == val) return;
-    isDarkMode = val;
+  void toggleDarkMode([bool? val]) {
+    final nextVal = val ?? !isDarkMode;
+    if (isDarkMode == nextVal) return;
+    isDarkMode = nextVal;
     _saveToPrefs();
     notifyListeners();
   }
@@ -1823,6 +1824,7 @@ class AppState extends ChangeNotifier {
         : DateTime.now().add(Duration(days: durationMonths * 30));
     notifyListeners();
     await _saveToPrefs();
+    await syncOwnerWorkspaceConfigToCloud();
   }
 
   Future<void> saveInvoiceHeaderLines(List<InvoiceHeaderLine> lines) async {

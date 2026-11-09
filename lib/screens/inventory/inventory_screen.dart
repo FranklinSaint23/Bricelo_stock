@@ -65,38 +65,108 @@ class _InventoryScreenState extends State<InventoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. CARTE VALEUR DU STOCK EN 3 COLONNES
-            Row(
-              children: [
-                Expanded(
-                  child: _buildWebValueCard(
-                    'VALEUR DU STOCK (VENTE)'.tr,
-                    AppTheme.formatFCFA(totalVente),
-                    Icons.trending_up,
-                    AppTheme.accentGold,
+            // 0. ESPACE ÉQUIPIER INVITÉ SUR LE PORTAIL WEB (Magasinier, Gérant...) : DEMANDES SOUMISES AU PROPRIÉTAIRE
+            if (!appState.hasPermission('Validation des approbations')) ...[
+              Container(
+                padding: const EdgeInsets.all(18),
+                margin: const EdgeInsets.only(bottom: 18),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0F766E), Color(0xFF0D9488)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildWebValueCard(
-                    'COÛT D\'ACHAT'.tr,
-                    AppTheme.formatFCFA(totalAchat),
-                    Icons.shopping_bag_outlined,
-                    isDark ? Colors.white70 : const Color(0xFF0F172A),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warehouse_rounded, color: Colors.white, size: 28),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Espace ${appState.userRole} — Approvisionnement & Transferts',
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Vos demandes d\'approvisionnement et de transfert sont transmises au propriétaire pour validation dans ses Approbations et paiement du fournisseur.',
+                            style: TextStyle(color: Color(0xFFCCFBF1), fontSize: 12.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF0F766E),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                      ),
+                      icon: const Icon(Icons.add_shopping_cart_rounded, size: 16),
+                      label: const Text('Demander appro', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
+                      },
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryNavy,
+                        foregroundColor: AppTheme.accentGold,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                      ),
+                      icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                      label: const Text('Transférer stock', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const NewTransferScreen()));
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // 1. CARTE VALEUR DU STOCK EN 3 COLONNES (Si droit Comptabilité & Finances ou Propriétaire)
+            if (appState.hasPermission('Comptabilité & Finances')) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildWebValueCard(
+                      'VALEUR DU STOCK (VENTE)'.tr,
+                      AppTheme.formatFCFA(totalVente),
+                      Icons.trending_up,
+                      AppTheme.accentGold,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildWebValueCard(
-                    'MARGE BRUTE'.tr,
-                    '${AppTheme.formatFCFA(marge)} (${margePct.toStringAsFixed(1)}%)',
-                    Icons.pie_chart_outline,
-                    const Color(0xFF10B981),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildWebValueCard(
+                      'COÛT D\'ACHAT'.tr,
+                      AppTheme.formatFCFA(totalAchat),
+                      Icons.shopping_bag_outlined,
+                      isDark ? Colors.white70 : const Color(0xFF0F172A),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildWebValueCard(
+                      'MARGE BRUTE'.tr,
+                      '${AppTheme.formatFCFA(marge)} (${margePct.toStringAsFixed(1)}%)',
+                      Icons.pie_chart_outline,
+                      const Color(0xFF10B981),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
 
             // 2. BARRE D'ACTIONS WEB
             Container(

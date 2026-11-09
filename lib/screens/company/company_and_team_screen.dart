@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
@@ -14,6 +15,7 @@ class CompanyAndTeamScreen extends StatelessWidget {
       animation: appState,
       builder: (context, _) {
         final isDark = appState.isDarkMode;
+        final isWebPortal = kIsWeb || MediaQuery.of(context).size.width >= 800;
         final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
         final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB);
         final textPrimary = isDark ? Colors.white : const Color(0xFF1F2937);
@@ -73,6 +75,20 @@ class CompanyAndTeamScreen extends StatelessWidget {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyProfileScreen()));
                       },
                     ),
+                    if (isWebPortal) ...[
+                      _buildDivider(dividerCol),
+                      _buildRow(
+                        icon: Icons.workspace_premium_rounded,
+                        title: 'Abonnement & Formules (Portail Web)',
+                        badge: appState.subscriptionPlan,
+                        badgeColor: const Color(0xFF059669),
+                        textPrimary: textPrimary,
+                        isDark: isDark,
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionScreen()));
+                        },
+                      ),
+                    ],
                     _buildDivider(dividerCol),
                     _buildRow(
                       icon: Icons.auto_awesome_motion_rounded,

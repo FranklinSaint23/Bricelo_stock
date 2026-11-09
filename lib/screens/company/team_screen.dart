@@ -1094,25 +1094,25 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
         return Scaffold(
           backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF9FAFB),
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             elevation: 0,
             centerTitle: true,
             leading: InkWell(
               onTap: () => Navigator.pop(context),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
-                  SizedBox(width: 4),
-                  Text('Plus', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
+                  const SizedBox(width: 4),
+                  Text('Plus'.tr, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
             leadingWidth: 70,
-            title: const Text(
-              'Equipe',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
+            title: Text(
+              'Equipe'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
             ),
           ),
           body: members.isEmpty
@@ -1129,15 +1129,15 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                         child: const Icon(Icons.groups_rounded, size: 40, color: AppTheme.accentGold),
                       ),
                       const SizedBox(height: 14),
-                      const Text(
-                        'Aucun membre dans l\'équipe',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      Text(
+                        'Aucun membre dans l\'équipe'.tr,
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF1F2937)),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
-                        'Cliquez sur "Inviter" pour ajouter vos gérants, caissiers et magasiniers.',
+                      Text(
+                        'Cliquez sur "Inviter" pour ajouter vos gérants, caissiers et magasiniers.'.tr,
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       ),
                     ],
                   ),
@@ -1156,12 +1156,12 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                         decoration: BoxDecoration(
                           color: isDark ? AppTheme.darkSurface : Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
-                          boxShadow: const [
+                          border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB)),
+                          boxShadow: [
                             BoxShadow(
-                              color: Color(0x06000000),
+                              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
                               blurRadius: 4,
-                              offset: Offset(0, 2),
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
@@ -1200,15 +1200,15 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFFEF3C7),
+                                          color: isDark ? const Color(0xFF2E2211) : const Color(0xFFFEF3C7),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          m.role,
+                                          m.role.tr,
                                           style: const TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xFF92400E),
+                                            color: Color(0xFFD97706),
                                           ),
                                         ),
                                       ),
@@ -1216,15 +1216,15 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFE0F2FE),
+                                            color: isDark ? const Color(0xFF102847) : const Color(0xFFE0F2FE),
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(
                                             '💰 ${m.assignedCashDesk}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold,
-                                              color: Color(0xFF0369A1),
+                                              color: isDark ? AppTheme.accentGold : const Color(0xFF0369A1),
                                             ),
                                           ),
                                         ),
@@ -1237,7 +1237,7 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                             IconButton(
                               icon: const Icon(Icons.chevron_right, color: AppTheme.accentGold, size: 24),
                               onPressed: () => _showMemberDetailModal(context, m),
-                              tooltip: 'Détails du membre',
+                              tooltip: 'Détails du membre'.tr,
                             ),
                           ],
                         ),
@@ -1252,9 +1252,9 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
             elevation: 3,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             icon: const Icon(Icons.person_add_alt_1_rounded, color: AppTheme.primaryNavy, size: 20),
-            label: const Text(
-              'Inviter',
-              style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.w900, fontSize: 14),
+            label: Text(
+              'Inviter'.tr,
+              style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.w900, fontSize: 14),
             ),
             onPressed: () => _showInviteDialog(context),
           ),

@@ -39,12 +39,14 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                   children: [
                     DropdownButtonFormField<String>(
                       value: selectedType,
+                      dropdownColor: appState.isDarkMode ? AppTheme.darkSurface : Colors.white,
+                      style: TextStyle(color: appState.isDarkMode ? Colors.white : const Color(0xFF111827), fontSize: 13),
                       decoration: InputDecoration(
-                        labelText: 'Type de demande',
+                        labelText: 'Type de demande'.tr,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
-                      items: types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                      items: types.map((t) => DropdownMenuItem(value: t, child: Text(t.tr))).toList(),
                       onChanged: (val) {
                         if (val != null) setDlgState(() => selectedType = val);
                       },
@@ -146,7 +148,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: appState.isDarkMode ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Row(
           children: [
@@ -155,9 +157,11 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
               color: isApprove ? const Color(0xFF059669) : const Color(0xFFDC2626),
             ),
             const SizedBox(width: 8),
-            Text(
-              isApprove ? 'Approuver la demande' : 'Rejeter la demande',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            Expanded(
+              child: Text(
+                isApprove ? 'Approuver la demande'.tr : 'Rejeter la demande'.tr,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: appState.isDarkMode ? Colors.white : const Color(0xFF111827)),
+              ),
             ),
           ],
         ),
@@ -255,10 +259,17 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
           currentList = rejectedReqs;
         }
 
+        final isDark = appState.isDarkMode;
+        final pageBg = isDark ? AppTheme.darkScaffold : const Color(0xFFF9FAFB);
+        final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+        final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB);
+        final textPrimary = isDark ? Colors.white : const Color(0xFF111827);
+        final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280);
+
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
+          backgroundColor: pageBg,
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             elevation: 0,
             centerTitle: true,
             leading: Padding(
@@ -275,29 +286,29 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                 ),
               ),
             ),
-            title: const Text(
-              'Approbations',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
+            title: Text(
+              'Approbations'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
             ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-                tooltip: 'Créer une demande',
+                tooltip: 'Créer une demande'.tr,
                 onPressed: _showNewRequestDialog,
               ),
             ],
           ),
           body: Column(
             children: [
-              // BARRE D'ONGLETS SEGMENTEE (Screenshot 5 corrigé)
+              // BARRE D'ONGLETS SEGMENTEE
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 child: Container(
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: const Color(0xFFD1D5DB)),
+                    border: Border.all(color: cardBorder),
                   ),
                   child: Row(
                     children: List.generate(_tabs.length, (idx) {
@@ -316,13 +327,13 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                           ),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFFFEF3C7) : Colors.transparent,
+                              color: isSelected ? (isDark ? AppTheme.accentGold : const Color(0xFFFEF3C7)) : Colors.transparent,
                               borderRadius: BorderRadius.horizontal(
                                 left: idx == 0 ? const Radius.circular(22) : Radius.zero,
                                 right: idx == _tabs.length - 1 ? const Radius.circular(22) : Radius.zero,
                               ),
                               border: Border(
-                                right: idx < _tabs.length - 1 ? const BorderSide(color: Color(0xFFE5E7EB)) : BorderSide.none,
+                                right: idx < _tabs.length - 1 ? BorderSide(color: cardBorder) : BorderSide.none,
                               ),
                             ),
                             child: Center(
@@ -330,11 +341,11 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    _tabs[idx],
+                                    _tabs[idx].tr,
                                     style: TextStyle(
                                       fontSize: 12.5,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                      color: isSelected ? const Color(0xFF1F2937) : const Color(0xFF6B7280),
+                                      color: isSelected ? (isDark ? AppTheme.primaryNavy : const Color(0xFF1F2937)) : textSecondary,
                                     ),
                                   ),
                                   if (count > 0) ...[
@@ -342,7 +353,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                                       decoration: BoxDecoration(
-                                        color: isSelected ? AppTheme.primaryNavy : const Color(0xFFE5E7EB),
+                                        color: isSelected ? (isDark ? AppTheme.primaryNavy : AppTheme.primaryNavy) : (isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB)),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Text(
@@ -350,7 +361,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
-                                          color: isSelected ? Colors.white : const Color(0xFF4B5563),
+                                          color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF4B5563)),
                                         ),
                                       ),
                                     ),
@@ -373,28 +384,28 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.move_to_inbox_outlined,
                               size: 56,
-                              color: Color(0xFFD1D5DB),
+                              color: textSecondary,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               _selectedTab == 0
-                                  ? 'Aucune demande en attente.'
+                                  ? 'Aucune demande en attente.'.tr
                                   : _selectedTab == 1
-                                      ? 'Aucune demande approuvée.'
-                                      : 'Aucune demande rejetée.',
-                              style: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500),
+                                      ? 'Aucune demande approuvée.'.tr
+                                      : 'Aucune demande rejetée.'.tr,
+                              style: TextStyle(fontSize: 14, color: textSecondary, fontWeight: FontWeight.w500),
                             ),
                             const SizedBox(height: 16),
                             OutlinedButton.icon(
                               onPressed: _showNewRequestDialog,
                               icon: const Icon(Icons.add, size: 18),
-                              label: const Text('Créer une demande'),
+                              label: Text('Créer une demande'.tr),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.primaryNavy,
-                                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                foregroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                                side: BorderSide(color: cardBorder),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                               ),
                             ),
@@ -407,18 +418,18 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                         itemBuilder: (ctx, idx) {
                           final req = currentList[idx];
                           final badgeCol = _badgeColorForType(req.type);
-                          final dateStr = '${req.date.day.toString().padLeft(2, "0")}/${req.date.month.toString().padLeft(2, "0")}/${req.date.year} à ${req.date.hour.toString().padLeft(2, "0")}:${req.date.minute.toString().padLeft(2, "0")}';
+                          final dateStr = '${req.date.day.toString().padLeft(2, "0")}/${req.date.month.toString().padLeft(2, "0")}/${req.date.year} ${'à'.tr} ${req.date.hour.toString().padLeft(2, "0")}:${req.date.minute.toString().padLeft(2, "0")}';
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: cardBg,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFFE5E7EB)),
+                              border: Border.all(color: cardBorder),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
+                                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -437,35 +448,35 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        req.type,
+                                        req.type.tr,
                                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: badgeCol),
                                       ),
                                     ),
                                     Text(
                                       dateStr,
-                                      style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                                      style: TextStyle(fontSize: 11, color: textSecondary),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   req.title,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF111827)),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textPrimary),
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(Icons.person_outline, size: 14, color: Color(0xFF6B7280)),
+                                    Icon(Icons.person_outline, size: 14, color: textSecondary),
                                     const SizedBox(width: 4),
                                     Text(
                                       '${req.requesterName} · ${req.storeName}',
-                                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                                      style: TextStyle(fontSize: 12, color: textSecondary),
                                     ),
                                     const Spacer(),
                                     if (req.amount > 0)
                                       Text(
                                         AppTheme.formatFCFA(req.amount),
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.primaryNavy),
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                                       ),
                                   ],
                                 ),
@@ -475,13 +486,13 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                                     width: double.infinity,
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF9FAFB),
+                                      color: isDark ? const Color(0xFF162540) : const Color(0xFFF9FAFB),
                                       borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: const Color(0xFFF3F4F6)),
+                                      border: Border.all(color: cardBorder),
                                     ),
                                     child: Text(
                                       req.details,
-                                      style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563), height: 1.35),
+                                      style: TextStyle(fontSize: 12, color: textPrimary, height: 1.35),
                                     ),
                                   ),
                                 ],
@@ -490,12 +501,12 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                                   Row(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Icon(Icons.comment_outlined, size: 14, color: Color(0xFF6B7280)),
+                                      Icon(Icons.comment_outlined, size: 14, color: textSecondary),
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
                                           'Note: ${req.decisionNote}',
-                                          style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Color(0xFF4B5563)),
+                                          style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: textSecondary),
                                         ),
                                       ),
                                     ],
@@ -515,7 +526,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                                               padding: const EdgeInsets.symmetric(vertical: 8),
                                             ),
                                             onPressed: () => _showDecisionDialog(req, false),
-                                            child: const Text('Rejeter', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                            child: Text('Rejeter'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                           ),
                                         ),
                                         const SizedBox(width: 10),
@@ -529,7 +540,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                                             ),
                                             onPressed: () => _showDecisionDialog(req, true),
                                             child: Text(
-                                              req.type == 'Approvisionnement' ? 'Valider & Payer' : 'Approuver',
+                                              (req.type == 'Approvisionnement' ? 'Valider & Payer' : 'Approuver').tr,
                                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                             ),
                                           ),
@@ -540,17 +551,17 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFFEF3C7),
+                                        color: isDark ? const Color(0xFF2E2211) : const Color(0xFFFEF3C7),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: const Row(
+                                      child: Row(
                                         children: [
-                                          Icon(Icons.hourglass_top_rounded, color: Color(0xFF92400E), size: 16),
-                                          SizedBox(width: 6),
+                                          const Icon(Icons.hourglass_top_rounded, color: Color(0xFFD97706), size: 16),
+                                          const SizedBox(width: 6),
                                           Expanded(
                                             child: Text(
-                                              'En attente de validation par le propriétaire',
-                                              style: TextStyle(color: Color(0xFF92400E), fontSize: 12, fontWeight: FontWeight.bold),
+                                              'En attente de validation par le propriétaire'.tr,
+                                              style: const TextStyle(color: Color(0xFFD97706), fontSize: 12, fontWeight: FontWeight.bold),
                                             ),
                                           ),
                                         ],
@@ -567,10 +578,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: AppTheme.primaryNavy,
-            foregroundColor: Colors.white,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
+            foregroundColor: isDark ? AppTheme.accentGold : Colors.white,
             icon: const Icon(Icons.add),
-            label: const Text('Demande'),
+            label: Text('Demande'.tr),
             onPressed: _showNewRequestDialog,
           ),
         );

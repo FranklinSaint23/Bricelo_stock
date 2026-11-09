@@ -206,48 +206,61 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = AppState.instance;
-    final isEn = appState.currentLanguage == 'en';
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. TOP BAR : CHANGEMENT DE LANGUE & STATUT CLOUD SUPABASE
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InkWell(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LanguageOnboardingScreen()),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final isDark = AppState().isDarkMode;
+        final isEn = appState.currentLanguage == 'en';
+        final pageBg = isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC);
+        final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+        final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
+        final textPrimary = isDark ? Colors.white : AppTheme.primaryNavy;
+        final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+        return Scaffold(
+          backgroundColor: pageBg,
+          body: SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  // 1. TOP BAR : CHANGEMENT DE LANGUE
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => const LanguageOnboardingScreen()),
+                          );
+                        },
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: cardBorder),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(isEn ? '🇬🇧 EN' : '🇫🇷 FR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy)),
+                              const SizedBox(width: 4),
+                              Icon(Icons.keyboard_arrow_down, size: 16, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(isEn ? '🇬🇧 EN' : '🇫🇷 FR', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.primaryNavy)),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.keyboard_arrow_down, size: 16, color: AppTheme.primaryNavy),
-                        ],
-                      ),
-                    ),
+                      const SizedBox.shrink(),
+                    ],
                   ),
-                  const SizedBox.shrink(),
-                ],
-              ),
               const SizedBox(height: 18),
 
               // 2. EN-TÊTE LOGO & BIENVENUE
@@ -285,12 +298,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       'Bricelo Stock',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
-                        color: AppTheme.primaryNavy,
+                        color: textPrimary,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -299,7 +312,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       isEn
                           ? 'Point of Sale, Inventory & Accounting'
                           : 'Point de vente, gestion de stock & trésorerie',
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 13, color: textSecondary),
                     ),
                   ],
                 ),
@@ -311,10 +324,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 isEn
                     ? 'How would you like to continue?'
                     : 'Quel est votre profil sur la plateforme ?',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryNavy,
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 10),
@@ -326,6 +339,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: Icons.login_rounded,
                       title: isEn ? 'Owner' : 'Propriétaire',
                       subtitle: isEn ? 'My store account' : 'Déjà utilisateur',
+                      isDark: isDark,
                       onTap: () => setState(() {
                         _authMode = 0;
                         _clearAllFields();
@@ -339,6 +353,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: Icons.storefront_rounded,
                       title: isEn ? 'New Store' : 'Nouveau',
                       subtitle: isEn ? 'Create store' : 'Créer boutique',
+                      isDark: isDark,
                       onTap: () => setState(() {
                         _authMode = 1;
                         _clearAllFields();
@@ -352,6 +367,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: Icons.badge_rounded,
                       title: isEn ? 'Invited Staff' : 'Compte Invité',
                       subtitle: isEn ? 'Cashier, Staff...' : 'Équipier / Rôle',
+                      isDark: isDark,
                       onTap: () => setState(() {
                         _authMode = 2;
                         _clearAllFields();
@@ -366,10 +382,10 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: _authMode == 2 ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+                    color: _authMode == 2 ? AppTheme.accentGold : cardBorder,
                     width: _authMode == 2 ? 1.5 : 1.0,
                   ),
                   boxShadow: [
@@ -403,10 +419,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 : _authMode == 2
                                     ? (isEn ? 'Invited Team Member Login' : 'Connexion Compte Invité (Équipier)')
                                     : (isEn ? 'Sign in to your account' : 'Connexion Espace Propriétaire'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryNavy,
+                              color: textPrimary,
                             ),
                           ),
                         ),
@@ -608,10 +624,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-            ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -621,6 +641,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    bool isDark = false,
   }) {
     return InkWell(
       onTap: onTap,
@@ -629,10 +650,14 @@ class _LoginScreenState extends State<LoginScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryNavy : Colors.white,
+          color: isSelected
+              ? AppTheme.primaryNavy
+              : (isDark ? AppTheme.darkSurface : Colors.white),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+            color: isSelected
+                ? AppTheme.accentGold
+                : (isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
             width: isSelected ? 1.8 : 1.0,
           ),
           boxShadow: isSelected
@@ -675,7 +700,7 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 12.5,
-                color: isSelected ? Colors.white : AppTheme.primaryNavy,
+                color: isSelected ? Colors.white : (isDark ? Colors.white : AppTheme.primaryNavy),
               ),
             ),
             const SizedBox(height: 2),
@@ -685,7 +710,7 @@ class _LoginScreenState extends State<LoginScreen> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 10.5,
-                color: isSelected ? Colors.white70 : const Color(0xFF64748B),
+                color: isSelected ? Colors.white70 : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
               ),
             ),
           ],
@@ -702,29 +727,31 @@ class _LoginScreenState extends State<LoginScreen> {
     TextInputType keyboardType = TextInputType.text,
     TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
+    final isDark = AppState().isDarkMode;
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
+      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827)),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: AppTheme.primaryNavy, size: 20),
+        prefixIcon: Icon(icon, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 20),
         labelText: label,
         hintText: hint,
-        labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 13),
+        hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8), fontSize: 13),
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 1.5),
+          borderSide: BorderSide(color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       ),

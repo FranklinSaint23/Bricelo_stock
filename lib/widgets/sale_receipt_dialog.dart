@@ -184,14 +184,14 @@ class SaleReceiptDialog extends StatelessWidget {
                 color: AppTheme.primaryNavy,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.visibility_rounded, color: AppTheme.accentGold, size: 16),
-                  SizedBox(width: 6),
+                  const Icon(Icons.visibility_rounded, color: AppTheme.accentGold, size: 16),
+                  const SizedBox(width: 6),
                   Text(
-                    'Aperçu de la Facture',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    'Aperçu de la Facture'.tr,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ],
               ),
@@ -630,7 +630,7 @@ class SaleReceiptDialog extends StatelessWidget {
                             elevation: 0,
                           ),
                           icon: const Icon(Icons.print_rounded, size: 18, color: AppTheme.primaryNavy),
-                          label: const Text('Imprimer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          label: Text('Imprimer'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           onPressed: () async {
                             try {
                               await InvoicePrintService.printSale(sale);
@@ -654,7 +654,7 @@ class SaleReceiptDialog extends StatelessWidget {
                             elevation: 0,
                           ),
                           icon: const Icon(Icons.share_rounded, size: 18, color: AppTheme.accentGold),
-                          label: const Text('Partager PDF', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          label: Text('Partager PDF'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           onPressed: () async {
                             try {
                               await InvoicePrintService.shareSale(sale);
@@ -681,12 +681,12 @@ class SaleReceiptDialog extends StatelessWidget {
                         elevation: 0,
                       ),
                       icon: const Icon(Icons.chat_bubble_outline_rounded, size: 17),
-                      label: const Text('Envoyer texte WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                      label: Text('Envoyer texte WhatsApp'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
                       onPressed: () {
                         final txt = _buildPlainTextReceipt(appState);
                         Clipboard.setData(ClipboardData(text: txt));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Facture copiée ! Collez-la dans WhatsApp pour l\'envoyer au client.')),
+                          SnackBar(content: Text('Facture copiée ! Collez-la dans WhatsApp pour l\'envoyer au client.'.tr)),
                         );
                       },
                     ),
@@ -707,7 +707,7 @@ class SaleReceiptDialog extends StatelessWidget {
                         if (onNewSale != null) onNewSale!();
                       },
                       child: Text(
-                        onNewSale != null ? 'Nouvelle vente' : 'Fermer',
+                        (onNewSale != null ? 'Nouvelle vente' : 'Fermer').tr,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
                       ),
                     ),

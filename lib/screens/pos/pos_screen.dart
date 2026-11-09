@@ -485,7 +485,7 @@ class _PosScreenState extends State<PosScreen> {
                           ),
                           onPressed: appState.cart.isEmpty
                               ? null
-                              : () => _showCheckoutDialog(context),
+                              : () => _handleMobilePay(context),
                         ),
                       ),
                     ],

@@ -337,7 +337,6 @@ class AppTranslations {
     // --- Sales & Customers ---
     "Ventes & clients": "Sales & Customers",
     "Clients": "Customers",
-    "Nouveau client": "New Customer",
     "Modifier le client": "Edit Customer",
     "Nom complet": "Full Name",
     "Numéro de téléphone": "Phone Number",
@@ -436,7 +435,6 @@ class AppTranslations {
     "Achats": "Purchases",
     "Achat": "Purchase",
     "Total dépenses": "Total Expenses",
-    "Total achats": "Total Purchases",
 
     // --- Company, Team & Settings ---
     "Entreprise & équipe": "Company & Team",
@@ -539,8 +537,6 @@ class AppTranslations {
     "Fermer": "Close",
     "Confirmer": "Confirm",
     "Valider": "Validate",
-    "Supprimer": "Delete",
-    "Modifier": "Edit",
     "Ajouter": "Add",
     "Créer": "Create",
     "Continuer": "Continue",

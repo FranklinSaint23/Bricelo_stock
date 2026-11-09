@@ -371,10 +371,18 @@ class _CustomersScreenState extends State<CustomersScreen> {
           return true;
         }).toList();
 
+        final isDark = appState.isDarkMode;
+        final pageBg = isDark ? AppTheme.darkScaffold : Colors.white;
+        final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+        final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFD1D5DB);
+        final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+        final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+        final dividerCol = isDark ? const Color(0xFF1E3052) : const Color(0xFFF3F4F6);
+
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: pageBg,
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             elevation: 0,
             centerTitle: true,
             leading: Padding(
@@ -403,20 +411,21 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
                 child: TextField(
                   controller: _searchCtrl,
+                  style: TextStyle(color: textPrimary, fontSize: 14),
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Rechercher un client...'.tr,
-                    hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
-                    prefixIcon: const Icon(Icons.search, color: Color(0xFF4B5563)),
+                    hintStyle: TextStyle(fontSize: 14, color: textSecondary),
+                    prefixIcon: Icon(Icons.search, color: isDark ? AppTheme.accentGold : const Color(0xFF4B5563)),
                     filled: true,
-                    fillColor: const Color(0xFFFAFAFA),
+                    fillColor: cardBg,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                      borderSide: BorderSide(color: cardBorder),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                      borderSide: BorderSide(color: cardBorder),
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
@@ -428,7 +437,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFF9CA3AF)),
+                    color: cardBg,
+                    border: Border.all(color: cardBorder),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Row(
@@ -440,20 +450,23 @@ class _CustomersScreenState extends State<CustomersScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
-                              color: _selectedTab == 'Actifs' ? AppTheme.primaryNavy : Colors.transparent,
+                              color: _selectedTab == 'Actifs' ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy) : Colors.transparent,
                               borderRadius: const BorderRadius.horizontal(left: Radius.circular(24)),
-                              border: _selectedTab == 'Actifs' ? Border.all(color: AppTheme.primaryNavy, width: 1.2) : null,
                             ),
                             child: Center(
                               child: Text(
                                 'Actifs'.tr,
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _selectedTab == 'Actifs' ? AppTheme.accentGold : const Color(0xFF475569)),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: _selectedTab == 'Actifs' ? (isDark ? AppTheme.primaryNavy : AppTheme.accentGold) : textSecondary,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                      Container(width: 1, height: 38, color: const Color(0xFF9CA3AF)),
+                      Container(width: 1, height: 38, color: cardBorder),
                       Expanded(
                         child: InkWell(
                           onTap: () => setState(() => _selectedTab = 'Archivé'),
@@ -461,14 +474,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
-                              color: _selectedTab == 'Archivé' ? AppTheme.primaryNavy : Colors.transparent,
+                              color: _selectedTab == 'Archivé' ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy) : Colors.transparent,
                               borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
-                              border: _selectedTab == 'Archivé' ? Border.all(color: AppTheme.primaryNavy, width: 1.2) : null,
                             ),
                             child: Center(
                               child: Text(
                                 'Archivé'.tr,
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _selectedTab == 'Archivé' ? AppTheme.accentGold : const Color(0xFF475569)),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: _selectedTab == 'Archivé' ? (isDark ? AppTheme.primaryNavy : AppTheme.accentGold) : textSecondary,
+                                ),
                               ),
                             ),
                           ),
@@ -487,11 +503,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.groups_outlined, size: 68, color: Color(0xFFD1D5DB)),
+                            Icon(Icons.groups_outlined, size: 68, color: textSecondary),
                             const SizedBox(height: 14),
                             Text(
-                              _selectedTab == 'Archivé' ? 'Aucun client archivé.' : 'Aucun client actif.',
-                              style: const TextStyle(fontSize: 15, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500),
+                              (_selectedTab == 'Archivé' ? 'Aucun client archivé.' : 'Aucun client actif.').tr,
+                              style: TextStyle(fontSize: 15, color: textSecondary, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -499,23 +515,23 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         itemCount: filtered.length,
-                        separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                        separatorBuilder: (context, index) => Divider(height: 1, color: dividerCol),
                         itemBuilder: (context, idx) {
                           final c = filtered[idx];
                           return ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: c.isArchived ? Colors.grey.shade200 : const Color(0xFFFEF3C7),
+                              backgroundColor: c.isArchived ? (isDark ? const Color(0xFF1E293B) : Colors.grey.shade200) : (isDark ? const Color(0xFF2E2211) : const Color(0xFFFEF3C7)),
                               child: Text(
                                 c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: c.isArchived ? Colors.grey.shade600 : const Color(0xFF92400E),
+                                  color: c.isArchived ? (isDark ? Colors.white60 : Colors.grey.shade600) : (isDark ? AppTheme.accentGold : const Color(0xFF92400E)),
                                 ),
                               ),
                             ),
-                            title: Text(c.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            subtitle: Text(c.phone.isNotEmpty ? c.phone : (c.address.isNotEmpty ? c.address : 'Aucun détail')),
-                            trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                            title: Text(c.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textPrimary)),
+                            subtitle: Text(c.phone.isNotEmpty ? c.phone : (c.address.isNotEmpty ? c.address : 'Aucun détail'.tr), style: TextStyle(color: textSecondary)),
+                            trailing: Icon(Icons.chevron_right, size: 18, color: textSecondary),
                             onTap: () => _showCustomerDetailModal(c),
                           );
                         },

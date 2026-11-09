@@ -431,10 +431,17 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         final totalRevenue = sales.fold<double>(0, (sum, s) => sum + s.total);
         final totalEncaisse = sales.fold<double>(0, (sum, s) => sum + s.amountReceived);
 
+        final isDark = appState.isDarkMode;
+        final pageBg = isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC);
+        final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+        final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
+        final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+        final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFC),
+          backgroundColor: pageBg,
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             elevation: 0,
             centerTitle: true,
             leading: Padding(
@@ -467,7 +474,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   icon: const Icon(Icons.share_outlined, size: 16),
-                  label: const Text('Partager', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                  label: Text('Partager'.tr, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                   onPressed: () async {
                     try {
                       await _shareSalesJournalPdf(sales, totalEncaisse);
@@ -490,11 +497,12 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: TextField(
                   controller: _searchCtrl,
+                  style: TextStyle(color: textPrimary, fontSize: 14),
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: 'Rechercher par numero ou client...',
-                    hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
-                    prefixIcon: const Icon(Icons.search, color: Color(0xFF4B5563)),
+                    hintText: 'Rechercher par numéro ou client...'.tr,
+                    hintStyle: TextStyle(fontSize: 14, color: textSecondary),
+                    prefixIcon: Icon(Icons.search, color: isDark ? AppTheme.accentGold : const Color(0xFF4B5563)),
                     suffixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -507,18 +515,18 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                             },
                           ),
                         IconButton(
-                          icon: const Icon(Icons.tune_rounded, color: Color(0xFF4B5563)),
-                          tooltip: 'Filtres',
+                          icon: Icon(Icons.tune_rounded, color: isDark ? AppTheme.accentGold : const Color(0xFF4B5563)),
+                          tooltip: 'Filtres'.tr,
                           onPressed: _showFilterBottomSheet,
                         ),
                       ],
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                      borderSide: BorderSide(color: cardBorder),
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    fillColor: Colors.white,
+                    fillColor: cardBg,
                     filled: true,
                   ),
                 ),
@@ -552,19 +560,19 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.accentGold : const Color(0xFFF1F5F9),
+                            color: isSelected ? AppTheme.accentGold : cardBg,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: isSelected ? AppTheme.accentGold : const Color(0xFFCBD5E1),
+                              color: isSelected ? AppTheme.accentGold : cardBorder,
                             ),
                           ),
                           child: Center(
                             child: Text(
-                              p,
+                              p.tr,
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                color: isSelected ? AppTheme.primaryNavy : const Color(0xFF475569),
+                                color: isSelected ? AppTheme.primaryNavy : (isDark ? Colors.white70 : const Color(0xFF475569)),
                               ),
                             ),
                           ),
@@ -580,42 +588,42 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: const Color(0xFFFFFBEB), // Light gold tint
+                color: isDark ? const Color(0xFF162540) : const Color(0xFFFFFBEB),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${sales.length} vente(s) • ${AppTheme.formatFCFA(totalRevenue)}',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.primaryNavy),
+                      '${sales.length} ${'vente(s)'.tr} • ${AppTheme.formatFCFA(totalRevenue)}',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.primaryNavy),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Encaissé ${AppTheme.formatFCFA(totalEncaisse)}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFFD97706), fontWeight: FontWeight.w700),
+                      '${'Encaissé'.tr} ${AppTheme.formatFCFA(totalEncaisse)}',
+                      style: TextStyle(fontSize: 12, color: isDark ? AppTheme.accentGold : const Color(0xFFD97706), fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 child: Text(
-                  'Votre formule affiche les 30 derniers jours.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  'Votre formule affiche les 30 derniers jours.'.tr,
+                  style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
               ),
 
               // 4. LISTE DYNAMIQUE DES VENTES
               Expanded(
                 child: sales.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.receipt_outlined, size: 70, color: Color(0xFFD1D5DB)),
-                            SizedBox(height: 14),
+                            Icon(Icons.receipt_outlined, size: 70, color: textSecondary),
+                            const SizedBox(height: 14),
                             Text(
-                              'Aucune vente enregistrée',
-                              style: TextStyle(fontSize: 15, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500),
+                              'Aucune vente enregistrée'.tr,
+                              style: TextStyle(fontSize: 15, color: textSecondary, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -642,20 +650,20 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        isToday ? 'AUJOURD\'HUI' : _formatDateOnly(sale.createdAt).toUpperCase(),
-                                        style: const TextStyle(
+                                        isToday ? 'AUJOURD\'HUI'.tr : _formatDateOnly(sale.createdAt).toUpperCase(),
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w900,
                                           fontSize: 12.5,
-                                          color: Color(0xFF64748B),
+                                          color: textSecondary,
                                           letterSpacing: 0.5,
                                         ),
                                       ),
                                       Text(
                                         AppTheme.formatFCFA(sale.total),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 12.5,
-                                          color: Color(0xFF64748B),
+                                          color: textSecondary,
                                         ),
                                       ),
                                     ],
@@ -675,11 +683,11 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                   margin: const EdgeInsets.only(bottom: 8),
                                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: cardBg,
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                                    boxShadow: const [
-                                      BoxShadow(color: Colors.black12, blurRadius: 3, offset: Offset(0, 1)),
+                                    border: Border.all(color: cardBorder),
+                                    boxShadow: [
+                                      BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08), blurRadius: 3, offset: const Offset(0, 1)),
                                     ],
                                   ),
                                   child: Row(
@@ -690,16 +698,16 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                           children: [
                                             Text(
                                               sale.historyReference,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontWeight: FontWeight.w900,
                                                 fontSize: 14,
-                                                color: Color(0xFF0F172A),
+                                                color: textPrimary,
                                               ),
                                             ),
                                             const SizedBox(height: 3),
                                             Text(
                                               _formatDateTime(sale.createdAt),
-                                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                              style: TextStyle(fontSize: 11.5, color: textSecondary),
                                             ),
                                           ],
                                         ),
@@ -709,10 +717,10 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                         children: [
                                           Text(
                                             AppTheme.formatFCFA(sale.total),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.w900,
                                               fontSize: 14.5,
-                                              color: Color(0xFF0F172A),
+                                              color: isDark ? AppTheme.accentGold : const Color(0xFF0F172A),
                                             ),
                                           ),
                                           const SizedBox(height: 4),
@@ -721,17 +729,17 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                             decoration: BoxDecoration(
                                               color: sale.paymentMethod == 'À Crédit'
                                                   ? const Color(0xFFFEF3C7)
-                                                  : const Color(0xFFFFFBEB),
+                                                  : (isDark ? const Color(0xFF2E2211) : const Color(0xFFFFFBEB)),
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: Text(
-                                              sale.paymentMethod == 'À Crédit' ? 'À Crédit' : 'Terminé',
+                                              (sale.paymentMethod == 'À Crédit' ? 'À Crédit' : 'Terminé').tr,
                                               style: TextStyle(
                                                 fontSize: 10.5,
                                                 fontWeight: FontWeight.bold,
                                                 color: sale.paymentMethod == 'À Crédit'
                                                     ? const Color(0xFFB45309)
-                                                    : const Color(0xFFD97706),
+                                                    : (isDark ? AppTheme.accentGold : const Color(0xFFD97706)),
                                               ),
                                             ),
                                           ),

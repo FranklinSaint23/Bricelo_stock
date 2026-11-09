@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 
-import 'package:flutter/material.dart';
-import 'package:stock_prime/theme/app_theme.dart';
-import 'package:stock_prime/services/app_state.dart';
-
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
 

@@ -93,264 +93,283 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = appState.isDarkMode;
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final isDark = appState.isDarkMode;
+        final pageBg = isDark ? AppTheme.darkScaffold : Colors.white;
+        final textPrimary = isDark ? Colors.white : const Color(0xFF111827);
+        final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563);
+        final dividerCol = isDark ? const Color(0xFF1E3052) : const Color(0xFFE5E7EB);
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
-      appBar: AppBar(
-        backgroundColor: AppTheme.primaryNavy,
-        elevation: 0,
-        centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
+        return Scaffold(
+          backgroundColor: pageBg,
+          appBar: AppBar(
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
+            elevation: 0,
+            centerTitle: true,
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: InkWell(
+                onTap: () => Navigator.pop(context),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
+                ),
               ),
-              child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
+            ),
+            title: Text(
+              'Profil de l\'entreprise'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
             ),
           ),
-        ),
-        title: const Text(
-          'Profil de l\'entreprise',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        children: [
-          // 1. SECTION LOGO (FORMAT RECTANGLE STRICT)
-          Center(
-            child: Column(
-              children: [
-                Container(
-                  width: 220,
-                  height: 100, // Exact rectangle (ratio 2.2:1)
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.accentGold,
-                      width: 1.8,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: (_logoBase64 != null && _logoBase64!.trim().isNotEmpty)
-                        ? Image.memory(
-                            base64Decode(_logoBase64!.contains(',') ? _logoBase64!.split(',').last : _logoBase64!),
-                            fit: BoxFit.fill,
-                            errorBuilder: (_, _, _) => _buildLogoPlaceholder(),
-                          )
-                        : _buildLogoPlaceholder(),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          body: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            children: [
+              // 1. SECTION LOGO (FORMAT RECTANGLE STRICT)
+              Center(
+                child: Column(
                   children: [
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppTheme.primaryNavy, width: 1.2),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    Container(
+                      width: 220,
+                      height: 100, // Exact rectangle (ratio 2.2:1)
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.accentGold,
+                          width: 1.8,
+                        ),
                       ),
-                      onPressed: _pickLogo,
-                      icon: const Icon(Icons.photo_library_outlined, size: 18, color: AppTheme.primaryNavy),
-                      label: Text(
-                        (_logoBase64 != null && _logoBase64!.isNotEmpty) ? 'Changer le logo' : 'Ajouter un logo',
-                        style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 13),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: (_logoBase64 != null && _logoBase64!.trim().isNotEmpty)
+                            ? Image.memory(
+                                base64Decode(_logoBase64!.contains(',') ? _logoBase64!.split(',').last : _logoBase64!),
+                                fit: BoxFit.fill,
+                                errorBuilder: (_, _, _) => _buildLogoPlaceholder(),
+                              )
+                            : _buildLogoPlaceholder(),
                       ),
                     ),
-                    if (_logoBase64 != null && _logoBase64!.isNotEmpty) ...[
-                      const SizedBox(width: 8),
-                      IconButton(
-                        tooltip: 'Supprimer le logo',
-                        icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626)),
-                        onPressed: _removeLogo,
-                      ),
-                    ],
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                            side: BorderSide(color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, width: 1.2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          ),
+                          onPressed: _pickLogo,
+                          icon: Icon(Icons.photo_library_outlined, size: 18, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                          label: Text(
+                            ((_logoBase64 != null && _logoBase64!.isNotEmpty) ? 'Changer le logo' : 'Ajouter un logo').tr,
+                            style: TextStyle(color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
+                        if (_logoBase64 != null && _logoBase64!.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          IconButton(
+                            tooltip: 'Supprimer le logo'.tr,
+                            icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626)),
+                            onPressed: _removeLogo,
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Format rectangle recommandé pour l\'en-tête de facture'.tr,
+                      style: TextStyle(fontSize: 11, color: textSecondary),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Format rectangle recommandé pour l\'en-tête de facture',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Divider(height: 1),
-          const SizedBox(height: 20),
-
-          // 2. NOM DE L'ENTREPRISE
-          TextField(
-            controller: _nameController,
-            decoration: InputDecoration(
-              labelText: 'Nom de l\'entreprise *',
-              hintText: 'Ex: Bricelo Confort',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13, fontWeight: FontWeight.bold),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // 3. ACTIVITÉ / SLOGAN
-          TextField(
-            controller: _activityController,
-            maxLines: 2,
-            decoration: InputDecoration(
-              labelText: 'Activité principale / Slogan',
-              hintText: 'Ex: VENTE DE MATELAS, LITS, MOUSSES, MEUBLES ET ACCESSOIRES MENAGERS',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13, fontWeight: FontWeight.bold),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // 4. ADRESSE / SITUATION GÉOGRAPHIQUE
-          TextField(
-            controller: _addressController,
-            decoration: InputDecoration(
-              labelText: 'Adresse / Localisation',
-              hintText: 'Ex: Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13, fontWeight: FontWeight.bold),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // 5. TÉLÉPHONE
-          TextField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              labelText: 'Téléphone *',
-              hintText: 'Ex: +237 689 39 88 07',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13, fontWeight: FontWeight.bold),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // 6. EMAIL
-          TextField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: 'Email',
-              hintText: 'contact@bricelo.com',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // 7. INFORMATIONS LÉGALES & FISCALES
-          const Text(
-            'Informations légales & fiscales',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
-          ),
-          const SizedBox(height: 10),
-
-          // N° CONTRIBUABLE (NIU)
-          TextField(
-            controller: _taxIdController,
-            decoration: InputDecoration(
-              labelText: 'N° de Contribuable (NIU)',
-              hintText: 'Ex: N° Cont: P049616604139M',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // RCCM
-          TextField(
-            controller: _rccmController,
-            decoration: InputDecoration(
-              labelText: 'Registre du commerce (RCCM)',
-              hintText: 'Ex: RC/DLA/2026/B/1234',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // PAYS
-          DropdownButtonFormField<String>(
-            initialValue: _selectedCountry,
-            decoration: InputDecoration(
-              labelText: 'Pays',
-              labelStyle: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            ),
-            items: _countries.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedCountry = val);
-            },
-          ),
-          const SizedBox(height: 30),
-
-          // BOUTON ENREGISTRER
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryNavy,
-                foregroundColor: AppTheme.accentGold,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
               ),
-              onPressed: () async {
-                final name = _nameController.text.trim();
-                if (name.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Le nom de l\'entreprise est obligatoire.'), backgroundColor: Color(0xFFDC2626)),
-                  );
-                  return;
-                }
+              const SizedBox(height: 20),
+              Divider(height: 1, color: dividerCol),
+              const SizedBox(height: 20),
 
-                await appState.updateCompanyProfile(
-                  name: name,
-                  phone: _phoneController.text.trim(),
-                  email: _emailController.text.trim(),
-                  address: _addressController.text.trim(),
-                  activity: _activityController.text.trim(),
-                  taxNo: _taxIdController.text.trim(),
-                  rccmNo: _rccmController.text.trim(),
-                  logoBase64: _logoBase64 ?? '',
-                );
+              // 2. NOM DE L'ENTREPRISE
+              TextField(
+                controller: _nameController,
+                style: TextStyle(color: textPrimary),
+                decoration: InputDecoration(
+                  labelText: '${'Nom de l\'entreprise'.tr} *',
+                  hintText: 'Ex: Bricelo Confort',
+                  labelStyle: TextStyle(color: textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 14),
 
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Profil d\'entreprise et logo enregistrés avec succès !'),
-                    backgroundColor: Color(0xFF059669),
+              // 3. ACTIVITÉ / SLOGAN
+              TextField(
+                controller: _activityController,
+                maxLines: 2,
+                style: TextStyle(color: textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Activité principale / Slogan'.tr,
+                  hintText: 'Ex: VENTE DE MATELAS, LITS, MOUSSES, MEUBLES ET ACCESSOIRES MENAGERS',
+                  labelStyle: TextStyle(color: textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 4. ADRESSE / SITUATION GÉOGRAPHIQUE
+              TextField(
+                controller: _addressController,
+                style: TextStyle(color: textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Adresse / Localisation'.tr,
+                  hintText: 'Ex: Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)',
+                  labelStyle: TextStyle(color: textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 5. TÉLÉPHONE
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                style: TextStyle(color: textPrimary),
+                decoration: InputDecoration(
+                  labelText: '${'Téléphone'.tr} *',
+                  hintText: 'Ex: +237 689 39 88 07',
+                  labelStyle: TextStyle(color: textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 6. EMAIL
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: TextStyle(color: textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Email'.tr,
+                  hintText: 'contact@bricelo.com',
+                  labelStyle: TextStyle(color: textSecondary, fontSize: 13),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // 7. INFORMATIONS LÉGALES & FISCALES
+              Text(
+                'Informations légales & fiscales'.tr,
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textPrimary),
+              ),
+              const SizedBox(height: 10),
+
+              // N° CONTRIBUABLE (NIU)
+              TextField(
+                controller: _taxIdController,
+                style: TextStyle(color: textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'N° de Contribuable (NIU)'.tr,
+                  hintText: 'Ex: N° Cont: P049616604139M',
+                  labelStyle: TextStyle(color: textSecondary, fontSize: 13),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // RCCM
+              TextField(
+                controller: _rccmController,
+                style: TextStyle(color: textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Registre du commerce (RCCM)'.tr,
+                  hintText: 'Ex: RC/DLA/2026/B/1234',
+                  labelStyle: TextStyle(color: textSecondary, fontSize: 13),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // PAYS
+              DropdownButtonFormField<String>(
+                initialValue: _selectedCountry,
+                dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
+                style: TextStyle(color: textPrimary, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Pays'.tr,
+                  labelStyle: TextStyle(color: textSecondary, fontSize: 13),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                ),
+                items: _countries.map((c) => DropdownMenuItem(value: c, child: Text(c.tr))).toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedCountry = val);
+                },
+              ),
+              const SizedBox(height: 30),
+
+              // BOUTON ENREGISTRER
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                    foregroundColor: isDark ? AppTheme.primaryNavy : AppTheme.accentGold,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
                   ),
-                );
-                Navigator.pop(context);
-              },
-              child: const Text('Enregistrer le profil', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-            ),
+                  onPressed: () async {
+                    final name = _nameController.text.trim();
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Le nom de l\'entreprise est obligatoire.'.tr), backgroundColor: const Color(0xFFDC2626)),
+                      );
+                      return;
+                    }
+
+                    await appState.updateCompanyProfile(
+                      name: name,
+                      phone: _phoneController.text.trim(),
+                      email: _emailController.text.trim(),
+                      address: _addressController.text.trim(),
+                      activity: _activityController.text.trim(),
+                      taxNo: _taxIdController.text.trim(),
+                      rccmNo: _rccmController.text.trim(),
+                      logoBase64: _logoBase64 ?? '',
+                    );
+
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Profil d\'entreprise et logo enregistrés avec succès !'.tr),
+                        backgroundColor: const Color(0xFF059669),
+                      ),
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: Text('Enregistrer le profil'.tr, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
-          const SizedBox(height: 24),
-        ],
-      ),
+        );
+      },
     );
   }
 

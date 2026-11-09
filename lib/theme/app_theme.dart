@@ -163,13 +163,3 @@ class AppTheme {
     return '$formatted F CFA';
   }
 }
-
-  // Formatage monétaire F CFA
-  static String formatFCFA(num amount) {
-    final rounded = amount.round();
-    final str = rounded.toString();
-    final reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
-    final formatted = str.replaceAllMapped(reg, (Match m) => '${m[1]}.');
-    return '$formatted F CFA';
-  }
-}

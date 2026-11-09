@@ -619,23 +619,23 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         return Scaffold(
           backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC),
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             elevation: 0,
             centerTitle: true,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
               onPressed: () => Navigator.pop(context),
             ),
-            title: const Text(
-              'Dépenses',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
+            title: Text(
+              'Dépenses'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
             ),
           ),
           body: Column(
             children: [
               // Périodes sous le header (scroll horizontal clair et accessible)
               Container(
-                color: isDark ? const Color(0xFF0F1A28) : Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: SizedBox(
                   height: 38,
@@ -667,7 +667,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           ),
                           child: Center(
                             child: Text(
-                              p,
+                              p.tr,
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
@@ -685,13 +685,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               // Bannière total dépenses de la période
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: Colors.white,
+                color: isDark ? const Color(0xFF162540) : Colors.white,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Total ($_selectedSegment)',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                      '${'Total'.tr} (${_selectedSegment.tr})',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
                     ),
                     Text(
                       AppTheme.formatFCFA(totalPeriod),
@@ -704,7 +704,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   ],
                 ),
               ),
-              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+              Divider(height: 1, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
 
               // Liste des dépenses ou État vide
               Expanded(
@@ -726,18 +726,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'Aucune dépense ($_selectedSegment)',
-                                style: const TextStyle(
+                                '${'Aucune dépense'.tr} (${_selectedSegment.tr})',
+                                style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 16,
-                                  color: Color(0xFF1E293B),
+                                  color: isDark ? Colors.white : const Color(0xFF1E293B),
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              const Text(
-                                'Cliquez sur Créer pour enregistrer un loyer, salaire, facture ou charge d\'exploitation.',
+                              Text(
+                                'Cliquez sur Créer pour enregistrer un loyer, salaire, facture ou charge d\'exploitation.'.tr,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                                style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 13),
                               ),
                             ],
                           ),
@@ -760,12 +760,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: isDark ? AppTheme.darkSurface : Colors.white,
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.02),
+                                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.02),
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
                                   ),
@@ -777,10 +777,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                     width: 44,
                                     height: 44,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFFEF3C7),
+                                      color: isDark ? const Color(0xFF2E2211) : const Color(0xFFFEF3C7),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: Icon(catMatch.icon, color: const Color(0xFFB45309), size: 22),
+                                    child: Icon(catMatch.icon, color: isDark ? AppTheme.accentGold : const Color(0xFFB45309), size: 22),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -789,10 +789,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                       children: [
                                         Text(
                                           exp.description.isNotEmpty ? exp.description : exp.category,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 14,
-                                            color: Color(0xFF0F172A),
+                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -803,12 +803,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFFF1F5F9),
+                                                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                                                 borderRadius: BorderRadius.circular(4),
                                               ),
                                               child: Text(
-                                                exp.category,
-                                                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                                                exp.category.tr,
+                                                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xFF475569)),
                                               ),
                                             ),
                                             const SizedBox(width: 6),

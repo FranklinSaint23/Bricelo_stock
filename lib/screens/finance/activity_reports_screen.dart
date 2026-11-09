@@ -351,16 +351,16 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
         return Scaffold(
           backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC),
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
               onPressed: () => Navigator.pop(context),
             ),
             centerTitle: true,
-            title: const Text(
-              'Rapport d\'activité',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
+            title: Text(
+              'Rapport d\'activité'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
             ),
             actions: [
               IconButton(

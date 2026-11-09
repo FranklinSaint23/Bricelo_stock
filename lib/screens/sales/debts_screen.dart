@@ -263,10 +263,17 @@ class _DebtsScreenState extends State<DebtsScreen> {
           return true;
         }).toList();
 
+        final isDark = appState.isDarkMode;
+        final pageBg = isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC);
+        final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+        final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
+        final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+        final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFC),
+          backgroundColor: pageBg,
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             elevation: 0,
             centerTitle: true,
             leading: Padding(
@@ -280,9 +287,9 @@ class _DebtsScreenState extends State<DebtsScreen> {
                 ),
               ),
             ),
-            title: const Text(
-              'Recouvrement des dettes',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
+            title: Text(
+              'Recouvrement des dettes'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
             ),
           ),
           body: Column(
@@ -345,14 +352,16 @@ class _DebtsScreenState extends State<DebtsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 child: TextField(
                   controller: _searchCtrl,
+                  style: TextStyle(color: textPrimary, fontSize: 13),
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: 'Rechercher un client ou téléphone...',
-                    hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-                    prefixIcon: const Icon(Icons.search, size: 20),
+                    hintText: 'Rechercher un client ou téléphone...'.tr,
+                    hintStyle: TextStyle(fontSize: 13, color: textSecondary),
+                    prefixIcon: Icon(Icons.search, size: 20, color: textSecondary),
                     filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    fillColor: cardBg,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: cardBorder)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: cardBorder)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
                 ),
@@ -373,17 +382,17 @@ class _DebtsScreenState extends State<DebtsScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: isSel ? AppTheme.primaryNavy : Colors.white,
+                              color: isSel ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy) : cardBg,
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: isSel ? AppTheme.primaryNavy : const Color(0xFFCBD5E1)),
+                              border: Border.all(color: isSel ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy) : cardBorder),
                             ),
                             child: Center(
                               child: Text(
-                                tab,
+                                tab.tr,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12.5,
-                                  color: isSel ? AppTheme.accentGold : const Color(0xFF475569),
+                                  color: isSel ? (isDark ? AppTheme.primaryNavy : AppTheme.accentGold) : textSecondary,
                                 ),
                               ),
                             ),
@@ -415,19 +424,24 @@ class _DebtsScreenState extends State<DebtsScreen> {
                           final d = displayedDebts[idx];
                           final isOverdue = !d.isSettled && (d.dueDate != null && d.dueDate!.isBefore(DateTime.now()));
 
-                          return Card(
-                            elevation: 1,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          return Container(
                             margin: const EdgeInsets.only(bottom: 12),
-                            child: Padding(
-                              padding: const EdgeInsets.all(14),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(d.customerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: cardBg,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: cardBorder),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), blurRadius: 4, offset: const Offset(0, 1)),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(d.customerName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textPrimary)),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                         decoration: BoxDecoration(
@@ -462,7 +476,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
                                     ],
                                   ),
                                   const SizedBox(height: 10),
-                                  const Divider(height: 1),
+                                  Divider(height: 1, color: cardBorder),
                                   const SizedBox(height: 8),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
@@ -476,10 +490,10 @@ class _DebtsScreenState extends State<DebtsScreen> {
                                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                           ),
                                           icon: const Icon(Icons.chat_bubble_outline, size: 15),
-                                          label: const Text('Relancer', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                          label: Text('Relancer'.tr, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                                           onPressed: () {
                                             ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('Message de relance WhatsApp prêt pour ${d.customerName}.')),
+                                              SnackBar(content: Text('Message de relance WhatsApp prêt pour ${d.customerName}.'.tr)),
                                             );
                                           },
                                         ),
@@ -493,36 +507,35 @@ class _DebtsScreenState extends State<DebtsScreen> {
                                             elevation: 0,
                                           ),
                                           icon: const Icon(Icons.payments_rounded, size: 16),
-                                          label: const Text('Encaisser', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                          label: Text('Encaisser'.tr, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                                           onPressed: () => _showRecordPaymentModal(d),
                                         ),
                                       ] else ...[
                                         const Icon(Icons.check_circle, size: 16, color: Color(0xFF16A34A)),
                                         const SizedBox(width: 4),
-                                        const Text('Dette entièrement régularisée', style: TextStyle(fontSize: 12, color: Color(0xFF16A34A), fontWeight: FontWeight.bold)),
+                                        Text('Dette entièrement régularisée'.tr, style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A), fontWeight: FontWeight.bold)),
                                       ],
                                     ],
                                   ),
                                 ],
                               ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: AppTheme.accentGold,
-            foregroundColor: AppTheme.primaryNavy,
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            icon: const Icon(Icons.add_circle_outline, size: 20),
-            label: const Text('Nouvelle dette', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            onPressed: _showAddManualDebtModal,
-          ),
-        );
-      },
-    );
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton.extended(
+              backgroundColor: AppTheme.accentGold,
+              foregroundColor: AppTheme.primaryNavy,
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              icon: const Icon(Icons.add_circle_outline, size: 20),
+              label: Text('Nouvelle dette'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              onPressed: _showAddManualDebtModal,
+            ),
+          );
+        },
+      );
+    }
   }
-}

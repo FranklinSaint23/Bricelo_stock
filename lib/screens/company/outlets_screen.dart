@@ -436,7 +436,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
         return Scaffold(
           backgroundColor: pageBg,
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
             elevation: 0,
             centerTitle: true,
             leading: Padding(

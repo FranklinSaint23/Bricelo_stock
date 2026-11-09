@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:stock_prime/theme/app_theme.dart';
@@ -398,6 +399,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       builder: (context, _) {
         final emailDisplay = appState.userEmail.isNotEmpty ? appState.userEmail : 'Non renseigné';
         final phoneDisplay = appState.userPhone.isNotEmpty ? appState.userPhone : 'Non renseigné';
+        final isWebPortal = kIsWeb || MediaQuery.of(context).size.width >= 800;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF9FAFB),
@@ -426,9 +428,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 780),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 // 1. CARTE PROFIL & LOGO DE LA BOUTIQUE
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -700,63 +705,106 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 ),
                 const SizedBox(height: 22),
 
-                // 4. ABONNEMENT (LECTURE SEULE — SYNCHRONISÉ DEPUIS LE PORTAIL WEB / BD)
-                const Text(
-                  'Abonnement',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                // 4. ABONNEMENT
+                // Sur Mobile (!isWebPortal) : consommation uniquement (lecture seule sans lien ni chevron).
+                // Sur le Portail Web (isWebPortal) : gestion complète des formules synchronisée vers Supabase & Mobile.
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Abonnement',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                    ),
+                    if (isWebPortal)
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                          );
+                        },
+                        child: const Text(
+                          'Voir les formules',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primaryNavy),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.accentGold.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
+                InkWell(
+                  onTap: isWebPortal
+                      ? () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                          );
+                        }
+                      : null,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                        child: const Icon(Icons.workspace_premium_rounded, color: AppTheme.accentGold, size: 24),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                'Formule : ${_getSubscriptionPlan(appState)}',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFDCFCE7),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'Actif',
-                                style: TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.accentGold.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.workspace_premium_rounded, color: AppTheme.accentGold, size: 24),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'Formule : ${_getSubscriptionPlan(appState)}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'Actif',
+                                  style: TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (isWebPortal)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryNavy,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'Changer de formule',
+                              style: TextStyle(color: AppTheme.accentGold, fontSize: 11.5, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 22),
@@ -776,9 +824,18 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                   ),
                   child: InkWell(
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Ouverture du portail web Bricelo (https://bricelo.com)...')),
-                      );
+                      if (isWebPortal) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Rendez-vous sur le portail web Bricelo Stock pour souscrire ou gérer votre abonnement.'),
+                          ),
+                        );
+                      }
                     },
                     child: Row(
                       children: const [
@@ -842,7 +899,9 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         );

@@ -93,26 +93,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: [
-                    Text(
-                      '${'Bonjour'.tr}, ${appState.displayUserName} 👋',
-                      style: TextStyle(
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const MyAccountScreen()));
+                      },
+                      borderRadius: BorderRadius.circular(28),
+                      child: Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.accentGold, width: 2),
+                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: _buildShopLogoAvatar(appState, 52),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
+                    const SizedBox(width: 14),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.calendar_today_rounded, size: 14, color: isDark ? AppTheme.accentGold : const Color(0xFF64748B)),
-                        const SizedBox(width: 6),
                         Text(
-                          AppTranslations.formattedCurrentDate,
-                          style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w600),
+                          '${'Bonjour'.tr}, ${appState.displayUserName} 👋',
+                          style: TextStyle(
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today_rounded, size: 14, color: isDark ? AppTheme.accentGold : const Color(0xFF64748B)),
+                            const SizedBox(width: 6),
+                            Text(
+                              AppTranslations.formattedCurrentDate,
+                              style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -449,6 +471,220 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 18),
+
+                      // CARTE ABONNEMENT PORTAIL WEB (Synchronisé avec l'app mobile en consommation)
+                      if (appState.userRole.toLowerCase().contains('propriétaire') ||
+                          appState.userRole.toLowerCase().contains('owner'))
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: isDark ? AppTheme.darkSurface : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.5), width: 1.5),
+                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.accentGold.withValues(alpha: 0.16),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(Icons.workspace_premium_rounded, color: AppTheme.primaryNavy, size: 22),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'ABONNEMENT PORTAIL WEB',
+                                          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.8),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                'Formule : ${appState.subscriptionPlan}',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w900,
+                                                  fontSize: 15,
+                                                  color: isDark ? Colors.white : AppTheme.primaryNavy,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFDCFCE7),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: const Text(
+                                                'Actif',
+                                                style: TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Souscrivez ou changez votre formule ici sur le portail web. Votre abonnement est automatiquement synchronisé sur votre téléphone mobile via la base de données.',
+                                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B), height: 1.35),
+                              ),
+                              const SizedBox(height: 14),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryNavy,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                  icon: const Icon(Icons.upgrade_rounded, color: AppTheme.accentGold, size: 18),
+                                  label: const Text(
+                                    'Gérer mon abonnement / Formules',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionScreen()));
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 18),
+
+                      // CARTE SUIVI SHIFTS, APPROBATIONS & ÉQUIPE (PORTAIL WEB)
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppTheme.darkSurface : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
+                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.groups_rounded, color: AppTheme.primaryNavy, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Équipe, Shifts & Approbations',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14.5,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (appState.pendingApprovalsCount > 0)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.danger,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '${appState.pendingApprovalsCount} en attente',
+                                      style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF2F2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.verified_user_rounded, color: Color(0xFFDC2626), size: 18),
+                              ),
+                              title: const Text('Approbations (Stock & Transferts)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                              subtitle: Text(
+                                appState.pendingApprovalsCount > 0
+                                    ? '${appState.pendingApprovalsCount} demande(s) d\'équipiers à valider'
+                                    : 'Aucune demande en attente',
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              trailing: const Icon(Icons.chevron_right_rounded, size: 18),
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => const ApprovalsScreen()));
+                              },
+                            ),
+                            const Divider(height: 12),
+                            ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFECFDF5),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.punch_clock_rounded, color: Color(0xFF059669), size: 18),
+                              ),
+                              title: const Text('Suivi Shifts & Activités par Boutique', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                              subtitle: Text(
+                                appState.activeCashShift != null
+                                    ? '${appState.activeCashShift!.cashDeskName} ouvert (${appState.activeCashShift!.formattedDuration})'
+                                    : 'Caissiers, Magasiniers & Gérants',
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              trailing: const Icon(Icons.chevron_right_rounded, size: 18),
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => const ShiftsTrackingScreen()));
+                              },
+                            ),
+                            const Divider(height: 12),
+                            ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.badge_rounded, color: AppTheme.primaryNavy, size: 18),
+                              ),
+                              title: const Text('Équipe & Groupes d\'accès', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                              subtitle: Text(
+                                '${appState.teamMembers.length} collaborateur(s) invité(s)',
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              trailing: const Icon(Icons.chevron_right_rounded, size: 18),
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamScreen()));
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -736,7 +972,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
-              ),
               ),
               const SizedBox(height: 18),
 
@@ -1306,23 +1541,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: TextStyle(
                 fontSize: 11.5,
                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-                color: AppTheme.primaryNavy,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: const TextStyle(
-                fontSize: 11.5,
-                color: Color(0xFF64748B),
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
