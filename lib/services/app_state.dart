@@ -1223,7 +1223,16 @@ class AppState extends ChangeNotifier {
   }
 
   double get todayExpensesTotal => expenses.fold(0.0, (sum, exp) => sum + exp.amount);
-  double get todayNetProfit => todayGrossMargin - todayExpensesTotal;
+
+  double get todayDepreciationsTotal {
+    final now = DateTime.now();
+    return stockDepreciations.where((d) =>
+        d.date.year == now.year &&
+        d.date.month == now.month &&
+        d.date.day == now.day).fold(0.0, (sum, dep) => sum + dep.totalLoss);
+  }
+
+  double get todayNetProfit => todayGrossMargin - todayExpensesTotal - todayDepreciationsTotal;
 
   double get totalCustomerDebt => debts.where((d) => !d.isSettled).fold(0.0, (sum, d) => sum + d.remainingDebt);
   double get totalSupplierDebt => supplierDebts.where((d) => !d.isSettled).fold(0.0, (sum, d) => sum + d.remainingDebt);

@@ -18,11 +18,12 @@ class _PeriodSlot {
   double revenue = 0.0;
   double cogs = 0.0;
   double expenses = 0.0;
+  double depreciations = 0.0;
 
   _PeriodSlot(this.label);
 
   double get grossProfit => revenue - cogs;
-  double get netProfit => grossProfit - expenses;
+  double get netProfit => grossProfit - expenses - depreciations;
 }
 
 class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
@@ -212,6 +213,17 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
               e.createdAt.isBefore(range.end.add(const Duration(milliseconds: 1)));
         }).toList();
 
+        // 2b. FILTRAGE DES PERTES ET DÉPRÉCIATIONS DE STOCK (PÉREMPTIONS, CASSE, ÉCARTS)
+        final filteredDepreciations = appState.stockDepreciations.where((d) {
+          if (_selectedStore != 'Tous' && d.storeName.trim().toLowerCase() != _selectedStore.trim().toLowerCase()) {
+            return false;
+          }
+          return d.date.isAfter(range.start.subtract(const Duration(milliseconds: 1))) &&
+              d.date.isBefore(range.end.add(const Duration(milliseconds: 1)));
+        }).toList();
+
+        final totalDepreciations = filteredDepreciations.fold<double>(0.0, (sum, d) => sum + d.totalLoss);
+
         // 3. CALCULS FINANCIERS GLOBAUX
         final totalRevenue = filteredSales.fold<double>(0.0, (sum, s) => sum + s.total);
         final totalSalesCount = filteredSales.length;
@@ -235,7 +247,8 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
         final grossMargin = totalRevenue - totalCOGS;
         final marginRate = totalRevenue > 0 ? (grossMargin / totalRevenue * 100) : 0.0;
         final totalExpenses = filteredExpenses.fold<double>(0.0, (sum, e) => sum + e.amount);
-        final netProfit = grossMargin - totalExpenses;
+        // Formule commerciale rigoureuse : Bénéfice Net Réel = Marge Brute - Dépenses - Pertes de stock
+        final netProfit = grossMargin - totalExpenses - totalDepreciations;
 
         // 4. CALCUL DES RECORDS / PICS
         final isDaily = _selectedPeriod == 'Aujourd\'hui' || _selectedPeriod == 'Hier';
@@ -286,6 +299,24 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
 
           final slot = slots.putIfAbsent(key, () => _PeriodSlot(label));
           slot.expenses += e.amount;
+        }
+
+        for (final d in filteredDepreciations) {
+          String key;
+          String label;
+          if (isDaily) {
+            key = '${d.date.hour}h';
+            label = 'à ${d.date.hour}h-${d.date.hour + 1}h';
+          } else if (isYearly) {
+            key = '${d.date.year}-${d.date.month.toString().padLeft(2, '0')}';
+            label = 'en ${_monthName(d.date.month)}';
+          } else {
+            key = '${d.date.year}-${d.date.month.toString().padLeft(2, '0')}-${d.date.day.toString().padLeft(2, '0')}';
+            label = 'le ${_formatDayMonth(d.date)}';
+          }
+
+          final slot = slots.putIfAbsent(key, () => _PeriodSlot(label));
+          slot.depreciations += d.totalLoss;
         }
 
         _PeriodSlot? peakRevenueSlot;
@@ -520,6 +551,7 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
                       ? 'Fr.${peakNetSlot.netProfit.round()} est le plus élevé (${peakNetSlot.label})'
                       : '',
                   totalExpenses: totalExpenses,
+                  totalDepreciations: totalDepreciations,
                   totalSalesCount: totalSalesCount,
                   totalDiscounts: totalDiscounts,
                   averageBasket: averageBasket,
@@ -656,14 +688,14 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _buildMetricCard(
-                      title: 'BÉNÉFICE NET',
+                      title: 'BÉNÉFICE NET RÉEL',
                       amount: AppTheme.formatFCFA(netProfit),
                       icon: Icons.monetization_on_outlined,
                       iconColor: netProfit >= 0 ? const Color(0xFF059669) : const Color(0xFFDC2626),
-                      badgeText: 'Net',
+                      badgeText: 'Net Réel',
                       subRecord: peakNetSlot != null && peakNetSlot.netProfit > 0
                           ? '🏆 Record : ${AppTheme.formatFCFA(peakNetSlot.netProfit)} (${peakNetSlot.label})'
-                          : 'Aucun record enregistré',
+                          : (totalDepreciations > 0 ? 'Pertes stock déduites : -${AppTheme.formatFCFA(totalDepreciations)}' : 'Aucun record enregistré'),
                       isDark: isDark,
                     ),
                   ),
@@ -719,6 +751,62 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+
+              // CARTE PERTES & DÉPRÉCIATIONS DE STOCK (PÉREMPTIONS, CASSE, ÉCARTS)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF261515) : const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF5A2323) : const Color(0xFFFECACA),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDC2626).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.remove_shopping_cart_rounded, color: Color(0xFFDC2626), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Pertes & Dépréciations de stock',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF991B1B)),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            totalDepreciations > 0
+                                ? 'Péremptions, casse & avaries déduits du bénéfice net réel'
+                                : 'Aucune dépréciation de stock enregistrée sur la période',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      totalDepreciations > 0 ? '- ${AppTheme.formatFCFA(totalDepreciations)}' : '0 F CFA',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: totalDepreciations > 0 ? const Color(0xFFDC2626) : const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -1352,6 +1440,7 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
     required double netProfit,
     required String peakNetText,
     required double totalExpenses,
+    double totalDepreciations = 0.0,
     required int totalSalesCount,
     required double totalDiscounts,
     required double averageBasket,
@@ -1453,6 +1542,7 @@ class _GlobalStatsScreenState extends State<GlobalStatsScreen> {
         netProfit: netProfit,
         peakNetText: peakNetText,
         totalExpenses: totalExpenses,
+        totalDepreciations: totalDepreciations,
         totalSalesCount: totalSalesCount,
         totalDiscounts: totalDiscounts,
         averageBasket: averageBasket,

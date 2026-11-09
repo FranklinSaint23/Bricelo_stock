@@ -229,7 +229,19 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
         final grossMargin = totalRevenue - totalCOGS;
         final marginRate = totalRevenue > 0 ? (grossMargin / totalRevenue * 100) : 0.0;
         final totalExpenses = filteredExpenses.fold<double>(0.0, (sum, e) => sum + e.amount);
-        final netProfit = grossMargin - totalExpenses;
+
+        // 2b. FILTRAGE DES PERTES ET DÉPRÉCIATIONS DE STOCK (PÉREMPTIONS, CASSE, ÉCARTS)
+        final filteredDepreciations = appState.stockDepreciations.where((d) {
+          if (_selectedStore != 'Tous' && d.storeName.trim().toLowerCase() != _selectedStore.trim().toLowerCase()) {
+            return false;
+          }
+          return d.date.isAfter(range.start.subtract(const Duration(milliseconds: 1))) &&
+              d.date.isBefore(range.end.add(const Duration(milliseconds: 1)));
+        }).toList();
+
+        final totalDepreciations = filteredDepreciations.fold<double>(0.0, (sum, d) => sum + d.totalLoss);
+        // Bénéfice Net Réel = Marge Brute - Dépenses - Pertes de stock
+        final netProfit = grossMargin - totalExpenses - totalDepreciations;
 
         // 4. MOUVEMENTS DE STOCK & OPÉRATIONS SUR LA PÉRIODE
         final filteredMovements = appState.stockMovements.where((m) {
@@ -364,6 +376,7 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
                   netProfit: netProfit,
                   peakNetText: peakNetText,
                   totalExpenses: totalExpenses,
+                  totalDepreciations: totalDepreciations,
                   totalSalesCount: totalSalesCount,
                   totalDiscounts: totalDiscounts,
                   averageBasket: averageBasket,
@@ -509,9 +522,10 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
                     const Divider(height: 16),
                     _buildReportLine('Marge commerciale brute', grossMargin, color: AppTheme.accentGold, isDark: isDark),
                     _buildReportLine('Dépenses d\'exploitation & charges', -totalExpenses, color: const Color(0xFFDC2626), isDark: isDark),
+                    _buildReportLine('Pertes & Dépréciations de stock', -totalDepreciations, color: const Color(0xFFDC2626), isDark: isDark),
                     const Divider(height: 20, thickness: 1.5),
                     _buildReportLine(
-                      'RÉSULTAT NET DE L\'ACTIVITÉ',
+                      'BÉNÉFICE NET RÉEL DE L\'ACTIVITÉ',
                       netProfit,
                       isBold: true,
                       fontSize: 14.5,
@@ -674,6 +688,7 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
     required double netProfit,
     required String peakNetText,
     required double totalExpenses,
+    double totalDepreciations = 0.0,
     required int totalSalesCount,
     required double totalDiscounts,
     required double averageBasket,
@@ -884,6 +899,7 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
         netProfit: netProfit,
         peakNetText: peakNetText,
         totalExpenses: totalExpenses,
+        totalDepreciations: totalDepreciations,
         totalSalesCount: totalSalesCount,
         totalDiscounts: totalDiscounts,
         averageBasket: averageBasket,

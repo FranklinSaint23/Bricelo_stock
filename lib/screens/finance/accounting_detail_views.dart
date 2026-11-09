@@ -429,7 +429,8 @@ class IncomeStatementScreen extends StatelessWidget {
         final margeBrute = caNet - cogs;
         final margePct = caNet > 0 ? (margeBrute / caNet * 100) : 0.0;
         final totalCharges = appState.expenses.fold<double>(0.0, (sum, e) => sum + e.amount);
-        final resultatNet = margeBrute - totalCharges;
+        final totalDepreciations = appState.stockDepreciations.fold<double>(0.0, (sum, d) => sum + d.totalLoss);
+        final resultatNet = margeBrute - totalCharges - totalDepreciations;
 
         return Scaffold(
           backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF9FAFB),
@@ -473,7 +474,7 @@ class IncomeStatementScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      resultatNet >= 0 ? 'Bénéfice net réalisé sur la période' : 'Perte d\'exploitation sur la période',
+                      resultatNet >= 0 ? 'Bénéfice net réel réalisé sur la période' : 'Perte nette réelle sur la période',
                       style: const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
@@ -499,8 +500,9 @@ class IncomeStatementScreen extends StatelessWidget {
                     const Divider(height: 20),
                     _buildRowItem('Marge Brute commerciale (${margePct.toStringAsFixed(1)}%)', margeBrute, isBold: true, color: const Color(0xFF16A34A)),
                     _buildRowItem('Charges d\'exploitation & dépenses', -totalCharges, isPositive: false),
+                    _buildRowItem('Pertes & Dépréciations de stock', -totalDepreciations, isPositive: false, color: const Color(0xFFDC2626)),
                     const Divider(height: 24, thickness: 1.5),
-                    _buildRowItem('RÉSULTAT NET', resultatNet, isBold: true, fontSize: 15, color: resultatNet >= 0 ? AppTheme.primaryNavy : const Color(0xFFDC2626)),
+                    _buildRowItem('BÉNÉFICE NET RÉEL', resultatNet, isBold: true, fontSize: 15, color: resultatNet >= 0 ? AppTheme.primaryNavy : const Color(0xFFDC2626)),
                   ],
                 ),
               ),

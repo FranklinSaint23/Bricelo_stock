@@ -308,14 +308,55 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                     ],
                   ),
                   if (appState.isBossMode) ...[
+                    const Divider(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Marge brute des ventes :', style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
+                        Text(
+                          AppTheme.formatFCFA(appState.todayGrossMargin),
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppTheme.accentGold),
+                        ),
+                      ],
+                    ),
+                    if (appState.todayExpensesTotal > 0) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Dépenses du jour :', style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
+                          Text(
+                            '- ${AppTheme.formatFCFA(appState.todayExpensesTotal)}',
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFFDC2626)),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (appState.todayDepreciationsTotal > 0) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Pertes & Dépréciations de stock :', style: TextStyle(fontSize: 11.5, color: Color(0xFFDC2626))),
+                          Text(
+                            '- ${AppTheme.formatFCFA(appState.todayDepreciationsTotal)}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFDC2626)),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('BÉNÉFICE NET DU JOUR :', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.success)),
+                        const Text('BÉNÉFICE NET RÉEL DU JOUR :', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.success)),
                         Text(
                           AppTheme.formatFCFA(appState.todayNetProfit),
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.success),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: appState.todayNetProfit >= 0 ? AppTheme.success : const Color(0xFFDC2626),
+                          ),
                         ),
                       ],
                     ),

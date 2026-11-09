@@ -351,7 +351,18 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
               e.createdAt.isBefore(range.end.add(const Duration(milliseconds: 1)));
         }).fold(0.0, (sum, e) => sum + ((e.amount as num?)?.toDouble() ?? 0.0));
 
-        final netProfit = estimatedProfit - periodExpenses;
+        // Pertes et dépréciations de stock sur la période (Péremptions, casse, écarts...)
+        final periodDepreciations = appState.stockDepreciations.where((d) {
+          if (_selectedStore != 'Toutes les boutiques' &&
+              d.storeName.trim().toLowerCase() != _selectedStore.trim().toLowerCase()) {
+            return false;
+          }
+          return d.date.isAfter(range.start.subtract(const Duration(milliseconds: 1))) &&
+              d.date.isBefore(range.end.add(const Duration(milliseconds: 1)));
+        }).fold(0.0, (sum, d) => sum + d.totalLoss);
+
+        // Bénéfice Net Réel = Marge Brute - Dépenses - Pertes de stock
+        final netProfit = estimatedProfit - periodExpenses - periodDepreciations;
 
         // Produits les plus vendus calculés dynamiquement
         final Map<String, ({int quantity, double revenue, double unitPrice})> productStats = {};
@@ -554,12 +565,25 @@ class _SalesAnalyticsScreenState extends State<SalesAnalyticsScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildKpiBox(
-                        'Bénéfice net',
+                        'Pertes de stock',
+                        AppTheme.formatFCFA(periodDepreciations),
+                        periodDepreciations > 0 ? const Color(0xFFDC2626) : const Color(0xFF6B7280),
+                        subtitle: 'Péremptions & casse',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildKpiBox(
+                        'Bénéfice net réel',
                         AppTheme.formatFCFA(netProfit),
                         netProfit >= 0 ? const Color(0xFF059669) : const Color(0xFFDC2626),
                         subtitle: totalSales > 0
-                            ? '${((netProfit / totalSales) * 100).toStringAsFixed(1)}% net'
-                            : '0% net',
+                            ? '${((netProfit / totalSales) * 100).toStringAsFixed(1)}% net (Marge - Dépenses - Pertes)'
+                            : 'Marge - Dépenses - Pertes',
                       ),
                     ),
                   ],

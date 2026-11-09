@@ -35,6 +35,7 @@ class GlobalStatsPdfService {
     required double netProfit,
     required String peakNetText,
     required double totalExpenses,
+    double totalDepreciations = 0.0,
     required int totalSalesCount,
     required double totalDiscounts,
     required double averageBasket,
@@ -303,10 +304,12 @@ class GlobalStatsPdfService {
                 pw.SizedBox(width: 8),
                 pw.Expanded(
                   child: buildMetricCard(
-                    label: 'Bénéfice net',
+                    label: 'Bénéfice net réel',
                     value: _formatFCFA(netProfit),
-                    badge: 'Net',
-                    subtitle: peakNetText.isNotEmpty ? peakNetText : (totalExpenses > 0 ? 'Dépenses : ${_formatFCFA(totalExpenses)}' : 'Aucune dépense'),
+                    badge: 'Net Réel',
+                    subtitle: peakNetText.isNotEmpty
+                        ? peakNetText
+                        : 'Marge: ${_formatFCFA(grossMargin)} | Dép: -${_formatFCFA(totalExpenses)}${totalDepreciations > 0 ? ' | Pertes: -${_formatFCFA(totalDepreciations)}' : ''}',
                     valueColor: netProfit >= 0 ? greenSuccess : redAlert,
                     valueSize: 13,
                   ),
@@ -357,6 +360,18 @@ class GlobalStatsPdfService {
                   ),
                 ),
               ],
+            ),
+            pw.SizedBox(height: 6),
+
+            // LIGNE PERTES & DÉPRÉCIATIONS DE STOCK
+            buildMetricCard(
+              label: 'Pertes & Dépréciations de stock',
+              value: _formatFCFA(totalDepreciations),
+              subtitle: totalDepreciations > 0
+                  ? 'Péremptions, casse & écarts déduits du bénéfice net réel'
+                  : 'Aucune dépréciation de stock enregistrée sur la période',
+              valueColor: totalDepreciations > 0 ? redAlert : grayMuted,
+              valueSize: 11,
             ),
             pw.SizedBox(height: 12),
 
