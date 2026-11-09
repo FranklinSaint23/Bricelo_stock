@@ -15,10 +15,10 @@ class _AccessGroupsScreenState extends State<AccessGroupsScreen> {
 
   int _countUsersForRole(String roleName) {
     final r = roleName.toLowerCase().trim();
-    if (r.contains('propriétaire') || r.contains('owner') || r.contains('gérant')) {
+    if (r.contains('propriétaire') || r.contains('owner')) {
       final matches = appState.teamMembers.where((m) {
         final mr = m.role.toLowerCase();
-        return mr.contains('propriétaire') || mr.contains('owner') || mr.contains('gérant') || mr.contains('admin');
+        return mr.contains('propriétaire') || mr.contains('owner');
       }).length;
       return matches > 0 ? matches : 1; // Le propriétaire connecté au minimum
     }
@@ -27,127 +27,7 @@ class _AccessGroupsScreenState extends State<AccessGroupsScreen> {
 
   bool _isOwnerRole(String roleName) {
     final r = roleName.toLowerCase();
-    return r.contains('propriétaire') || r.contains('owner') || r.contains('gérant');
-  }
-
-  void _showAddRoleDialog() {
-    final nameCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        final isDark = appState.isDarkMode;
-        final cardBg = isDark ? const Color(0xFF132238) : Colors.white;
-        final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
-
-        return AlertDialog(
-          backgroundColor: cardBg,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: Text('Nouveau groupe d\'accès'.tr, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                style: TextStyle(color: textColor, fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'Nom du groupe / rôle *'.tr,
-                  hintText: 'Ex: Chef de rayon, Magasinier',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descCtrl,
-                style: TextStyle(color: textColor, fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'Description'.tr,
-                  hintText: 'Responsabilités et attributions du groupe',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Annuler'.tr, style: const TextStyle(color: Color(0xFF6B7280))),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryNavy,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: () async {
-                final name = nameCtrl.text.trim();
-                if (name.isNotEmpty) {
-                  final newRole = {
-                    'role': name,
-                    'description': descCtrl.text.trim().isNotEmpty ? descCtrl.text.trim() : 'Groupe d\'accès personnalisé',
-                    'isDefault': false,
-                    'permissions': {
-                      'Point de vente (POS)': true,
-                      'Gestion des shifts (Caisse)': true,
-                      'Gestion du stock & Prix': false,
-                      'Demandes d\'approvisionnement & Transferts': false,
-                      'Comptabilité & Finances': false,
-                      'Validation des approbations': false,
-                      'Gestion des collaborateurs': false,
-                      'Suppression de données': false,
-                    },
-                  };
-                  final updated = List<Map<String, dynamic>>.from(appState.accessGroups)..add(newRole);
-                  await appState.saveAccessGroups(updated);
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Groupe "$name" créé avec succès !'.tr),
-                        backgroundColor: const Color(0xFF059669),
-                      ),
-                    );
-                  }
-                }
-              },
-              child: Text('Créer'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _deleteRole(int index, String roleName) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Supprimer le groupe "$roleName" ?'),
-        content: const Text('Les utilisateurs associés perdront les droits de ce groupe.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final updated = List<Map<String, dynamic>>.from(appState.accessGroups)..removeAt(index);
-              await appState.saveAccessGroups(updated);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Groupe "$roleName" supprimé')),
-                );
-              }
-            },
-            child: const Text('Supprimer', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+    return r.contains('propriétaire') || r.contains('owner');
   }
 
   @override
@@ -206,7 +86,6 @@ class _AccessGroupsScreenState extends State<AccessGroupsScreen> {
                   final role = roles[i];
                   final roleName = (role['role'] ?? '').toString();
                   final isOwner = _isOwnerRole(roleName);
-                  final isDefault = role['isDefault'] as bool? ?? false;
                   final permissions = Map<String, dynamic>.from(role['permissions'] as Map? ?? {});
                   final usersCount = _countUsersForRole(roleName);
 
@@ -249,27 +128,16 @@ class _AccessGroupsScreenState extends State<AccessGroupsScreen> {
                                 ),
                               ],
                             ),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryNavy.withValues(alpha: isDark ? 0.4 : 0.08),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    '$usersCount ${usersCount > 1 ? "utilisateurs" : "utilisateur"}'.tr,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.accentGold),
-                                  ),
-                                ),
-                                if (!isDefault && !isOwner) ...[
-                                  const SizedBox(width: 4),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFDC2626)),
-                                    onPressed: () => _deleteRole(i, roleName),
-                                  ),
-                                ],
-                              ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryNavy.withValues(alpha: isDark ? 0.4 : 0.08),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$usersCount ${usersCount > 1 ? "utilisateurs" : "utilisateur"}'.tr,
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.accentGold),
+                              ),
                             ),
                           ],
                         ),
@@ -355,23 +223,6 @@ class _AccessGroupsScreenState extends State<AccessGroupsScreen> {
                 }),
               ],
 
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: _showAddRoleDialog,
-                  icon: const Icon(Icons.add_rounded, color: AppTheme.primaryNavy),
-                  label: Text(
-                    'Créer un nouveau groupe d\'accès'.tr,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.accentGold,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
               const SizedBox(height: 24),
             ],
           ),

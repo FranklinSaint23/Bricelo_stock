@@ -1,5 +1,6 @@
 export 'package:stock_prime/services/translations.dart';
 import 'package:flutter/material.dart';
+import 'package:stock_prime/services/app_state.dart';
 
 class AppTheme {
   // Palette Officielle BRICELO STOCK
@@ -48,7 +49,16 @@ class AppTheme {
   static const Color orangeMoney = Color(0xFFFF6600);
   static const Color mtnYellow = Color(0xFFFFCC00);
 
-  
+  // --- Dynamic Color Getters for instant Dark/Light mode reactivity ---
+  static bool get isDark => AppState.instance.isDarkMode;
+  static Color get scaffoldBg => isDark ? darkScaffold : const Color(0xFFF8FAFC);
+  static Color get cardBg => isDark ? darkSurface : Colors.white;
+  static Color get cardBorder => isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
+  static Color get textPrimaryColor => isDark ? Colors.white : const Color(0xFF0F172A);
+  static Color get textSecondaryColor => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+  static Color get inputBg => isDark ? const Color(0xFF09121E) : Colors.white;
+  static Color get inputBorder => isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1);
+
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
@@ -78,6 +88,23 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: Color(0xFF1E3052), width: 1),
         ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: const Color(0xFF0F1E31),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF1E3052)),
+        ),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+        contentTextStyle: const TextStyle(color: Colors.white70, fontSize: 14),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Color(0xFF0F1E31),
+        modalBackgroundColor: Color(0xFF0F1E31),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFF1E3052),
+        thickness: 1,
       ),
     );
   }
@@ -110,8 +137,32 @@ class AppTheme {
           side: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
         ),
       ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titleTextStyle: const TextStyle(color: Color(0xFF0F172A), fontSize: 18, fontWeight: FontWeight.bold),
+        contentTextStyle: const TextStyle(color: Color(0xFF475569), fontSize: 14),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        modalBackgroundColor: Colors.white,
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFFE2E8F0),
+        thickness: 1,
+      ),
     );
   }
+
+  // Formatage monétaire F CFA
+  static String formatFCFA(num amount) {
+    final rounded = amount.round();
+    final str = rounded.toString();
+    final reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+    final formatted = str.replaceAllMapped(reg, (Match m) => '${m[1]}.');
+    return '$formatted F CFA';
+  }
+}
 
   // Formatage monétaire F CFA
   static String formatFCFA(num amount) {

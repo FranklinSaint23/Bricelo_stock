@@ -72,8 +72,14 @@ class _PosScreenState extends State<PosScreen> {
   // VERSION GRAND ÉCRAN WEB / DESKTOP (2 COLONNES)
   // ==========================================
   Widget _buildDesktopLayout(BuildContext context, List<Product> products, List<String> stores) {
+    final isDark = appState.isDarkMode;
+    final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+    final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC),
       body: Row(
         children: [
           Expanded(
@@ -89,19 +95,20 @@ class _PosScreenState extends State<PosScreen> {
                         child: Container(
                           height: 46,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: cardBg,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                            boxShadow: const [
-                              BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1)),
+                            border: Border.all(color: cardBorder),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), blurRadius: 4, offset: const Offset(0, 1)),
                             ],
                           ),
                           child: TextField(
                             controller: _searchCtrl,
+                            style: TextStyle(color: textPrimary, fontSize: 13),
                             decoration: InputDecoration(
                               hintText: 'Rechercher un article par nom ou code-barres...'.tr,
-                              hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                              prefixIcon: const Icon(Icons.search, color: Color(0xFF64748B)),
+                              hintStyle: TextStyle(color: textSecondary, fontSize: 13),
+                              prefixIcon: Icon(Icons.search, color: isDark ? AppTheme.accentGold : const Color(0xFF64748B)),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
@@ -141,16 +148,16 @@ class _PosScreenState extends State<PosScreen> {
                           label: Text(store),
                           selected: isSelected,
                           selectedColor: AppTheme.primaryNavy,
-                          backgroundColor: Colors.white,
+                          backgroundColor: cardBg,
                           labelStyle: TextStyle(
-                            color: isSelected ? AppTheme.accentGold : const Color(0xFF475569),
+                            color: isSelected ? AppTheme.accentGold : (isDark ? Colors.white : const Color(0xFF475569)),
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                             fontSize: 12,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                             side: BorderSide(
-                              color: isSelected ? AppTheme.primaryNavy : const Color(0xFFE2E8F0),
+                              color: isSelected ? AppTheme.primaryNavy : cardBorder,
                             ),
                           ),
                           onSelected: (_) => setState(() {
@@ -235,11 +242,11 @@ class _PosScreenState extends State<PosScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: cardBg,
                                     borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                                    boxShadow: const [
-                                      BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1)),
+                                    border: Border.all(color: cardBorder),
+                                    boxShadow: [
+                                      BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08), blurRadius: 4, offset: const Offset(0, 1)),
                                     ],
                                   ),
                                   child: Column(
@@ -257,13 +264,13 @@ class _PosScreenState extends State<PosScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                             decoration: BoxDecoration(
-                                              color: p.stock <= 5 ? const Color(0xFFFEF3C7) : const Color(0xFFECFDF5),
+                                              color: p.stock <= 5 ? (isDark ? const Color(0xFF78350F) : const Color(0xFFFEF3C7)) : (isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5)),
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                             child: Text(
                                               '${p.stock} ${p.unit}',
                                               style: TextStyle(
-                                                color: p.stock <= 5 ? const Color(0xFFD97706) : const Color(0xFF059669),
+                                                color: p.stock <= 5 ? const Color(0xFFFBBF24) : const Color(0xFF34D399),
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -274,10 +281,10 @@ class _PosScreenState extends State<PosScreen> {
                                       const Spacer(),
                                       Text(
                                         p.name,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
-                                          color: Color(0xFF0F172A),
+                                          color: textPrimary,
                                         ),
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
@@ -288,10 +295,10 @@ class _PosScreenState extends State<PosScreen> {
                                         children: [
                                           Text(
                                             AppTheme.formatFCFA(p.sellPrice),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.w900,
                                               fontSize: 15,
-                                              color: AppTheme.primaryNavy,
+                                              color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                                             ),
                                           ),
                                           Container(
@@ -320,28 +327,28 @@ class _PosScreenState extends State<PosScreen> {
           // COLONNE DROITE (35%) : TICKET DE CAISSE & PANIER ACTIF
           Container(
             width: 370,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(left: BorderSide(color: Color(0xFFE2E8F0))),
+            decoration: BoxDecoration(
+              color: cardBg,
+              border: Border(left: BorderSide(color: cardBorder)),
             ),
             child: Column(
               children: [
                 Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF8FAFC),
-                    border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                    border: Border(bottom: BorderSide(color: cardBorder)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.receipt_long, color: AppTheme.primaryNavy, size: 20),
+                          Icon(Icons.receipt_long, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 20),
                           const SizedBox(width: 8),
                           Text(
                             'Caisse / Ticket'.tr,
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0F172A)),
+                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: textPrimary),
                           ),
                         ],
                       ),
@@ -496,8 +503,14 @@ class _PosScreenState extends State<PosScreen> {
   // VERSION MOBILE — STYLE BRICELO (100% DYNAMIQUE)
   // ==========================================
   Widget _buildMobileLayout(BuildContext context, List<Product> products, List<String> stores) {
+    final isDark = appState.isDarkMode;
+    final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+    final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
@@ -553,12 +566,12 @@ class _PosScreenState extends State<PosScreen> {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: cardBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.02),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -566,10 +579,11 @@ class _PosScreenState extends State<PosScreen> {
               ),
               child: TextField(
                 controller: _searchCtrl,
+                style: TextStyle(color: textPrimary, fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'Rechercher un produit ou scanner...'.tr,
-                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF64748B), size: 20),
+                  hintStyle: TextStyle(color: textSecondary, fontSize: 13),
+                  prefixIcon: Icon(Icons.search_rounded, color: isDark ? AppTheme.accentGold : const Color(0xFF64748B), size: 20),
                   suffixIcon: Padding(
                     padding: const EdgeInsets.all(6.0),
                     child: InkWell(
@@ -603,15 +617,16 @@ class _PosScreenState extends State<PosScreen> {
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: cardBorder),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 1)),
+                  BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.02), blurRadius: 4, offset: const Offset(0, 1)),
                 ],
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
+                  dropdownColor: cardBg,
                   value: stores.contains(_selectedStore) ? _selectedStore : 'Toutes',
                   isExpanded: true,
                   icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.accentGold),
@@ -623,13 +638,13 @@ class _PosScreenState extends State<PosScreen> {
                           Icon(
                             store == 'Toutes' ? Icons.storefront_rounded : Icons.store_rounded,
                             size: 18,
-                            color: AppTheme.primaryNavy,
+                            color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            store == 'Toutes' ? 'Toutes les boutiques' : store,
-                            style: const TextStyle(
-                              color: AppTheme.primaryNavy,
+                            store == 'Toutes' ? 'Toutes les boutiques'.tr : store,
+                            style: TextStyle(
+                              color: textPrimary,
                               fontWeight: FontWeight.w700,
                               fontSize: 13.5,
                             ),
@@ -784,15 +799,15 @@ class _PosScreenState extends State<PosScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                             decoration: BoxDecoration(
-                              color: inCart ? const Color(0xFFFFFBEB) : Colors.white,
+                              color: inCart ? (isDark ? const Color(0xFF2E2200) : const Color(0xFFFFFBEB)) : cardBg,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: inCart ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+                                color: inCart ? AppTheme.accentGold : cardBorder,
                                 width: inCart ? 1.5 : 1,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
+                                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -815,16 +830,16 @@ class _PosScreenState extends State<PosScreen> {
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
                                         color: isOutOfStock
-                                            ? const Color(0xFFFEE2E2)
-                                            : (isLow ? const Color(0xFFFFF8E7) : const Color(0xFFF1F5F9)),
+                                            ? (isDark ? const Color(0xFF5C1D1D) : const Color(0xFFFEE2E2))
+                                            : (isLow ? (isDark ? const Color(0xFF78350F) : const Color(0xFFFFF8E7)) : (isDark ? const Color(0xFF1E3052) : const Color(0xFFF1F5F9))),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        isOutOfStock ? 'Épuisé' : '$availStock $unitLabel',
+                                        isOutOfStock ? 'Épuisé'.tr : '$availStock $unitLabel',
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w800,
-                                          color: isOutOfStock ? const Color(0xFFDC2626) : const Color(0xFFD97706),
+                                          color: isOutOfStock ? const Color(0xFFEF4444) : (isDark ? AppTheme.accentGold : const Color(0xFFD97706)),
                                         ),
                                       ),
                                     ),
@@ -833,10 +848,10 @@ class _PosScreenState extends State<PosScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   p.name,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w800,
                                     fontSize: 13,
-                                    color: Color(0xFF0F172A),
+                                    color: textPrimary,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -848,10 +863,10 @@ class _PosScreenState extends State<PosScreen> {
                                     Flexible(
                                       child: Text(
                                         AppTheme.formatFCFA(p.sellPrice),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w900,
                                           fontSize: 13,
-                                          color: Color(0xFFD97706),
+                                          color: isDark ? AppTheme.accentGold : const Color(0xFFD97706),
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -868,14 +883,14 @@ class _PosScreenState extends State<PosScreen> {
                                               width: 26,
                                               height: 26,
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
+                                                color: cardBg,
                                                 borderRadius: BorderRadius.circular(6),
-                                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                                                border: Border.all(color: cardBorder),
                                               ),
                                               child: Icon(
                                                 inCartQty == 1 ? Icons.delete_outline : Icons.remove,
                                                 size: 15,
-                                                color: inCartQty == 1 ? Colors.red : const Color(0xFF0F172A),
+                                                color: inCartQty == 1 ? Colors.red : textPrimary,
                                               ),
                                             ),
                                           ),
@@ -883,7 +898,7 @@ class _PosScreenState extends State<PosScreen> {
                                             padding: const EdgeInsets.symmetric(horizontal: 6),
                                             child: Text(
                                               '$inCartQty',
-                                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: textPrimary),
                                             ),
                                           ),
                                           InkWell(
@@ -949,10 +964,10 @@ class _PosScreenState extends State<PosScreen> {
                                           width: 28,
                                           height: 28,
                                           decoration: BoxDecoration(
-                                            color: AppTheme.primaryNavy,
+                                            color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                                             borderRadius: BorderRadius.circular(8),
                                           ),
-                                          child: const Icon(Icons.add_rounded, color: AppTheme.accentGold, size: 18),
+                                          child: Icon(Icons.add_rounded, color: isDark ? AppTheme.primaryNavy : AppTheme.accentGold, size: 18),
                                         ),
                                       ),
                                   ],
@@ -975,11 +990,11 @@ class _PosScreenState extends State<PosScreen> {
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                  color: cardBg,
+                  border: Border(top: BorderSide(color: cardBorder)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
+                      color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.04),
                       blurRadius: 12,
                       offset: const Offset(0, -4),
                     ),
@@ -999,25 +1014,25 @@ class _PosScreenState extends State<PosScreen> {
                               children: [
                                 Text(
                                   '${appState.cartCount} ${'articles'.tr}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11.5,
-                                    color: Color(0xFF64748B),
+                                    color: textSecondary,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 if (appState.cart.isNotEmpty) ...[
                                   const SizedBox(width: 6),
-                                  const Icon(Icons.keyboard_arrow_up_rounded, size: 16, color: AppTheme.primaryNavy),
+                                  Icon(Icons.keyboard_arrow_up_rounded, size: 16, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                                 ],
                               ],
                             ),
                             const SizedBox(height: 2),
                             Text(
                               AppTheme.formatFCFA(appState.cartTotal),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
-                                color: AppTheme.primaryNavy,
+                                color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                               ),
                             ),
                           ],
@@ -1026,17 +1041,17 @@ class _PosScreenState extends State<PosScreen> {
                     ),
                     if (appState.cart.isNotEmpty) ...[
                       IconButton(
-                        tooltip: 'Mettre en attente',
-                        icon: const Icon(Icons.pause_circle_outline_rounded, color: AppTheme.primaryNavy),
+                        tooltip: 'Mettre en attente'.tr,
+                        icon: Icon(Icons.pause_circle_outline_rounded, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                         onPressed: () {
                           appState.holdCurrentCart();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Panier mis en attente')),
+                            SnackBar(content: Text('Panier mis en attente'.tr)),
                           );
                         },
                       ),
                       IconButton(
-                        tooltip: 'Vider le panier',
+                        tooltip: 'Vider le panier'.tr,
                         icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger),
                         onPressed: () => appState.clearCart(),
                       ),
@@ -1090,9 +1105,10 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   void _showCartSummaryModal(BuildContext context) {
+    final isDark = appState.isDarkMode;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
@@ -1105,19 +1121,19 @@ class _PosScreenState extends State<PosScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Panier en cours (${appState.cartCount})',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.primaryNavy),
+                      '${'Panier en cours'.tr} (${appState.cartCount})',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: isDark ? Colors.white : AppTheme.primaryNavy),
                     ),
                     TextButton(
                       onPressed: () {
                         appState.clearCart();
                         Navigator.pop(ctx);
                       },
-                      child: const Text('Tout vider', style: TextStyle(color: AppTheme.danger, fontWeight: FontWeight.bold)),
+                      child: Text('Tout vider'.tr, style: const TextStyle(color: AppTheme.danger, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
-                const Divider(),
+                Divider(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,

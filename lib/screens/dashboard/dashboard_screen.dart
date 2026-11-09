@@ -82,8 +82,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     int salesCount,
     double totalDebt,
   ) {
+    final isDark = appState.isDarkMode;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -97,8 +98,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text(
                       '${'Bonjour'.tr}, ${appState.displayUserName} 👋',
-                      style: const TextStyle(
-                        color: Color(0xFF0F172A),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
                         fontSize: 26,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.5,
@@ -107,11 +108,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF64748B)),
+                        Icon(Icons.calendar_today_rounded, size: 14, color: isDark ? AppTheme.accentGold : const Color(0xFF64748B)),
                         const SizedBox(width: 6),
                         Text(
                           AppTranslations.formattedCurrentDate,
-                          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -120,10 +121,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? AppTheme.darkSurface : Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))],
+                    border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08), blurRadius: 4, offset: const Offset(0, 1))],
                   ),
                   child: Row(
                     children: [
@@ -135,7 +136,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 8),
                       Text(
                         appState.currentStore,
-                        style: const TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.bold, fontSize: 12),
+                        style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1E293B), fontWeight: FontWeight.bold, fontSize: 12),
                       ),
                     ],
                   ),
@@ -167,9 +168,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     value: AppTheme.formatFCFA(totalSales),
                     subtitle: 'Espèces & Mobile Money'.tr,
                     icon: Icons.account_balance_wallet_outlined,
-                    bgColor: Colors.white,
+                    bgColor: isDark ? AppTheme.darkSurface : Colors.white,
                     valueColor: const Color(0xFF16A34A),
-                    subtitleColor: const Color(0xFF64748B),
+                    subtitleColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                     iconColor: const Color(0xFF16A34A),
                   ),
                 ),
@@ -185,7 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       value: AppTheme.formatFCFA(totalDebt),
                       subtitle: 'Voir les clients endettés >'.tr,
                       icon: Icons.people_outline,
-                      bgColor: Colors.white,
+                      bgColor: isDark ? AppTheme.darkSurface : Colors.white,
                       valueColor: const Color(0xFFD97706),
                       subtitleColor: const Color(0xFFD97706),
                       iconColor: const Color(0xFFD97706),
@@ -199,10 +200,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     value: '${appState.products.length}',
                     subtitle: appState.lowStockCount > 0 ? '${appState.lowStockCount} ${'bas'.tr}' : 'Stock optimal'.tr,
                     icon: Icons.inventory_2_outlined,
-                    bgColor: Colors.white,
-                    valueColor: const Color(0xFF0F172A),
+                    bgColor: isDark ? AppTheme.darkSurface : Colors.white,
+                    valueColor: isDark ? Colors.white : const Color(0xFF0F172A),
                     subtitleColor: appState.lowStockCount > 0 ? const Color(0xFFDC2626) : const Color(0xFF10B981),
-                    iconColor: AppTheme.primaryNavy,
+                    iconColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                   ),
                 ),
               ],
@@ -470,15 +471,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Color subtitleColor,
     required Color iconColor,
   }) {
+    final isDark = AppState.instance.isDarkMode;
     final isDarkCard = bgGradient != null;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: bgColor ?? (isDark ? AppTheme.darkSurface : Colors.white),
         gradient: bgGradient,
         borderRadius: BorderRadius.circular(14),
-        border: isDarkCard ? null : Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+        border: isDarkCard ? null : Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,7 +491,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(
                 title,
                 style: TextStyle(
-                  color: isDarkCard ? Colors.white70 : const Color(0xFF64748B),
+                  color: isDarkCard ? Colors.white70 : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -535,16 +537,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final isDark = AppState.instance.isDarkMode;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppTheme.darkSurface : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))],
+          border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08), blurRadius: 4, offset: const Offset(0, 1))],
         ),
         child: Row(
           children: [
@@ -552,23 +555,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withValues(alpha: isDark ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: color, size: 22),
+              child: Icon(icon, color: isDark ? AppTheme.accentGold : color, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A))),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF0F172A))),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: const TextStyle(color: Color(0xFF64748B), fontSize: 11)),
+                  Text(subtitle, style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 11)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 13, color: Color(0xFF94A3B8)),
+            Icon(Icons.arrow_forward_ios, size: 13, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
           ],
         ),
       ),
@@ -602,8 +605,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return true;
     }).toList();
 
+    final isDark = appState.isDarkMode;
+    final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+    final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final navyOrWhite = isDark ? Colors.white : AppTheme.primaryNavy;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
@@ -653,8 +663,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Text(
                           '${'Bonjour'.tr}, ${appState.displayUserName} 👋',
-                          style: const TextStyle(
-                            color: Color(0xFF0F172A),
+                          style: TextStyle(
+                            color: textPrimary,
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.3,
@@ -665,13 +675,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 3),
                         Row(
                           children: [
-                            const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xFF64748B)),
+                            Icon(Icons.calendar_today_rounded, size: 12, color: isDark ? AppTheme.accentGold : const Color(0xFF64748B)),
                             const SizedBox(width: 5),
                             Flexible(
                               child: Text(
                                 AppTranslations.formattedCurrentDate,
-                                style: const TextStyle(
-                                  color: Color(0xFF64748B),
+                                style: TextStyle(
+                                  color: textSecondary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -691,23 +701,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(
                 height: 46,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: cardBorder),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
+                      color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.02),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: TextField(
+                  style: TextStyle(color: textPrimary, fontSize: 13),
                   onChanged: (v) => setState(() => _searchQuery = v),
                   decoration: InputDecoration(
                     hintText: 'Rechercher une vente, un client ou produit...'.tr,
-                    hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                    prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF64748B), size: 20),
+                    hintStyle: TextStyle(color: textSecondary, fontSize: 13),
+                    prefixIcon: Icon(Icons.search_rounded, color: isDark ? AppTheme.accentGold : const Color(0xFF64748B), size: 20),
                     suffixIcon: InkWell(
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const PosScreen()));
@@ -715,16 +726,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Container(
                         margin: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryNavy.withValues(alpha: 0.06),
+                          color: isDark ? const Color(0xFF1E3052) : AppTheme.primaryNavy.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.primaryNavy, size: 18),
+                        child: Icon(Icons.qr_code_scanner_rounded, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 18),
                       ),
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
+              ),
               ),
               const SizedBox(height: 18),
 
@@ -894,18 +906,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Text(
                     'Actions Rapides'.tr,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryNavy,
+                      color: navyOrWhite,
                     ),
                   ),
                   Text(
                     '${appState.products.length} ${'articles'.tr}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
+                      color: textSecondary,
                     ),
                   ),
                 ],
@@ -933,8 +945,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       subtitle: '${appState.products.length} ${'articles'.tr}',
                       icon: Icons.add_box_rounded,
                       cardBg: const Color(0xFFEEF2F6),
-                      iconBg: AppTheme.primaryNavy,
-                      iconColor: Colors.white,
+                      iconBg: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                      iconColor: isDark ? AppTheme.primaryNavy : Colors.white,
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
                       },
@@ -962,7 +974,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Expanded(
                     child: _buildBriceloCategoryCard(
                       title: 'Historique des ventes'.tr,
-                      subtitle: '${appState.sales.length} vente${appState.sales.length > 1 ? "s" : ""}',
+                      subtitle: '${appState.sales.length} ${appState.sales.length > 1 ? "ventes".tr : "vente".tr}',
                       icon: Icons.history_rounded,
                       cardBg: const Color(0xFFFFF8E7),
                       iconBg: const Color(0xFFE5A600),
@@ -982,10 +994,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Text(
                     _activeFilter == 'Stock faible' ? 'Alertes de Stock'.tr : 'Ventes Récentes'.tr,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryNavy,
+                      color: navyOrWhite,
                     ),
                   ),
                   InkWell(
@@ -994,10 +1006,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                     child: Text(
                       'Historique >'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFFB45309),
+                        color: isDark ? AppTheme.accentGold : const Color(0xFFB45309),
                       ),
                     ),
                   ),
@@ -1011,9 +1023,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: cardBg,
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: cardBorder),
                         ),
                         child: Text(
                           'Tous vos stocks sont à niveau optimal'.tr,
@@ -1026,9 +1038,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: cardBg,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFFFDE68A)),
+                              border: Border.all(color: isDark ? const Color(0xFF854D0E) : const Color(0xFFFDE68A)),
                             ),
                             child: Row(
                               children: [
@@ -1038,7 +1050,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                                      Text(p.name, style: TextStyle(fontWeight: FontWeight.bold, color: textPrimary)),
                                       Text('Stock restant : ${p.stock} ${p.unit}', style: const TextStyle(fontSize: 12, color: Color(0xFFD97706))),
                                     ],
                                   ),
@@ -1047,7 +1059,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   onPressed: () {
                                     Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
                                   },
-                                  child: Text('Réassort'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  child: Text('Réassort'.tr, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.accentGold)),
                                 ),
                               ],
                             ),
@@ -1059,9 +1071,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: cardBorder),
                   ),
                   child: Row(
                     children: [
@@ -1069,10 +1081,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryNavy.withValues(alpha: 0.06),
+                          color: isDark ? const Color(0xFF1E3052) : AppTheme.primaryNavy.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(Icons.rocket_launch_rounded, color: AppTheme.primaryNavy, size: 24),
+                        child: Icon(Icons.rocket_launch_rounded, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 24),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -1083,10 +1095,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               appState.products.isEmpty
                                   ? 'Ajoutez vos premiers produits pour commencer'.tr
                                   : 'Aucune vente enregistrée aujourd\'hui'.tr,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 13.5,
-                                color: AppTheme.primaryNavy,
+                                color: textPrimary,
                               ),
                             ),
                             const SizedBox(height: 3),
@@ -1094,7 +1106,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               appState.products.isEmpty
                                   ? 'Créez un produit puis encaissez au comptoir avec reçu.'.tr
                                   : 'Rendez-vous dans Vente pour encaisser votre premier client.'.tr,
-                              style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+                              style: TextStyle(color: textSecondary, fontSize: 11.5),
                             ),
                           ],
                         ),
@@ -1112,9 +1124,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: cardBg,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: cardBorder),
                         ),
                         child: Row(
                           children: [
@@ -1122,10 +1134,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               width: 42,
                               height: 42,
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryNavy.withValues(alpha: 0.06),
+                                color: isDark ? const Color(0xFF1E3052) : AppTheme.primaryNavy.withValues(alpha: 0.06),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.receipt_long_rounded, color: AppTheme.primaryNavy, size: 20),
+                              child: Icon(Icons.receipt_long_rounded, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 20),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -1134,26 +1146,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 children: [
                                   Text(
                                     '${sale.ticketNumber} • ${sale.customerName}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 13.5,
-                                      color: AppTheme.primaryNavy,
+                                      color: textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     '${(sale.paymentMethod.startsWith("Caisse 1") || sale.paymentMethod == "Caisse 1" || sale.paymentMethod == "Caisse") ? "Caisse ${sale.storeName}" : sale.paymentMethod} • ${sale.items.length} article(s) • Voir reçu',
-                                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+                                    style: TextStyle(color: textSecondary, fontSize: 11.5),
                                   ),
                                 ],
                               ),
                             ),
                             Text(
                               AppTheme.formatFCFA(sale.total),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 14,
-                                color: AppTheme.primaryNavy,
+                                color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                               ),
                             ),
                           ],
@@ -1168,8 +1180,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'fab_dashboard_assistant',
-        backgroundColor: AppTheme.primaryNavy,
-        foregroundColor: AppTheme.accentGold,
+        backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+        foregroundColor: isDark ? AppTheme.primaryNavy : AppTheme.accentGold,
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () {
@@ -1181,6 +1193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildStatusPill(String label, {required int count}) {
+    final isDark = AppState.instance.isDarkMode;
     final isSelected = _activeFilter == label;
     return InkWell(
       onTap: () => setState(() => _activeFilter = label),
@@ -1188,10 +1201,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryNavy : Colors.white,
+          color: isSelected
+              ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy)
+              : (isDark ? AppTheme.darkSurface : Colors.white),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryNavy : const Color(0xFFE2E8F0),
+            color: isSelected
+                ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy)
+                : (isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
           ),
         ),
         child: Row(
@@ -1200,7 +1217,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text(
               label.tr,
               style: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF475569),
+                color: isSelected
+                    ? (isDark ? AppTheme.primaryNavy : Colors.white)
+                    : (isDark ? Colors.white : const Color(0xFF475569)),
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 fontSize: 12,
               ),
@@ -1209,13 +1228,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.accentGold : const Color(0xFFF1F5F9),
+                color: isSelected
+                    ? (isDark ? AppTheme.primaryNavy.withValues(alpha: 0.2) : AppTheme.accentGold)
+                    : (isDark ? const Color(0xFF1E3052) : const Color(0xFFF1F5F9)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 '$count',
                 style: TextStyle(
-                  color: isSelected ? AppTheme.primaryNavy : const Color(0xFF475569),
+                  color: isSelected
+                      ? (isDark ? AppTheme.primaryNavy : AppTheme.primaryNavy)
+                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
                   fontWeight: FontWeight.w800,
                   fontSize: 10,
                 ),
@@ -1236,15 +1259,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Color iconColor,
     required VoidCallback onTap,
   }) {
+    final isDark = AppState.instance.isDarkMode;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: cardBg,
+          color: isDark ? AppTheme.darkSurface : cardBg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+          border: Border.all(color: isDark ? const Color(0xFF1E3052) : Colors.black.withValues(alpha: 0.04)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1268,9 +1292,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 14),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 14,
+                color: isDark ? Colors.white : AppTheme.primaryNavy,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11.5,
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
                 color: AppTheme.primaryNavy,
               ),
               maxLines: 1,

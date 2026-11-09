@@ -313,27 +313,33 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 ),
                 const SizedBox(height: 12),
 
-                // RÔLE * (Propriétaire / Gérant / Caissier / Magasinier / Vendeur + Rôles personnalisés)
+                // RÔLE * (Uniquement Caissier, Magasinier, Gérant, Propriétaire)
                 DropdownButtonFormField<String>(
                   initialValue: role,
+                  isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'Rôle *',
                     labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  items: [
-                    const DropdownMenuItem(value: 'Caissier', child: Text('Caissier (POS, encaissement, reçu)')),
-                    const DropdownMenuItem(value: 'Magasinier', child: Text('Magasinier (Stock, réappro à valider)')),
-                    const DropdownMenuItem(value: 'Gérant', child: Text('Gérant (Supervision sous validation)')),
-                    const DropdownMenuItem(value: 'Vendeur', child: Text('Vendeur (POS & Catalogue)')),
-                    const DropdownMenuItem(value: 'Propriétaire', child: Text('Propriétaire (Tous droits & validations)')),
-                    ...appState.accessGroups
-                        .map((g) => (g['role'] ?? '').toString())
-                        .where((r) =>
-                            r.isNotEmpty &&
-                            !['Caissier', 'Magasinier', 'Gérant', 'Vendeur', 'Propriétaire'].contains(r))
-                        .map((r) => DropdownMenuItem(value: r, child: Text('$r (Rôle personnalisé)'))),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Caissier',
+                      child: Text('Caissier (POS, encaissement, reçu)', overflow: TextOverflow.ellipsis),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Magasinier',
+                      child: Text('Magasinier (Stock, réappro à valider)', overflow: TextOverflow.ellipsis),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Gérant',
+                      child: Text('Gérant (Supervision sous validation)', overflow: TextOverflow.ellipsis),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Propriétaire',
+                      child: Text('Propriétaire (Tous droits & validations)', overflow: TextOverflow.ellipsis),
+                    ),
                   ],
                   onChanged: (v) {
                     setDlgState(() {
@@ -350,6 +356,7 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 if (role == 'Caissier') ...[
                   DropdownButtonFormField<String>(
                     value: selectedCashDesk,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Caisse attribuée au caissier *',
                       labelStyle: const TextStyle(color: Color(0xFF0284C7), fontSize: 13, fontWeight: FontWeight.bold),
@@ -361,11 +368,16 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                       prefixIcon: const Icon(Icons.point_of_sale_rounded, color: Color(0xFF0284C7)),
                     ),
                     items: appState.cashDesks.isNotEmpty
-                        ? appState.cashDesks.map((d) => DropdownMenuItem(value: d.name, child: Text(d.name))).toList()
-                        : [
-                            const DropdownMenuItem(value: 'Caisse Principale', child: Text('Caisse Principale')),
-                            const DropdownMenuItem(value: 'Caisse 1', child: Text('Caisse 1')),
-                            const DropdownMenuItem(value: 'Caisse 2', child: Text('Caisse 2')),
+                        ? appState.cashDesks
+                            .map((d) => DropdownMenuItem(
+                                  value: d.name,
+                                  child: Text(d.name, overflow: TextOverflow.ellipsis),
+                                ))
+                            .toList()
+                        : const [
+                            DropdownMenuItem(value: 'Caisse Principale', child: Text('Caisse Principale', overflow: TextOverflow.ellipsis)),
+                            DropdownMenuItem(value: 'Caisse 1', child: Text('Caisse 1', overflow: TextOverflow.ellipsis)),
+                            DropdownMenuItem(value: 'Caisse 2', child: Text('Caisse 2', overflow: TextOverflow.ellipsis)),
                           ],
                     onChanged: (v) => setDlgState(() => selectedCashDesk = v ?? 'Caisse Principale'),
                   ),
@@ -430,6 +442,7 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                   // BOUTIQUE ASSIGNÉE (pour les autres rôles)
                   DropdownButtonFormField<String>(
                     initialValue: assignedStore,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Boutique assignée',
                       labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
@@ -437,8 +450,16 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     items: [
-                      const DropdownMenuItem(value: 'Toutes les boutiques', child: Text('Toutes les boutiques')),
-                      ...appState.availableStores.map((s) => DropdownMenuItem(value: s, child: Text(s))),
+                      const DropdownMenuItem(
+                        value: 'Toutes les boutiques',
+                        child: Text('Toutes les boutiques', overflow: TextOverflow.ellipsis),
+                      ),
+                      ...appState.availableStores.map(
+                        (s) => DropdownMenuItem(
+                          value: s,
+                          child: Text(s, overflow: TextOverflow.ellipsis),
+                        ),
+                      ),
                     ],
                     onChanged: (v) => setDlgState(() => assignedStore = v ?? 'Toutes les boutiques'),
                   ),
@@ -637,7 +658,8 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                   ),
                 ] else ...[
                   DropdownButtonFormField<String>(
-                    initialValue: ['Gérant', 'Caissier', 'Magasinier', 'Vendeur'].contains(role) ? role : 'Caissier',
+                    initialValue: ['Gérant', 'Caissier', 'Magasinier'].contains(role) ? role : 'Caissier',
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Rôle *',
                       labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
@@ -645,10 +667,9 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'Gérant', child: Text('Gérant')),
-                      DropdownMenuItem(value: 'Caissier', child: Text('Caissier')),
-                      DropdownMenuItem(value: 'Magasinier', child: Text('Magasinier')),
-                      DropdownMenuItem(value: 'Vendeur', child: Text('Vendeur')),
+                      DropdownMenuItem(value: 'Gérant', child: Text('Gérant', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'Caissier', child: Text('Caissier', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'Magasinier', child: Text('Magasinier', overflow: TextOverflow.ellipsis)),
                     ],
                     onChanged: (v) {
                       setDlgState(() {
@@ -689,6 +710,7 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                   // BOUTIQUE ASSIGNÉE (pour les autres rôles)
                   DropdownButtonFormField<String>(
                     initialValue: assignedStore.isNotEmpty ? assignedStore : 'Toutes les boutiques',
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Boutique assignée',
                       labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
@@ -696,8 +718,16 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     items: [
-                      const DropdownMenuItem(value: 'Toutes les boutiques', child: Text('Toutes les boutiques')),
-                      ...appState.availableStores.map((s) => DropdownMenuItem(value: s, child: Text(s))),
+                      const DropdownMenuItem(
+                        value: 'Toutes les boutiques',
+                        child: Text('Toutes les boutiques', overflow: TextOverflow.ellipsis),
+                      ),
+                      ...appState.availableStores.map(
+                        (s) => DropdownMenuItem(
+                          value: s,
+                          child: Text(s, overflow: TextOverflow.ellipsis),
+                        ),
+                      ),
                     ],
                     onChanged: (v) => setDlgState(() => assignedStore = v ?? 'Toutes les boutiques'),
                   ),

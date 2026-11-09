@@ -130,6 +130,7 @@ class _MainShellState extends State<MainShell> {
       animation: appState,
       builder: (context, _) {
         final isDesktop = MediaQuery.of(context).size.width >= 800;
+        final isDark = appState.isDarkMode;
         final tabs = _buildDynamicTabs();
         final safeIndex = _currentIndex.clamp(0, tabs.length - 1);
         final posIndex = tabs.indexWhere((t) => t.id == 'pos');
@@ -137,7 +138,7 @@ class _MainShellState extends State<MainShell> {
         if (isDesktop) {
           // Version Grand Écran Web Professionnelle Bricelo
           return Scaffold(
-            backgroundColor: const Color(0xFFF8FAFC),
+            backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC),
             body: Row(
               children: [
                 // 1. SIDEBAR WEB / DESKTOP (Largeur 260px)
@@ -412,19 +413,19 @@ class _MainShellState extends State<MainShell> {
                       Container(
                         height: 60,
                         padding: const EdgeInsets.symmetric(horizontal: 24),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppTheme.darkSurface : Colors.white,
+                          border: Border(bottom: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0))),
                         ),
                         child: Row(
                           children: [
                             // Titre de l'écran actif
                             Text(
                               tabs[safeIndex].webTitle,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 18,
-                                color: Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                               ),
                             ),
                             const SizedBox(width: 24),
@@ -433,16 +434,16 @@ class _MainShellState extends State<MainShell> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
+                                color: isDark ? const Color(0xFF162540) : const Color(0xFFF1F5F9),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.calendar_today, size: 14, color: Color(0xFF64748B)),
+                                  Icon(Icons.calendar_today, size: 14, color: isDark ? AppTheme.accentGold : const Color(0xFF64748B)),
                                   const SizedBox(width: 6),
                                   Text(
                                     AppTranslations.formattedCurrentDate,
-                                    style: const TextStyle(color: Color(0xFF475569), fontSize: 12, fontWeight: FontWeight.w600),
+                                    style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569), fontSize: 12, fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -470,8 +471,8 @@ class _MainShellState extends State<MainShell> {
                             // Bouton Assistant Bricelo
                             OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.primaryNavy,
-                                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                foregroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                                side: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               ),
@@ -485,6 +486,28 @@ class _MainShellState extends State<MainShell> {
                         ),
                       ),
 
+                      if (appState.showReconnectedSyncBanner)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          color: const Color(0xFF0D9488),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Connexion rétablie • Synchronisation en cours...',
+                                style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+
                       // Écran actif étendu
                       Expanded(child: tabs[safeIndex].screen),
                     ],
@@ -497,8 +520,36 @@ class _MainShellState extends State<MainShell> {
 
         // Version Mobile (Dynamique selon le rôle et les droits accordés)
         return Scaffold(
+          backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC),
           body: Column(
             children: [
+              if (appState.showReconnectedSyncBanner)
+                SafeArea(
+                  bottom: false,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    color: const Color(0xFF0D9488),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        ),
+                        SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            'Synchronisation en cours...',
+                            style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               if (appState.userRole != 'Propriétaire')
                 SafeArea(
                   bottom: false,
@@ -568,11 +619,14 @@ class _MainShellState extends State<MainShell> {
           ),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? AppTheme.darkSurface : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border(
+                top: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryNavy.withValues(alpha: 0.08),
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
                   blurRadius: 20,
                   offset: const Offset(0, -4),
                 ),
@@ -592,6 +646,7 @@ class _MainShellState extends State<MainShell> {
                         tabs[i].icon,
                         tabs[i].activeIcon,
                         tabs[i].label,
+                        isDark: isDark,
                         isSelectedOverride: safeIndex == i,
                         badge: tabs[i].badge,
                         badgeColor: tabs[i].badgeColor,
@@ -672,11 +727,13 @@ class _MainShellState extends State<MainShell> {
     IconData icon,
     IconData activeIcon,
     String label, {
+    bool isDark = false,
     bool? isSelectedOverride,
     String? badge,
     Color? badgeColor,
   }) {
     final isSelected = isSelectedOverride ?? (_currentIndex == index);
+    final activeColor = isDark ? AppTheme.accentGold : AppTheme.primaryNavy;
     return Expanded(
       child: InkWell(
         onTap: () => setState(() => _currentIndex = index),
@@ -694,13 +751,13 @@ class _MainShellState extends State<MainShell> {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.accentGold.withValues(alpha: 0.16) : Colors.transparent,
+                    color: isSelected ? AppTheme.accentGold.withValues(alpha: isDark ? 0.22 : 0.16) : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     isSelected ? activeIcon : icon,
                     size: 23,
-                    color: isSelected ? AppTheme.primaryNavy : const Color(0xFF94A3B8),
+                    color: isSelected ? activeColor : const Color(0xFF94A3B8),
                   ),
                 ),
                 if (badge != null)
@@ -733,7 +790,7 @@ class _MainShellState extends State<MainShell> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                color: isSelected ? AppTheme.primaryNavy : const Color(0xFF94A3B8),
+                color: isSelected ? activeColor : const Color(0xFF94A3B8),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

@@ -260,25 +260,28 @@ class _MoreScreenState extends State<MoreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = appState.isDarkMode;
-    final pageBg = isDark ? const Color(0xFF09121E) : const Color(0xFFF8FAFC);
-    final cardBg = isDark ? const Color(0xFF132238) : Colors.white;
-    final cardBorder = isDark ? const Color(0xFF1E3352) : const Color(0xFFE2E8F0);
-    final textColor = isDark ? Colors.white : const Color(0xFF0D1B2E);
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final isDark = appState.isDarkMode;
+        final pageBg = isDark ? const Color(0xFF09121E) : const Color(0xFFF8FAFC);
+        final cardBg = isDark ? const Color(0xFF132238) : Colors.white;
+        final cardBorder = isDark ? const Color(0xFF1E3352) : const Color(0xFFE2E8F0);
+        final textColor = isDark ? Colors.white : const Color(0xFF0D1B2E);
 
-    final allItems = _getOriginalItems();
-    final isSearching = _query.isNotEmpty;
-    final filteredItems = isSearching
-        ? allItems.where((item) {
-            final q = _query.toLowerCase();
-            final matchTitle = item.title.toLowerCase().contains(q);
-            final matchKw = item.keywords.any((k) => k.toLowerCase().contains(q));
-            return matchTitle || matchKw;
-          }).toList()
-        : allItems;
+        final allItems = _getOriginalItems();
+        final isSearching = _query.isNotEmpty;
+        final filteredItems = isSearching
+            ? allItems.where((item) {
+                final q = _query.toLowerCase();
+                final matchTitle = item.title.toLowerCase().contains(q);
+                final matchKw = item.keywords.any((k) => k.toLowerCase().contains(q));
+                return matchTitle || matchKw;
+              }).toList()
+            : allItems;
 
-    return Scaffold(
-      backgroundColor: pageBg,
+        return Scaffold(
+          backgroundColor: pageBg,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
@@ -744,6 +747,8 @@ class _MoreScreenState extends State<MoreScreen> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 

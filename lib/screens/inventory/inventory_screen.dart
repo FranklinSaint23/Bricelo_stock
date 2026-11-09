@@ -194,7 +194,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return Scaffold(
       backgroundColor: pageBg,
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryNavy,
+        backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
         title: Text(
           'Stock'.tr,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
@@ -495,9 +495,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 // 3. SÉLECTEUR DYNAMIQUE DE BOUTIQUES / DÉPÔTS (Pilule délimitée)
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? AppTheme.darkSurface : Colors.white,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+                    border: Border.all(color: isDark ? const Color(0xFF1E3352) : const Color(0xFFCBD5E1), width: 1.2),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -509,13 +509,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                           decoration: BoxDecoration(
-                            color: isSel ? const Color(0xFFFED7AA) : Colors.transparent,
+                            color: isSel ? (isDark ? AppTheme.accentGold : const Color(0xFFFED7AA)) : Colors.transparent,
                             borderRadius: BorderRadius.circular(22),
                           ),
                           child: Text(
-                            st,
+                            st.tr,
                             style: TextStyle(
-                              color: isSel ? const Color(0xFF9A3412) : const Color(0xFF1E293B),
+                              color: isSel ? (isDark ? AppTheme.primaryNavy : const Color(0xFF9A3412)) : (isDark ? Colors.white70 : const Color(0xFF1E293B)),
                               fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
                               fontSize: 13,
                             ),
@@ -554,7 +554,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               child: GestureDetector(
                 onTap: () => setState(() => _isFabExpanded = false),
                 child: Container(
-                  color: Colors.white.withValues(alpha: 0.85),
+                  color: (isDark ? AppTheme.darkScaffold : Colors.white).withValues(alpha: 0.88),
                   padding: const EdgeInsets.only(bottom: 90, right: 16),
                   alignment: Alignment.bottomRight,
                   child: Column(
@@ -564,6 +564,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       _buildSpeedDialItem(
                         label: 'Approvisionner'.tr,
                         icon: Icons.add_shopping_cart,
+                        isDark: isDark,
                         onTap: () {
                           setState(() => _isFabExpanded = false);
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
@@ -573,6 +574,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       _buildSpeedDialItem(
                         label: 'Ajuster'.tr,
                         icon: Icons.tune,
+                        isDark: isDark,
                         onTap: () {
                           setState(() => _isFabExpanded = false);
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const StockAdjustmentScreen()));
@@ -582,6 +584,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       _buildSpeedDialItem(
                         label: 'Transférer'.tr,
                         icon: Icons.swap_horiz,
+                        isDark: isDark,
                         onTap: () {
                           setState(() => _isFabExpanded = false);
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const StockTransfersScreen()));
@@ -591,6 +594,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       _buildSpeedDialItem(
                         label: 'Inventaires'.tr,
                         icon: Icons.fact_check_rounded,
+                        isDark: isDark,
                         onTap: () {
                           setState(() => _isFabExpanded = false);
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const PhysicalInventoryScreen()));
@@ -600,6 +604,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       _buildSpeedDialItem(
                         label: 'Dépréciation'.tr,
                         icon: Icons.trending_down,
+                        isDark: isDark,
                         onTap: () {
                           setState(() => _isFabExpanded = false);
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const DepreciationReportScreen()));
@@ -898,6 +903,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     required String label,
     required IconData icon,
     required VoidCallback onTap,
+    bool isDark = false,
   }) {
     return InkWell(
       onTap: onTap,
@@ -907,19 +913,19 @@ class _InventoryScreenState extends State<InventoryScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF111827)),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? Colors.white : const Color(0xFF111827)),
           ),
           const SizedBox(width: 12),
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF132238) : Colors.white,
               borderRadius: BorderRadius.circular(14),
-              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.12), blurRadius: 8, offset: const Offset(0, 3))],
+              border: Border.all(color: isDark ? const Color(0xFF1E3352) : const Color(0xFFE5E7EB)),
             ),
-            child: Icon(icon, color: AppTheme.primaryNavy, size: 22),
+            child: Icon(icon, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 22),
           ),
         ],
       ),

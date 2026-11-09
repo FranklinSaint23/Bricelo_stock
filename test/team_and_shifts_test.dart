@@ -108,12 +108,12 @@ void main() {
       expect(appState.hasPermission('Demandes d\'approvisionnement & Transferts'), true);
       expect(appState.hasPermission('Validation des approbations'), false);
 
-      // Vendeur a POS par défaut et n'a pas la gestion du stock ni validation
-      appState.userRole = 'Vendeur';
+      // Gérant supervise la boutique mais n'a pas la validation finale Propriétaire
+      appState.userRole = 'Gérant';
       expect(appState.hasPermission('Point de vente (POS)'), true);
-      expect(appState.hasPermission('Gestion du stock & Prix'), false);
+      expect(appState.hasPermission('Gestion du stock & Prix'), true);
       expect(appState.hasPermission('Validation des approbations'), false);
-      expect(appState.hasPermission('Comptabilité & Finances'), false);
+      expect(appState.hasPermission('Suppression de données'), false);
 
       // Rétablissement du rôle Propriétaire
       appState.userRole = 'Propriétaire';

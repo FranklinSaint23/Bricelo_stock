@@ -17,6 +17,8 @@ class AppState extends ChangeNotifier {
   bool _initialized = false;
   Timer? _autoSyncTimer;
   bool isOnlineSyncing = false;
+  bool isDeviceOffline = false;
+  bool showReconnectedSyncBanner = false;
 
   // --- Onboarding & Authentification ---
   bool hasSelectedLanguage = false;
@@ -240,7 +242,7 @@ class AppState extends ChangeNotifier {
     {
       'role': 'Caissier',
       'description': 'Caisse attribuée, encaissement, partage et impression de reçus. Accès restreint',
-      'isDefault': false,
+      'isDefault': true,
       'permissions': {
         'Point de vente (POS)': true,
         'Gestion des shifts (Caisse)': true,
@@ -252,22 +254,21 @@ class AppState extends ChangeNotifier {
         'Suppression de données': false,
       },
     },
-    {
-      'role': 'Vendeur',
-      'description': 'Prise de commande, vente au comptoir et création de devis clients. Accès restreint',
-      'isDefault': false,
-      'permissions': {
-        'Point de vente (POS)': true,
-        'Gestion des shifts (Caisse)': false,
-        'Gestion du stock & Prix': false,
-        'Demandes d\'approvisionnement & Transferts': false,
-        'Comptabilité & Finances': false,
-        'Validation des approbations': false,
-        'Gestion des collaborateurs': false,
-        'Suppression de données': false,
-      },
-    },
   ];
+
+  static const List<String> allowedTeamRoles = [
+    'Propriétaire',
+    'Gérant',
+    'Magasinier',
+    'Caissier',
+  ];
+
+  void _sanitizeAccessGroups() {
+    accessGroups = accessGroups.where((g) {
+      final r = (g['role'] ?? '').toString().trim();
+      return allowedTeamRoles.any((allowed) => allowed.toLowerCase() == r.toLowerCase());
+    }).toList();
+  }
 
   String? userAssignedCashDesk;
 
@@ -532,28 +533,12 @@ class AppState extends ChangeNotifier {
               .toList();
         }
 
-        // Groupes d'accès
+        // Groupes d'accès (uniquement Propriétaire, Gérant, Magasinier, Caissier)
         if (data['accessGroups'] != null) {
           accessGroups = (data['accessGroups'] as List<dynamic>)
               .map((e) => Map<String, dynamic>.from(e as Map))
               .toList();
-          if (!accessGroups.any((g) => g['role'].toString().toLowerCase() == 'vendeur')) {
-            accessGroups.add({
-              'role': 'Vendeur',
-              'description': 'Prise de commande, vente au comptoir et création de devis clients. Accès restreint',
-              'isDefault': false,
-              'permissions': {
-                'Point de vente (POS)': true,
-                'Gestion des shifts (Caisse)': false,
-                'Gestion du stock & Prix': false,
-                'Demandes d\'approvisionnement & Transferts': false,
-                'Comptabilité & Finances': false,
-                'Validation des approbations': false,
-                'Gestion des collaborateurs': false,
-                'Suppression de données': false,
-              },
-            });
-          }
+          _sanitizeAccessGroups();
         }
         userAssignedCashDesk = data['userAssignedCashDesk']?.toString();
         ownerPasswordHash = (data['ownerPasswordHash'] ?? '').toString();
@@ -561,6 +546,9 @@ class AppState extends ChangeNotifier {
           pendingSyncQueue = (data['pendingSyncQueue'] as List<dynamic>)
               .map((e) => Map<String, dynamic>.from(e as Map))
               .toList();
+          if (pendingSyncQueue.isNotEmpty) {
+            isDeviceOffline = true;
+          }
         }
         notifyListeners();
       }
@@ -568,22 +556,51 @@ class AppState extends ChangeNotifier {
       debugPrint('Erreur chargement local: $e');
     }
 
-    // Démarrer le moteur de synchronisation automatique (toutes les 20s) pour vider la file hors-ligne et tirer les nouveautés
+    // Démarrer le moteur de surveillance réseau & synchronisation automatique
     startAutoSyncEngine();
 
     // Synchronisation asynchrone immédiate depuis Supabase si connecté ou si des éléments sont en attente
     if (isLoggedIn || pendingSyncQueue.isNotEmpty) {
-      syncFromSupabase();
+      _checkConnectivityAndSync();
     }
   }
 
   void startAutoSyncEngine() {
     _autoSyncTimer?.cancel();
-    _autoSyncTimer = Timer.periodic(const Duration(seconds: 20), (_) {
-      if (isLoggedIn || pendingSyncQueue.isNotEmpty) {
-        syncFromSupabase();
+    _autoSyncTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (isLoggedIn || pendingSyncQueue.isNotEmpty || isDeviceOffline) {
+        _checkConnectivityAndSync();
       }
     });
+  }
+
+  Future<void> _checkConnectivityAndSync() async {
+    final sb = _supabase;
+    if (sb == null || isOnlineSyncing) return;
+
+    try {
+      // Vérification légère de la connexion Internet vers Supabase
+      await sb.from('stores').select('name').limit(1);
+
+      // Si l'appareil était hors-ligne juste avant (ou avait des données hors-ligne en attente), afficher le bandeau 3 secondes !
+      if (isDeviceOffline) {
+        isDeviceOffline = false;
+        showReconnectedSyncBanner = true;
+        notifyListeners();
+
+        await syncFromSupabase();
+
+        Future.delayed(const Duration(seconds: 3), () {
+          showReconnectedSyncBanner = false;
+          notifyListeners();
+        });
+      } else {
+        await syncFromSupabase();
+      }
+    } catch (_) {
+      // Pas de connexion Internet actuellement
+      isDeviceOffline = true;
+    }
   }
 
   /// Sauvegarde explicite des paramètres de l'application
@@ -749,7 +766,8 @@ class AppState extends ChangeNotifier {
     try {
       await _executeSupabaseOp(sb, op);
     } catch (_) {
-      // Échec réseau / hors-ligne : on persiste dans la file d'attente pour envoi automatique dès retour d'Internet
+      // Échec réseau / hors-ligne : on marque l'appareil hors-ligne et on persiste dans la file d'attente
+      isDeviceOffline = true;
       pendingSyncQueue.add(op);
       await _saveToPrefs();
     }
@@ -874,6 +892,7 @@ class AppState extends ChangeNotifier {
               accessGroups = (prof['access_groups'] as List)
                   .map((e) => Map<String, dynamic>.from(e as Map))
                   .toList();
+              _sanitizeAccessGroups();
             }
             if (prof['cash_desks'] is List && (prof['cash_desks'] as List).isNotEmpty && cashDesks.isEmpty) {
               cashDesks = (prof['cash_desks'] as List)
