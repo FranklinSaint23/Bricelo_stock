@@ -229,70 +229,241 @@ class _InventoryScreenState extends State<InventoryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. CARTE VALEUR DU STOCK MOBILE (100% Dynamique)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: cardBorder),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                // 0. ESPACE ÉQUIPIER INVITÉ (Magasinier, Gérant...) : DEMANDES SOUMISES AU PROPRIÉTAIRE
+                if (!appState.hasPermission('Validation des approbations')) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0F766E), Color(0xFF0D9488)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.trending_up_rounded, color: AppTheme.accentGold, size: 18),
-                              const SizedBox(width: 8),
-                              Text(
-                                'VALEUR DU STOCK'.tr,
-                                style: TextStyle(
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0D9488).withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.warehouse_rounded, color: Colors.white, size: 22),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Espace ${appState.userRole} — Approvisionnement & Transferts',
+                                style: const TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.bold),
                               ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryNavy.withValues(alpha: isDark ? 0.4 : 0.08),
-                              borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Text(
-                              _selectedStoreTab,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.accentGold),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Vos demandes d\'approvisionnement et de transfert sont transmises au propriétaire pour validation dans ses Approbations et paiement du fournisseur.',
+                          style: TextStyle(color: Color(0xFFCCFBF1), fontSize: 11.5, height: 1.35),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: const Color(0xFF0F766E),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                ),
+                                icon: const Icon(Icons.add_shopping_cart_rounded, size: 16),
+                                label: const Text(
+                                  'Demander appro',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplyScreen()));
+                                },
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildStockValueCol('Vente'.tr, AppTheme.formatFCFA(totalVente), isDark, textColor),
-                          Container(width: 1, height: 32, color: cardBorder),
-                          _buildStockValueCol('Coût'.tr, AppTheme.formatFCFA(totalAchat), isDark, textColor),
-                          Container(width: 1, height: 32, color: cardBorder),
-                          _buildStockValueCol('Marge'.tr, '${AppTheme.formatFCFA(marge)} (${margePct.toStringAsFixed(0)}%)', isDark, const Color(0xFF10B981)),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryNavy,
+                                  foregroundColor: AppTheme.accentGold,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                ),
+                                icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                                label: const Text(
+                                  'Transférer stock',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NewTransferScreen()));
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
+
+                  // Suivi des demandes soumises par cet équipier
+                  Builder(builder: (_) {
+                    final myRequests = appState.approvalRequests
+                        .where((r) => r.type == 'Approvisionnement' || r.type == 'Transfert de stock')
+                        .take(3)
+                        .toList();
+                    if (myRequests.isEmpty) return const SizedBox.shrink();
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: cardBorder),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Statut de vos demandes récentes (${myRequests.length})',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: textColor),
+                          ),
+                          const SizedBox(height: 8),
+                          ...myRequests.map((req) {
+                            final isPending = req.status == 'pending';
+                            final isPaid = req.paymentStatus == 'paid';
+                            final isApproved = req.status == 'approved';
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isPending
+                                        ? Icons.schedule_rounded
+                                        : (isApproved ? Icons.check_circle_rounded : Icons.cancel_rounded),
+                                    size: 15,
+                                    color: isPending
+                                        ? const Color(0xFFD97706)
+                                        : (isApproved ? const Color(0xFF059669) : const Color(0xFFDC2626)),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      req.title,
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textColor),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: isPending
+                                          ? const Color(0xFFFEF3C7)
+                                          : (isPaid ? const Color(0xFFDBEAFE) : (isApproved ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2))),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      isPending
+                                          ? 'En attente Proprio'
+                                          : (isPaid ? 'Validé & Payé' : (isApproved ? 'Validé' : 'Rejeté')),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: isPending
+                                            ? const Color(0xFF92400E)
+                                            : (isPaid ? const Color(0xFF1E40AF) : (isApproved ? const Color(0xFF065F46) : const Color(0xFF991B1B))),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+
+                // 1. CARTE VALEUR DU STOCK MOBILE (100% Dynamique — Masquée si l'équipier n'a pas accès aux finances)
+                if (appState.hasPermission('Comptabilité & Finances')) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: cardBorder),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.trending_up_rounded, color: AppTheme.accentGold, size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'VALEUR DU STOCK'.tr,
+                                  style: TextStyle(
+                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryNavy.withValues(alpha: isDark ? 0.4 : 0.08),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                _selectedStoreTab,
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.accentGold),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildStockValueCol('Vente'.tr, AppTheme.formatFCFA(totalVente), isDark, textColor),
+                            Container(width: 1, height: 32, color: cardBorder),
+                            _buildStockValueCol('Coût'.tr, AppTheme.formatFCFA(totalAchat), isDark, textColor),
+                            Container(width: 1, height: 32, color: cardBorder),
+                            _buildStockValueCol('Marge'.tr, '${AppTheme.formatFCFA(marge)} (${margePct.toStringAsFixed(0)}%)', isDark, const Color(0xFF10B981)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
 
                 // 2. BADGES D'ÉTAT DU STOCK
                 Row(

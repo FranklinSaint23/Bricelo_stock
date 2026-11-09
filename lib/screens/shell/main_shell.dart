@@ -3,6 +3,28 @@ import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/screens.dart';
 
+class _DynamicNavTab {
+  final String id;
+  final Widget screen;
+  final String label;
+  final String webTitle;
+  final IconData icon;
+  final IconData activeIcon;
+  final String? badge;
+  final Color? badgeColor;
+
+  const _DynamicNavTab({
+    required this.id,
+    required this.screen,
+    required this.label,
+    required this.webTitle,
+    required this.icon,
+    required this.activeIcon,
+    this.badge,
+    this.badgeColor,
+  });
+}
+
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -14,13 +36,93 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
   final appState = AppState.instance;
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    PosScreen(),
-    ProductsScreen(),
-    InventoryScreen(),
-    MoreScreen(),
-  ];
+  List<_DynamicNavTab> _buildDynamicTabs() {
+    final isOwner = appState.userRole.toLowerCase().contains('propriétaire') ||
+        appState.userRole.toLowerCase().contains('owner');
+    final canFinance = isOwner || appState.hasPermission('Comptabilité & Finances');
+    final canPos = isOwner || appState.hasPermission('Point de vente (POS)');
+    final canShifts = isOwner || appState.hasPermission('Gestion des shifts (Caisse)');
+    final canStockAndPrice = isOwner || appState.hasPermission('Gestion du stock & Prix');
+    final canRestockRequest = isOwner || appState.hasPermission('Demandes d\'approvisionnement & Transferts');
+    final canApprove = isOwner || appState.hasPermission('Validation des approbations');
+
+    final List<_DynamicNavTab> tabs = [];
+
+    if (canFinance) {
+      tabs.add(_DynamicNavTab(
+        id: 'dashboard',
+        screen: const DashboardScreen(),
+        label: 'Accueil'.tr,
+        webTitle: 'Tableau de bord'.tr,
+        icon: Icons.space_dashboard_outlined,
+        activeIcon: Icons.space_dashboard_rounded,
+      ));
+    }
+
+    if (canPos) {
+      tabs.add(_DynamicNavTab(
+        id: 'pos',
+        screen: const PosScreen(),
+        label: 'Vente'.tr,
+        webTitle: 'Point de vente (Caisse)'.tr,
+        icon: Icons.point_of_sale_outlined,
+        activeIcon: Icons.point_of_sale_rounded,
+        badge: appState.cart.isNotEmpty ? '${appState.cartCount}' : null,
+        badgeColor: const Color(0xFF10B981),
+      ));
+    }
+
+    // Pour les rôles invités ayant le droit de gérer leurs shifts (ex: Caissier), accès direct à leurs shifts
+    if (!isOwner && canShifts && !canFinance) {
+      tabs.add(_DynamicNavTab(
+        id: 'shifts',
+        screen: const ShiftsTrackingScreen(initialTabIndex: 0),
+        label: 'Shifts',
+        webTitle: 'Suivi de Caisse & Shifts',
+        icon: Icons.punch_clock_outlined,
+        activeIcon: Icons.punch_clock_rounded,
+      ));
+    }
+
+    if (canStockAndPrice) {
+      tabs.add(_DynamicNavTab(
+        id: 'products',
+        screen: const ProductsScreen(),
+        label: 'Produits'.tr,
+        webTitle: 'Gestion des Produits'.tr,
+        icon: Icons.category_outlined,
+        activeIcon: Icons.category_rounded,
+      ));
+    }
+
+    if (canStockAndPrice || canRestockRequest) {
+      tabs.add(_DynamicNavTab(
+        id: 'stock',
+        screen: const InventoryScreen(),
+        label: 'Stock'.tr,
+        webTitle: 'Gestion du Stock'.tr,
+        icon: Icons.all_inbox_outlined,
+        activeIcon: Icons.all_inbox_rounded,
+        badge: appState.lowStockProducts.isNotEmpty ? '!' : null,
+        badgeColor: AppTheme.danger,
+      ));
+    }
+
+    tabs.add(_DynamicNavTab(
+      id: 'more',
+      screen: const MoreScreen(),
+      label: isOwner ? 'Plus'.tr : 'Mon Compte',
+      webTitle: 'Menu & Paramètres'.tr,
+      icon: Icons.widgets_outlined,
+      activeIcon: Icons.widgets_rounded,
+      badge: (canApprove && appState.pendingApprovalsCount > 0)
+          ? '${appState.pendingApprovalsCount}'
+          : null,
+      badgeColor: AppTheme.danger,
+    ));
+
+    return tabs;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +130,9 @@ class _MainShellState extends State<MainShell> {
       animation: appState,
       builder: (context, _) {
         final isDesktop = MediaQuery.of(context).size.width >= 800;
+        final tabs = _buildDynamicTabs();
+        final safeIndex = _currentIndex.clamp(0, tabs.length - 1);
+        final posIndex = tabs.indexWhere((t) => t.id == 'pos');
 
         if (isDesktop) {
           // Version Grand Écran Web Professionnelle Bricelo
@@ -145,43 +250,21 @@ class _MainShellState extends State<MainShell> {
                       ),
                       const Divider(color: Color(0xFF1E293B), height: 16),
 
-                      // Navigation principale
+                      // Navigation principale dynamique selon le rôle et les permissions
                       Expanded(
                         child: ListView(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           children: [
-                            _buildWebSectionLabel('COMMERCE'),
-                            _buildWebNavTile(0, Icons.dashboard_outlined, Icons.dashboard, 'Accueil'.tr, null),
-                            _buildWebNavTile(
-                              1,
-                              Icons.point_of_sale_outlined,
-                              Icons.point_of_sale,
-                              'Point de vente'.tr,
-                              appState.cart.isNotEmpty ? '${appState.cartCount}' : null,
-                              badgeColor: const Color(0xFF10B981),
-                            ),
-
-                            const SizedBox(height: 12),
-                            _buildWebSectionLabel('INVENTAIRE'),
-                            _buildWebNavTile(
-                              2,
-                              Icons.inventory_2_outlined,
-                              Icons.inventory_2,
-                              'Produits'.tr,
-                              '${appState.products.length}',
-                            ),
-                            _buildWebNavTile(
-                              3,
-                              Icons.warehouse_outlined,
-                              Icons.warehouse,
-                              'Stock'.tr,
-                              appState.lowStockCount > 0 ? '${appState.lowStockCount} bas' : null,
-                              badgeColor: const Color(0xFFF59E0B),
-                            ),
-
-                            const SizedBox(height: 12),
-                            _buildWebSectionLabel('GESTION'),
-                            _buildWebNavTile(4, Icons.more_horiz_outlined, Icons.more_horiz, 'Plus'.tr, null),
+                            _buildWebSectionLabel('NAVIGATION (${appState.userRole.toUpperCase()})'),
+                            for (int i = 0; i < tabs.length; i++)
+                              _buildWebNavTile(
+                                i,
+                                tabs[i].icon,
+                                tabs[i].activeIcon,
+                                tabs[i].label,
+                                tabs[i].badge,
+                                badgeColor: tabs[i].badgeColor,
+                              ),
 
                             // Raccourci vers Assistant Bricelo
                             Container(
@@ -239,7 +322,7 @@ class _MainShellState extends State<MainShell> {
                         ),
                         child: Column(
                           children: [
-                            // Profil Franklin
+                            // Profil Utilisateur
                             Row(
                               children: [
                                 Container(
@@ -262,13 +345,16 @@ class _MainShellState extends State<MainShell> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        appState.displayCompanyName,
+                                        appState.displayUserName,
                                         style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       Text(
-                                        appState.userRole,
+                                        appState.userAssignedCashDesk != null && appState.userAssignedCashDesk!.isNotEmpty
+                                            ? '${appState.userRole} • ${appState.userAssignedCashDesk}'
+                                            : appState.userRole,
                                         style: const TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w600),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),
@@ -334,7 +420,7 @@ class _MainShellState extends State<MainShell> {
                           children: [
                             // Titre de l'écran actif
                             Text(
-                              _getScreenTitle(_currentIndex),
+                              tabs[safeIndex].webTitle,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 18,
@@ -364,20 +450,22 @@ class _MainShellState extends State<MainShell> {
 
                             const Spacer(),
 
-                            // Bouton Action Rapide : + Vente POS
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryNavy,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            // Bouton Action Rapide : + Vente POS (uniquement si autorisé)
+                            if (posIndex != -1) ...[
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryNavy,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                ),
+                                icon: const Icon(Icons.add_shopping_cart, size: 16),
+                                label: Text('Nouvelle vente'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                onPressed: () => setState(() => _currentIndex = posIndex),
                               ),
-                              icon: const Icon(Icons.add_shopping_cart, size: 16),
-                              label: Text('Nouvelle vente'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                              onPressed: () => setState(() => _currentIndex = 1),
-                            ),
-                            const SizedBox(width: 10),
+                              const SizedBox(width: 10),
+                            ],
 
                             // Bouton Assistant Bricelo
                             OutlinedButton.icon(
@@ -398,7 +486,7 @@ class _MainShellState extends State<MainShell> {
                       ),
 
                       // Écran actif étendu
-                      Expanded(child: _screens[_currentIndex]),
+                      Expanded(child: tabs[safeIndex].screen),
                     ],
                   ),
                 ),
@@ -407,9 +495,77 @@ class _MainShellState extends State<MainShell> {
           );
         }
 
-        // Version Mobile (100% Préservée)
+        // Version Mobile (Dynamique selon le rôle et les droits accordés)
         return Scaffold(
-          body: _screens[_currentIndex],
+          body: Column(
+            children: [
+              if (appState.userRole != 'Propriétaire')
+                SafeArea(
+                  bottom: false,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    color: const Color(0xFF0F172A),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.verified_user_rounded, color: AppTheme.accentGold, size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${appState.displayUserName} • ${appState.userRole}',
+                                style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (appState.userAssignedCashDesk != null && appState.userAssignedCashDesk!.isNotEmpty)
+                                Text(
+                                  'Caisse : ${appState.userAssignedCashDesk}',
+                                  style: const TextStyle(color: AppTheme.accentGold, fontSize: 10, fontWeight: FontWeight.w600),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                            ],
+                          ),
+                        ),
+                        // Bouton Déconnexion rapide pour l'équipier
+                        InkWell(
+                          onTap: () async {
+                            await appState.logout();
+                            if (!context.mounted) return;
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                              (route) => false,
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDC2626),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.logout_rounded, color: Colors.white, size: 12),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Déconnexion',
+                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              Expanded(child: tabs[safeIndex].screen),
+            ],
+          ),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -430,24 +586,16 @@ class _MainShellState extends State<MainShell> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildModernNavItem(0, Icons.space_dashboard_outlined, Icons.space_dashboard_rounded, 'Accueil'.tr),
-                    _buildModernNavItem(
-                      1,
-                      Icons.point_of_sale_outlined,
-                      Icons.point_of_sale_rounded,
-                      'Vente'.tr,
-                      badge: appState.cart.isNotEmpty ? '' : null,
-                    ),
-                    _buildModernNavItem(2, Icons.category_outlined, Icons.category_rounded, 'Produits'.tr),
-                    _buildModernNavItem(
-                      3,
-                      Icons.all_inbox_outlined,
-                      Icons.all_inbox_rounded,
-                      'Stock'.tr,
-                      badge: appState.lowStockProducts.isNotEmpty ? '!' : null,
-                      badgeColor: AppTheme.danger,
-                    ),
-                    _buildModernNavItem(4, Icons.widgets_outlined, Icons.widgets_rounded, 'Plus'.tr),
+                    for (int i = 0; i < tabs.length; i++)
+                      _buildModernNavItem(
+                        i,
+                        tabs[i].icon,
+                        tabs[i].activeIcon,
+                        tabs[i].label,
+                        isSelectedOverride: safeIndex == i,
+                        badge: tabs[i].badge,
+                        badgeColor: tabs[i].badgeColor,
+                      ),
                   ],
                 ),
               ),
@@ -456,21 +604,6 @@ class _MainShellState extends State<MainShell> {
         );
       },
     );
-  }
-
-  String _getScreenTitle(int idx) {
-    switch (idx) {
-      case 0:
-        return 'Tableau de bord'.tr;
-      case 1:
-        return 'Point de vente (Caisse)'.tr;
-      case 2:
-        return 'Gestion des Produits'.tr;
-      case 3:
-        return 'Gestion du Stock'.tr;
-      default:
-        return 'Menu & Paramètres'.tr;
-    }
   }
 
   Widget _buildWebSectionLabel(String title) {
@@ -539,10 +672,11 @@ class _MainShellState extends State<MainShell> {
     IconData icon,
     IconData activeIcon,
     String label, {
+    bool? isSelectedOverride,
     String? badge,
     Color? badgeColor,
   }) {
-    final isSelected = _currentIndex == index;
+    final isSelected = isSelectedOverride ?? (_currentIndex == index);
     return Expanded(
       child: InkWell(
         onTap: () => setState(() => _currentIndex = index),

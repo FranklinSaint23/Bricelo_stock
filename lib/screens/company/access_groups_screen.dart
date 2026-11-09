@@ -89,10 +89,13 @@ class _AccessGroupsScreenState extends State<AccessGroupsScreen> {
                     'isDefault': false,
                     'permissions': {
                       'Point de vente (POS)': true,
+                      'Gestion des shifts (Caisse)': true,
                       'Gestion du stock & Prix': false,
+                      'Demandes d\'approvisionnement & Transferts': false,
                       'Comptabilité & Finances': false,
-                      'Suppression de données': false,
+                      'Validation des approbations': false,
                       'Gestion des collaborateurs': false,
+                      'Suppression de données': false,
                     },
                   };
                   final updated = List<Map<String, dynamic>>.from(appState.accessGroups)..add(newRole);

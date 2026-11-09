@@ -7,15 +7,20 @@ class ShiftDialogHelper {
   /// Ouvre la modale pour démarrer un shift de caisse
   static Future<bool> showOpenShiftDialog(BuildContext context) async {
     final appState = AppState.instance;
+    final isCashier = appState.userRole.toLowerCase() == 'caissier';
     final cashiers = appState.teamMembers.isNotEmpty
         ? appState.teamMembers.map((m) => m.name).toList()
         : [appState.displayUserName];
-    String selectedCashier = cashiers.first;
+    String selectedCashier = (isCashier && cashiers.contains(appState.displayUserName))
+        ? appState.displayUserName
+        : cashiers.first;
 
     final desks = appState.cashDesks.isNotEmpty
         ? appState.cashDesks.map((d) => d.name).toList()
         : ['Caisse Principale'];
-    String selectedDesk = desks.first;
+    String selectedDesk = (isCashier && appState.userAssignedCashDesk != null && desks.contains(appState.userAssignedCashDesk))
+        ? appState.userAssignedCashDesk!
+        : desks.first;
 
     final openingCashCtrl = TextEditingController(text: '0');
 

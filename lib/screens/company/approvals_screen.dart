@@ -21,8 +21,8 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
     final amountCtrl = TextEditingController();
     final requesterCtrl = TextEditingController(text: appState.teamMembers.isNotEmpty ? appState.teamMembers.first.name : 'Caissier');
     final detailsCtrl = TextEditingController();
-    String selectedType = 'Remise';
-    final types = ['Remise', 'Dépense', 'Dépréciation', 'Crédit', 'Annulation'];
+    String selectedType = 'Approvisionnement';
+    final types = ['Approvisionnement', 'Transfert de stock', 'Remise', 'Dépense', 'Dépréciation', 'Crédit', 'Annulation'];
 
     showDialog(
       context: context,
@@ -219,6 +219,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
 
   Color _badgeColorForType(String type) {
     switch (type.toLowerCase()) {
+      case 'approvisionnement':
+        return const Color(0xFF0D9488);
+      case 'transfert de stock':
+        return const Color(0xFF0284C7);
       case 'remise':
         return const Color(0xFFD97706);
       case 'dépense':
@@ -499,35 +503,60 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                                 ],
                                 if (req.status == 'pending') ...[
                                   const SizedBox(height: 14),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: const Color(0xFFDC2626),
-                                            side: const BorderSide(color: Color(0xFFFCA5A5)),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                  if (appState.hasPermission('Validation des approbations')) ...[
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: const Color(0xFFDC2626),
+                                              side: const BorderSide(color: Color(0xFFFCA5A5)),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              padding: const EdgeInsets.symmetric(vertical: 8),
+                                            ),
+                                            onPressed: () => _showDecisionDialog(req, false),
+                                            child: const Text('Rejeter', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                           ),
-                                          onPressed: () => _showDecisionDialog(req, false),
-                                          child: const Text('Rejeter', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                         ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF059669),
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFF059669),
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              padding: const EdgeInsets.symmetric(vertical: 8),
+                                            ),
+                                            onPressed: () => _showDecisionDialog(req, true),
+                                            child: Text(
+                                              req.type == 'Approvisionnement' ? 'Valider & Payer' : 'Approuver',
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                            ),
                                           ),
-                                          onPressed: () => _showDecisionDialog(req, true),
-                                          child: const Text('Approuver', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                         ),
+                                      ],
+                                    ),
+                                  ] else ...[
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEF3C7),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                    ],
-                                  ),
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.hourglass_top_rounded, color: Color(0xFF92400E), size: 16),
+                                          SizedBox(width: 6),
+                                          Expanded(
+                                            child: Text(
+                                              'En attente de validation par le propriétaire',
+                                              style: TextStyle(color: Color(0xFF92400E), fontSize: 12, fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ],
                             ),

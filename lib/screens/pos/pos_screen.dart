@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/screens/pos/shift_dialog_helper.dart';
 import 'package:stock_prime/screens/screens.dart';
@@ -18,9 +19,22 @@ class _PosScreenState extends State<PosScreen> {
   final _searchCtrl = TextEditingController();
   String _searchQuery = '';
   String _selectedStore = 'Toutes';
+  Timer? _shiftTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Actualisation du chronomètre de shift toutes les 15 secondes
+    _shiftTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted && appState.activeCashShift != null) {
+        setState(() {});
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _shiftTimer?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -1166,105 +1180,156 @@ class _PosScreenState extends State<PosScreen> {
 
   Widget _buildShiftBottomBar(BuildContext context) {
     final shift = appState.activeCashShift;
+    final now = DateTime.now();
+    final isPast17h30 = now.hour > 17 || (now.hour == 17 && now.minute >= 30);
+
     if (shift != null) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F172A),
-          border: const Border(
-            top: BorderSide(color: Color(0xFF1E293B)),
-            bottom: BorderSide(color: Color(0xFF1E293B)),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Alerte 17h30 si le service est toujours ouvert après l'heure de clôture
+          if (isPast17h30)
             Container(
-              width: 9,
-              height: 9,
-              decoration: const BoxDecoration(
-                color: Color(0xFF10B981),
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              color: const Color(0xFFFEF2F2),
+              child: Row(
                 children: [
-                  Text.rich(
-                    TextSpan(
-                      text: 'Shift : ${shift.cashierName} ',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.5,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: '· ${shift.cashDeskName}',
-                          style: const TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontWeight: FontWeight.normal,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
+                  const Icon(Icons.alarm_on_rounded, color: Color(0xFFDC2626), size: 18),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      '⚠️ Alerte 17h30 : Heure de fermeture dépassée. Pensez à faire votre caisse et clôturer.',
+                      style: TextStyle(color: Color(0xFF991B1B), fontSize: 11.5, fontWeight: FontWeight.bold),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Décompte : ${AppTheme.formatFCFA(shift.cashSalesTotal)} encaissés · Fond: ${AppTheme.formatFCFA(shift.openingCash)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppTheme.accentGold,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDC2626),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     ),
+                    onPressed: () => ShiftDialogHelper.showCloseShiftDialog(context, shift),
+                    child: const Text('Clôturer', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: () => ShiftDialogHelper.showCloseShiftDialog(context, shift),
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDC2626).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.6)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.lock_clock, size: 14, color: Color(0xFFFCA5A5)),
-                    SizedBox(width: 4),
-                    Text(
-                      'Fermer',
-                      style: TextStyle(
-                        color: Color(0xFFFCA5A5),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11.5,
-                      ),
-                    ),
-                  ],
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A),
+              border: const Border(
+                top: BorderSide(color: Color(0xFF1E293B)),
+                bottom: BorderSide(color: Color(0xFF1E293B)),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
-          ],
-        ),
+            child: Row(
+              children: [
+                Container(
+                  width: 9,
+                  height: 9,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF10B981),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${shift.cashDeskName} ouvert',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF065F46),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.timer_outlined, color: Color(0xFF6EE7B7), size: 11),
+                                const SizedBox(width: 3),
+                                Text(
+                                  shift.formattedDuration,
+                                  style: const TextStyle(color: Color(0xFF6EE7B7), fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Caissier : ${shift.cashierName} · Décompte : ${AppTheme.formatFCFA(shift.cashSalesTotal)} encaissés (Fond: ${AppTheme.formatFCFA(shift.openingCash)})',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.accentGold,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () => ShiftDialogHelper.showCloseShiftDialog(context, shift),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.6)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.lock_clock, size: 14, color: Color(0xFFFCA5A5)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Clôturer',
+                          style: TextStyle(
+                            color: Color(0xFFFCA5A5),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     } else {
       return Container(

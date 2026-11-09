@@ -11,8 +11,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // true = Nouvel utilisateur (Inscription), false = Utilisateur déjà existant (Connexion)
-  bool _isNewUser = false;
+  // 0 = Propriétaire existant (Connexion), 1 = Nouveau (Créer boutique), 2 = Compte Invité (Équipier)
+  int _authMode = 0;
   bool _obscurePassword = true;
   bool _isSubmitting = false;
 
@@ -28,10 +28,10 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     final state = AppState.instance;
     // Si aucun profil n'a jamais été créé sur l'appareil, pré-sélectionner "Nouveau sur la plateforme"
-    if (state.userName.isEmpty && state.companyName.isEmpty) {
-      _isNewUser = true;
+    if (state.userName.isEmpty && state.companyName.isEmpty && state.teamMembers.isEmpty) {
+      _authMode = 1;
     } else {
-      _isNewUser = false;
+      _authMode = 0;
       _phoneCtrl.text = state.userPhone.isNotEmpty ? state.userPhone : state.userEmail;
       _fullNameCtrl.text = state.userName;
       _shopNameCtrl.text = state.companyName;
@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final state = AppState.instance;
     final isEn = state.currentLanguage == 'en';
 
-    if (_isNewUser) {
+    if (_authMode == 1) {
       final name = _fullNameCtrl.text.trim();
       final shop = _shopNameCtrl.text.trim();
       final phone = _phoneCtrl.text.trim();
@@ -88,6 +88,60 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
         MaterialPageRoute(builder: (_) => const MainShell()),
       );
+    } else if (_authMode == 2) {
+      // CONNEXION COMPTE INVITÉ / ÉQUIPIER (Caissier, Magasinier, Gérant, Vendeur...)
+      final identifier = _phoneCtrl.text.trim();
+      final pin = _passwordCtrl.text.trim();
+
+      if (identifier.isEmpty || pin.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppTheme.danger,
+            content: Text(
+              isEn
+                  ? 'Please enter your phone number and the 6-digit PIN sent by the owner.'
+                  : 'Veuillez entrer votre numéro de téléphone et le code PIN reçu du propriétaire.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      setState(() => _isSubmitting = true);
+      final matchedMember = await state.loginInvitedMember(
+        identifier: identifier,
+        pinCode: pin,
+      );
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+
+      if (matchedMember == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppTheme.danger,
+            content: Text(
+              isEn
+                  ? 'Invalid credentials. Check your phone number and PIN code with the store owner.'
+                  : 'Identifiants incorrects. Vérifiez votre numéro et le code PIN transmis par le propriétaire.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF059669),
+          content: Text(
+            'Bienvenue ${matchedMember.name} — Connecté en tant que ${matchedMember.role}',
+          ),
+        ),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainShell()),
+      );
     } else {
       final identifier = _phoneCtrl.text.trim();
       final pwd = _passwordCtrl.text.trim();
@@ -107,6 +161,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       setState(() => _isSubmitting = true);
+      state.userRole = 'Propriétaire';
+      state.userAssignedCashDesk = null;
       await state.loginUser(
         identifier: identifier,
         password: pwd,
@@ -226,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 3. QUESTION DE PROFIL : NOUVEAU OU DÉJÀ EXISTANT SUR LA PLATEFORME
+              // 3. QUESTION DE PROFIL : PROPRIÉTAIRE, NOUVEAU OU COMPTE INVITÉ (ÉQUIPIER)
               Text(
                 isEn
                     ? 'How would you like to continue?'
@@ -242,21 +298,41 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Expanded(
                     child: _buildProfileTypeCard(
-                      isSelected: !_isNewUser,
+                      isSelected: _authMode == 0,
                       icon: Icons.login_rounded,
-                      title: isEn ? 'Existing User' : 'Déjà utilisateur',
-                      subtitle: isEn ? 'Log in to my store' : 'Me connecter à mon compte',
-                      onTap: () => setState(() => _isNewUser = false),
+                      title: isEn ? 'Owner' : 'Propriétaire',
+                      subtitle: isEn ? 'My store account' : 'Déjà utilisateur',
+                      onTap: () => setState(() {
+                        _authMode = 0;
+                        _passwordCtrl.clear();
+                      }),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildProfileTypeCard(
-                      isSelected: _isNewUser,
+                      isSelected: _authMode == 1,
                       icon: Icons.storefront_rounded,
-                      title: isEn ? 'New User' : 'Nouveau',
-                      subtitle: isEn ? 'Create my store' : 'Créer ma boutique',
-                      onTap: () => setState(() => _isNewUser = true),
+                      title: isEn ? 'New Store' : 'Nouveau',
+                      subtitle: isEn ? 'Create store' : 'Créer boutique',
+                      onTap: () => setState(() {
+                        _authMode = 1;
+                        _passwordCtrl.clear();
+                      }),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildProfileTypeCard(
+                      isSelected: _authMode == 2,
+                      icon: Icons.badge_rounded,
+                      title: isEn ? 'Invited Staff' : 'Compte Invité',
+                      subtitle: isEn ? 'Cashier, Staff...' : 'Équipier / Rôle',
+                      onTap: () => setState(() {
+                        _authMode = 2;
+                        _phoneCtrl.clear();
+                        _passwordCtrl.clear();
+                      }),
                     ),
                   ),
                 ],
@@ -269,7 +345,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(
+                    color: _authMode == 2 ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+                    width: _authMode == 2 ? 1.5 : 1.0,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.primaryNavy.withValues(alpha: 0.04),
@@ -281,30 +360,122 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _isNewUser
-                          ? (isEn ? 'Create your store account' : 'Créer votre compte & boutique')
-                          : (isEn ? 'Sign in to your account' : 'Connexion à votre espace'),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryNavy,
-                      ),
+                    Row(
+                      children: [
+                        if (_authMode == 2) ...[
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accentGold.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.verified_user_rounded, color: AppTheme.primaryNavy, size: 18),
+                          ),
+                        ],
+                        Expanded(
+                          child: Text(
+                            _authMode == 1
+                                ? (isEn ? 'Create your store account' : 'Créer votre compte & boutique')
+                                : _authMode == 2
+                                    ? (isEn ? 'Invited Team Member Login' : 'Connexion Compte Invité (Équipier)')
+                                    : (isEn ? 'Sign in to your account' : 'Connexion Espace Propriétaire'),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryNavy,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _isNewUser
+                      _authMode == 1
                           ? (isEn
                               ? 'Configure your workspace in seconds.'
                               : 'Configurez votre boutique en quelques secondes.')
-                          : (isEn
-                              ? 'Enter your credentials to access your data.'
-                              : 'Entrez vos identifiants pour retrouver votre boutique.'),
+                          : _authMode == 2
+                              ? (isEn
+                                  ? 'Enter the phone number and 6-digit PIN sent by the store owner on WhatsApp.'
+                                  : 'Entrez votre numéro de téléphone et le code PIN reçus sur WhatsApp de votre propriétaire.')
+                              : (isEn
+                                  ? 'Enter your credentials to access your data.'
+                                  : 'Entrez vos identifiants pour retrouver votre boutique.'),
                       style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 16),
 
-                    if (_isNewUser) ...[
+                    // Si mode Compte Invité (2) et des membres invités existent sur l'appareil : sélection rapide
+                    if (_authMode == 2) ...[
+                      Builder(builder: (_) {
+                        final invitedList = appState.teamMembers
+                            .where((m) => !m.role.toLowerCase().contains('propriétaire') && m.isActive)
+                            .toList();
+                        if (invitedList.isEmpty) return const SizedBox.shrink();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Équipiers enregistrés dans la boutique (touchez pour pré-remplir) :',
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
+                            ),
+                            const SizedBox(height: 8),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: invitedList.map((m) {
+                                  final isSelectedMember = _phoneCtrl.text.trim() == m.phone.trim();
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _phoneCtrl.text = m.phone;
+                                        });
+                                      },
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: isSelectedMember ? AppTheme.primaryNavy : const Color(0xFFF1F5F9),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: isSelectedMember ? AppTheme.accentGold : const Color(0xFFCBD5E1),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.person_pin_circle_rounded,
+                                              size: 15,
+                                              color: isSelectedMember ? AppTheme.accentGold : AppTheme.primaryNavy,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              '${m.name} (${m.role})',
+                                              style: TextStyle(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: isSelectedMember ? Colors.white : AppTheme.primaryNavy,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+                        );
+                      }),
+                    ],
+
+                    if (_authMode == 1) ...[
                       _buildInput(
                         controller: _fullNameCtrl,
                         icon: Icons.badge_outlined,
@@ -337,6 +508,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 14),
+                    ] else if (_authMode == 2) ...[
+                      _buildInput(
+                        controller: _phoneCtrl,
+                        icon: Icons.phone_android_rounded,
+                        label: isEn ? 'Invited Phone Number *' : 'Numéro de téléphone (Identifiant) *',
+                        hint: 'Ex: +237 699 00 11 22',
+                        keyboardType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 14),
                     ] else ...[
                       _buildInput(
                         controller: _phoneCtrl,
@@ -357,12 +537,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ],
 
-                    // Mot de passe
+                    // Mot de passe ou Code PIN
                     TextField(
                       controller: _passwordCtrl,
                       obscureText: _obscurePassword,
+                      keyboardType: _authMode == 2 ? TextInputType.number : TextInputType.text,
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppTheme.primaryNavy, size: 20),
+                        prefixIcon: Icon(
+                          _authMode == 2 ? Icons.pin_outlined : Icons.lock_outline_rounded,
+                          color: AppTheme.primaryNavy,
+                          size: 20,
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -371,7 +556,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
-                        labelText: isEn ? 'Password *' : 'Mot de passe *',
+                        labelText: _authMode == 2
+                            ? (isEn ? '6-digit PIN Code *' : 'Code PIN secret (6 chiffres) *')
+                            : (isEn ? 'Password *' : 'Mot de passe *'),
+                        hintText: _authMode == 2 ? 'Ex: 482915' : null,
                         labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                         filled: true,
                         fillColor: const Color(0xFFF8FAFC),
@@ -390,7 +578,31 @@ class _LoginScreenState extends State<LoginScreen> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                     ),
-                    const SizedBox(height: 22),
+
+                    if (_authMode == 2) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.shield_outlined, color: Color(0xFF15803D), size: 18),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Votre interface s\'adaptera automatiquement à votre rôle (Caissier, Magasinier, Gérant...) et aux permissions accordées par le propriétaire.',
+                                style: TextStyle(fontSize: 11, color: Color(0xFF166534), fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
 
                     // BOUTON VALIDER
                     SizedBox(
@@ -419,9 +631,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      _isNewUser
+                                      _authMode == 1
                                           ? (isEn ? 'Create my store & Start' : 'Créer ma boutique & Démarrer')
-                                          : (isEn ? 'Sign In' : 'Se connecter'),
+                                          : _authMode == 2
+                                              ? (isEn ? 'Sign In as Team Member' : 'Se connecter à mon espace équipier')
+                                              : (isEn ? 'Sign In' : 'Se connecter'),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -460,7 +674,7 @@ class _LoginScreenState extends State<LoginScreen> {
       borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
           color: isSelected ? AppTheme.primaryNavy : Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -485,35 +699,39 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
                     color: isSelected ? AppTheme.accentGold : AppTheme.primaryNavy.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     icon,
-                    size: 20,
+                    size: 18,
                     color: AppTheme.primaryNavy,
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Icons.check_circle, color: AppTheme.accentGold, size: 18),
+                  const Icon(Icons.check_circle, color: AppTheme.accentGold, size: 16),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontWeight: FontWeight.w800,
-                fontSize: 14,
+                fontSize: 12.5,
                 color: isSelected ? Colors.white : AppTheme.primaryNavy,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10.5,
                 color: isSelected ? Colors.white70 : const Color(0xFF64748B),
               ),
             ),

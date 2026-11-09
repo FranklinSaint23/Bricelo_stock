@@ -17,6 +17,7 @@ import 'package:stock_prime/screens/company/company_and_team_screen.dart';
 import 'package:stock_prime/screens/company/preferences_screen.dart';
 import 'package:stock_prime/screens/company/language_screen.dart';
 import 'package:stock_prime/screens/dashboard/bricelo_assistant_screen.dart';
+import 'package:stock_prime/screens/pos/shifts_tracking_screen.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -89,94 +90,160 @@ class _MoreScreenState extends State<MoreScreen> {
     super.dispose();
   }
 
-  // Exactement les 11 fonctionnalités d'origine avec leurs noms complets, icônes et liens originaux
+  // Fonctionnalités filtrées dynamiquement selon le rôle et les groupes d'accès accordés par le propriétaire
   List<_OriginalMenuItem> _getOriginalItems() {
-    return [
-      // 1. Ventes & clients
-      _OriginalMenuItem(
+    final isOwner = appState.userRole.toLowerCase().contains('propriétaire') ||
+        appState.userRole.toLowerCase().contains('owner');
+    final canPos = isOwner || appState.hasPermission('Point de vente (POS)');
+    final canShifts = isOwner || appState.hasPermission('Gestion des shifts (Caisse)');
+    final canStock = isOwner ||
+        appState.hasPermission('Gestion du stock & Prix') ||
+        appState.hasPermission('Demandes d\'approvisionnement & Transferts');
+    final canFinance = isOwner || appState.hasPermission('Comptabilité & Finances');
+    final canTeam = isOwner ||
+        appState.hasPermission('Gestion des collaborateurs') ||
+        appState.hasPermission('Validation des approbations');
+
+    final List<_OriginalMenuItem> items = [];
+
+    // 1. Ventes & clients
+    if (canPos) {
+      items.add(_OriginalMenuItem(
         icon: Icons.point_of_sale_rounded,
         title: 'Ventes & clients'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const SalesAndCustomersScreen())),
         keywords: ['vente', 'ventes', 'client', 'clients', 'devis', 'facture', 'pos', 'commande'],
-      ),
-      // 2. Promotion & boutique
-      _OriginalMenuItem(
+      ));
+    }
+
+    // Option directe Shifts de caisse pour les équipiers autorisés (Caissier, Gérant)
+    if (!isOwner && canShifts) {
+      items.add(_OriginalMenuItem(
+        icon: Icons.punch_clock_rounded,
+        title: 'Suivi des shifts (caisse)',
+        onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const ShiftsTrackingScreen())),
+        keywords: ['shift', 'shifts', 'caisse', 'ouverture', 'fermeture', 'clôture'],
+      ));
+    }
+
+    // 2. Promotion & boutique
+    if (isOwner || canFinance) {
+      items.add(_OriginalMenuItem(
         icon: Icons.local_offer_rounded,
         title: 'Promotion & boutique'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const PromotionAndShopScreen())),
         keywords: ['promotion', 'boutique', 'shop', 'remise', 'catalogue', 'promo', 'commande', 'commandes en ligne', 'boutique en ligne', 'studio video', 'studio vidéo', 'video', 'vidéo'],
-      ),
-      // 3. Stock
-      _OriginalMenuItem(
+      ));
+    }
+
+    // 3. Stock
+    if (canStock) {
+      items.add(_OriginalMenuItem(
         icon: Icons.inventory_2_rounded,
         title: 'Stock'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const StockSubMenuScreen())),
         keywords: ['stock', 'stocks', 'article', 'articles', 'produit', 'produits', 'inventaire'],
-      ),
-      // 4. Achats & dépenses
-      _OriginalMenuItem(
+      ));
+    }
+
+    // 4. Achats & dépenses
+    if (canFinance) {
+      items.add(_OriginalMenuItem(
         icon: Icons.account_balance_wallet_rounded,
         title: 'Achats & dépenses'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const PurchasesAndExpensesScreen())),
         keywords: ['achat', 'achats', 'dépense', 'depense', 'dépenses', 'fournisseur', 'fournisseurs', 'charge', 'bon d\'achat', 'bons d\'achat', 'dette fournisseur', 'dettes fournisseurs'],
-      ),
-      // 5. Comptabilité & trésorerie
-      _OriginalMenuItem(
+      ));
+    }
+
+    // 5. Comptabilité & trésorerie
+    if (canFinance) {
+      items.add(_OriginalMenuItem(
         icon: Icons.calculate_rounded,
         title: 'Comptabilité & trésorerie'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const AccountingScreen())),
         keywords: ['comptabilité', 'comptabilite', 'trésorerie', 'tresorerie', 'banque', 'caisse', 'finance', 'bilan'],
-      ),
-      // 6. Statistiques (globales)
-      _OriginalMenuItem(
+      ));
+    }
+
+    // 6. Statistiques (globales)
+    if (canFinance) {
+      items.add(_OriginalMenuItem(
         icon: Icons.bar_chart_rounded,
         title: 'Statistiques (globales)'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const GlobalStatsScreen())),
         keywords: ['statistique', 'statistiques', 'stat', 'stats', 'globale', 'globales', 'analyse', 'graphique', 'chiffre'],
-      ),
-      // 7. Rapports
-      _OriginalMenuItem(
+      ));
+    }
+
+    // 7. Rapports
+    if (canFinance) {
+      items.add(_OriginalMenuItem(
         icon: Icons.assessment_rounded,
         title: 'Rapports'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const ActivityReportsScreen())),
         keywords: ['rapport', 'rapports', 'activité', 'activite', 'période', 'periode', 'bilan', 'export', 'pdf'],
-      ),
-      // 8. Entreprise & équipe
-      _OriginalMenuItem(
+      ));
+    }
+
+    // 8. Entreprise & équipe
+    if (canTeam) {
+      items.add(_OriginalMenuItem(
         icon: Icons.corporate_fare_rounded,
         title: 'Entreprise & équipe'.tr,
+        badge: appState.pendingApprovalsCount > 0
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFDC2626),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '${appState.pendingApprovalsCount}',
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              )
+            : null,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const CompanyAndTeamScreen())),
         keywords: ['entreprise', 'équipe', 'equipe', 'employé', 'employe', 'utilisateur', 'rôle', 'role', 'société'],
-      ),
-      // 8. Préférences
-      _OriginalMenuItem(
+      ));
+    }
+
+    // 9. Préférences (Propriétaire uniquement)
+    if (isOwner) {
+      items.add(_OriginalMenuItem(
         icon: Icons.tune_rounded,
         title: 'Préférences'.tr,
         onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const PreferencesScreen())),
         keywords: ['préférence', 'preference', 'préférences', 'preferences', 'paramètre', 'parametre', 'configuration'],
-      ),
-      // 9. Langue de l'application
-      _OriginalMenuItem(
-        icon: Icons.translate_rounded,
-        title: "Langue de l'application".tr,
-        onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const LanguageScreen())),
-        keywords: ['langue', 'langues', 'application', 'français', 'francais', 'anglais', 'english', 'swahili'],
-      ),
-      // 10. Assistant Bricelo
-      _OriginalMenuItem(
-        icon: Icons.auto_awesome_rounded,
-        title: 'Assistant Bricelo'.tr,
-        onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const BriceloAssistantScreen())),
-        keywords: ['assistant', 'bricelo', 'ia', 'ai', 'robot', 'aide', 'conseil'],
-      ),
-      // 11. Centre d'aide
-      _OriginalMenuItem(
-        icon: Icons.support_agent_rounded,
-        title: "Centre d'aide".tr,
-        onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
-        keywords: ['centre', 'aide', 'support', 'contact', 'faq', 'guide', 'tutoriel'],
-      ),
-    ];
+      ));
+    }
+
+    // 10. Langue de l'application
+    items.add(_OriginalMenuItem(
+      icon: Icons.translate_rounded,
+      title: "Langue de l'application".tr,
+      onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const LanguageScreen())),
+      keywords: ['langue', 'langues', 'application', 'français', 'francais', 'anglais', 'english', 'swahili'],
+    ));
+
+    // 11. Assistant Bricelo
+    items.add(_OriginalMenuItem(
+      icon: Icons.auto_awesome_rounded,
+      title: 'Assistant Bricelo'.tr,
+      onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const BriceloAssistantScreen())),
+      keywords: ['assistant', 'bricelo', 'ia', 'ai', 'robot', 'aide', 'conseil'],
+    ));
+
+    // 12. Centre d'aide
+    items.add(_OriginalMenuItem(
+      icon: Icons.support_agent_rounded,
+      title: "Centre d'aide".tr,
+      onTap: (ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
+      keywords: ['centre', 'aide', 'support', 'contact', 'faq', 'guide', 'tutoriel'],
+    ));
+
+    return items;
   }
 
   bool _isEmailVerified(AppState state) {
@@ -335,7 +402,7 @@ class _MoreScreenState extends State<MoreScreen> {
                                     border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.5), width: 1),
                                   ),
                                   child: Text(
-                                    'Propriétaire'.tr,
+                                    appState.userRole.tr,
                                     style: TextStyle(
                                       color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                                       fontSize: 11,
@@ -347,7 +414,9 @@ class _MoreScreenState extends State<MoreScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              appState.userEmail.isNotEmpty ? appState.userEmail : appState.displayCompanyName,
+                              appState.userAssignedCashDesk != null && appState.userAssignedCashDesk!.isNotEmpty
+                                  ? '${appState.displayCompanyName} • Caisse : ${appState.userAssignedCashDesk}'
+                                  : (appState.userEmail.isNotEmpty ? appState.userEmail : appState.displayCompanyName),
                               style: TextStyle(
                                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                                 fontSize: 12.5,
@@ -370,9 +439,77 @@ class _MoreScreenState extends State<MoreScreen> {
               const SizedBox(height: 14),
 
               // ==========================================
-              // 2. BANNIÈRE E-MAIL NON VÉRIFIÉ (Masquée si vérifié)
+              // 2. BANNIÈRE E-MAIL NON VÉRIFIÉ (Propriétaire uniquement) OU RÉSUMÉ DROITS ÉQUIPIER
               // ==========================================
-              if (!_isEmailVerified(appState)) ...[
+              if (appState.userRole != 'Propriétaire') ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.45)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.verified_user_rounded, color: AppTheme.accentGold, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Droits accordés à votre rôle (${appState.userRole})',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: textColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final perm in const [
+                            'Point de vente (POS)',
+                            'Gestion des shifts (Caisse)',
+                            'Gestion du stock & Prix',
+                            'Demandes d\'approvisionnement & Transferts',
+                            'Comptabilité & Finances',
+                            'Validation des approbations',
+                            'Gestion des collaborateurs',
+                            'Suppression de données',
+                          ])
+                            if (appState.hasPermission(perm))
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFD1FAE5),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.check_circle, size: 12, color: Color(0xFF059669)),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      perm,
+                                      style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ] else if (!_isEmailVerified(appState)) ...[
                 InkWell(
                   onTap: () {
                     Navigator.push(

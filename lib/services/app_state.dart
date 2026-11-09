@@ -142,41 +142,109 @@ class AppState extends ChangeNotifier {
   List<Map<String, dynamic>> accessGroups = [
     {
       'role': 'Propriétaire',
-      'description': 'Accès complet et illimité à toute l\'application',
+      'description': 'Accès complet et illimité à toute l\'application, validation des approbations et paiements',
       'isDefault': true,
       'permissions': {
         'Point de vente (POS)': true,
+        'Gestion des shifts (Caisse)': true,
         'Gestion du stock & Prix': true,
+        'Demandes d\'approvisionnement & Transferts': true,
         'Comptabilité & Finances': true,
-        'Suppression de données': true,
+        'Validation des approbations': true,
         'Gestion des collaborateurs': true,
+        'Suppression de données': true,
       },
     },
     {
-      'role': 'Responsable de magasin',
-      'description': 'Gestion des stocks, ventes et validation des transferts',
+      'role': 'Gérant',
+      'description': 'Supervision de la boutique, ventes et stocks. Opérations sensibles soumises à approbation',
       'isDefault': false,
       'permissions': {
         'Point de vente (POS)': true,
+        'Gestion des shifts (Caisse)': true,
         'Gestion du stock & Prix': true,
-        'Comptabilité & Finances': false,
-        'Suppression de données': false,
+        'Demandes d\'approvisionnement & Transferts': true,
+        'Comptabilité & Finances': true,
+        'Validation des approbations': false,
         'Gestion des collaborateurs': true,
+        'Suppression de données': false,
+      },
+    },
+    {
+      'role': 'Magasinier',
+      'description': 'Gestion des stocks, inventaires, demandes d\'approvisionnement et transferts à approuver',
+      'isDefault': false,
+      'permissions': {
+        'Point de vente (POS)': false,
+        'Gestion des shifts (Caisse)': false,
+        'Gestion du stock & Prix': true,
+        'Demandes d\'approvisionnement & Transferts': true,
+        'Comptabilité & Finances': false,
+        'Validation des approbations': false,
+        'Gestion des collaborateurs': false,
+        'Suppression de données': false,
       },
     },
     {
       'role': 'Caissier',
-      'description': 'Encaissement des ventes, devis et consultation des stocks',
+      'description': 'Caisse attribuée, encaissement, partage et impression de reçus. Accès restreint',
       'isDefault': false,
       'permissions': {
         'Point de vente (POS)': true,
+        'Gestion des shifts (Caisse)': true,
         'Gestion du stock & Prix': false,
+        'Demandes d\'approvisionnement & Transferts': false,
         'Comptabilité & Finances': false,
-        'Suppression de données': false,
+        'Validation des approbations': false,
         'Gestion des collaborateurs': false,
+        'Suppression de données': false,
+      },
+    },
+    {
+      'role': 'Vendeur',
+      'description': 'Prise de commande, vente au comptoir et création de devis clients. Accès restreint',
+      'isDefault': false,
+      'permissions': {
+        'Point de vente (POS)': true,
+        'Gestion des shifts (Caisse)': false,
+        'Gestion du stock & Prix': false,
+        'Demandes d\'approvisionnement & Transferts': false,
+        'Comptabilité & Finances': false,
+        'Validation des approbations': false,
+        'Gestion des collaborateurs': false,
+        'Suppression de données': false,
       },
     },
   ];
+
+  String? userAssignedCashDesk;
+
+  /// Nombre de demandes d'approbation en attente (visuel rouge)
+  int get pendingApprovalsCount => approvalRequests.where((r) => r.status == 'pending').length;
+
+  /// Vérification dynamique des droits accordés par le propriétaire
+  bool hasPermission(String permissionKey) {
+    if (userRole.toLowerCase().contains('propriétaire') || userRole.toLowerCase().contains('owner')) {
+      return true;
+    }
+    final normRole = userRole.toLowerCase().trim();
+    final group = accessGroups.firstWhereOrNull((g) =>
+        g['role'].toString().toLowerCase().trim() == normRole ||
+        (normRole.contains('gérant') && g['role'].toString().toLowerCase().contains('gérant')));
+    if (group != null && group['permissions'] is Map) {
+      final perms = group['permissions'] as Map;
+      if (perms.containsKey(permissionKey)) {
+        return perms[permissionKey] == true;
+      }
+      final normKey = permissionKey.toLowerCase().trim();
+      for (final entry in perms.entries) {
+        if (entry.key.toString().toLowerCase().trim() == normKey) {
+          return entry.value == true;
+        }
+      }
+    }
+    return false;
+  }
 
   // --- Getters d'affichage sécurisés ---
   String get language => currentLanguage;
@@ -417,7 +485,25 @@ class AppState extends ChangeNotifier {
           accessGroups = (data['accessGroups'] as List<dynamic>)
               .map((e) => Map<String, dynamic>.from(e as Map))
               .toList();
+          if (!accessGroups.any((g) => g['role'].toString().toLowerCase() == 'vendeur')) {
+            accessGroups.add({
+              'role': 'Vendeur',
+              'description': 'Prise de commande, vente au comptoir et création de devis clients. Accès restreint',
+              'isDefault': false,
+              'permissions': {
+                'Point de vente (POS)': true,
+                'Gestion des shifts (Caisse)': false,
+                'Gestion du stock & Prix': false,
+                'Demandes d\'approvisionnement & Transferts': false,
+                'Comptabilité & Finances': false,
+                'Validation des approbations': false,
+                'Gestion des collaborateurs': false,
+                'Suppression de données': false,
+              },
+            });
+          }
         }
+        userAssignedCashDesk = data['userAssignedCashDesk']?.toString();
         notifyListeners();
       }
     } catch (e) {
@@ -553,6 +639,7 @@ class AppState extends ChangeNotifier {
         'activeCashShift': activeCashShift?.toJson(),
         'cashShiftsHistory': cashShiftsHistory.map((e) => e.toJson()).toList(),
         'accessGroups': accessGroups,
+        'userAssignedCashDesk': userAssignedCashDesk,
       };
       await prefs.setString(_storageKey, jsonEncode(payload));
     } catch (e) {
@@ -745,23 +832,47 @@ class AppState extends ChangeNotifier {
       } catch (_) {}
     }
 
-    // 3. Si profil local ou identifiant saisi
-    if (userName.trim().isEmpty) {
-      if (fallbackName != null && fallbackName.trim().isNotEmpty) {
-        userName = fallbackName.trim();
-      } else if (cleanId.contains('@')) {
-        final localPart = cleanId.split('@').first.replaceAll(RegExp(r'[._-]'), ' ');
-        userName = localPart.isNotEmpty
-            ? localPart.split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ')
-            : 'Gérant';
-        userEmail = cleanId;
-      } else {
-        userName = 'Gérant';
-        userPhone = cleanId;
+    // Recherche par identifiant équipier (téléphone ou email) et code PIN
+    final normPhone = cleanId.replaceAll(RegExp(r'\s+'), '');
+    final memberMatch = teamMembers.firstWhereOrNull((m) {
+      final mPhone = m.phone.replaceAll(RegExp(r'\s+'), '');
+      final mEmail = (m.email ?? '').toLowerCase().trim();
+      final matchesId = mPhone == normPhone || mEmail == cleanId.toLowerCase();
+      if (!matchesId) return false;
+      if (password.isNotEmpty && m.pinCode.isNotEmpty) {
+        return m.pinCode.trim() == password.trim();
+      }
+      return true;
+    });
+
+    if (memberMatch != null) {
+      userName = memberMatch.name;
+      userPhone = memberMatch.phone;
+      userEmail = memberMatch.email ?? userEmail;
+      userRole = memberMatch.role;
+      userAssignedCashDesk = memberMatch.assignedCashDesk;
+      if (memberMatch.storeName.isNotEmpty && memberMatch.storeName != 'Toutes les boutiques') {
+        currentStore = memberMatch.storeName;
       }
     } else {
-      if (cleanId.contains('@') && userEmail.isEmpty) userEmail = cleanId;
-      if (!cleanId.contains('@') && userPhone.isEmpty) userPhone = cleanId;
+      // 3. Si profil local ou identifiant saisi
+      if (userName.trim().isEmpty) {
+        if (fallbackName != null && fallbackName.trim().isNotEmpty) {
+          userName = fallbackName.trim();
+        } else if (cleanId.contains('@')) {
+          final localPart = cleanId.split('@').first.replaceAll(RegExp(r'[._-]'), ' ');
+          userName = localPart.isNotEmpty
+              ? localPart.split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ')
+              : 'Gérant';
+          userEmail = cleanId;
+        } else {
+          userName = 'Gérant';
+          userPhone = cleanId;
+        }
+      } else {
+        if (cleanId.contains('@') && userEmail.isEmpty) userEmail = cleanId;
+        if (!cleanId.contains('@') && userPhone.isEmpty) userPhone = cleanId;
+      }
     }
 
     if (companyName.trim().isEmpty) {
@@ -781,6 +892,58 @@ class AppState extends ChangeNotifier {
     notifyListeners();
 
     await syncFromSupabase();
+  }
+
+  /// Connexion dédiée aux comptes invités (Équipiers : Caissier, Magasinier, Gérant, Vendeur, etc.)
+  Future<TeamMember?> loginInvitedMember({
+    required String identifier,
+    required String pinCode,
+  }) async {
+    final cleanId = identifier.trim();
+    final cleanPin = pinCode.trim();
+    if (cleanId.isEmpty || cleanPin.isEmpty) return null;
+
+    final normInputPhone = cleanId.replaceAll(RegExp(r'[^0-9]'), '');
+
+    final memberMatch = teamMembers.firstWhereOrNull((m) {
+      if (!m.isActive) return false;
+      final mPhoneDigits = m.phone.replaceAll(RegExp(r'[^0-9]'), '');
+      final mEmail = (m.email ?? '').toLowerCase().trim();
+      final matchesPhone = normInputPhone.isNotEmpty &&
+          mPhoneDigits.isNotEmpty &&
+          (mPhoneDigits == normInputPhone ||
+              mPhoneDigits.endsWith(normInputPhone) ||
+              normInputPhone.endsWith(mPhoneDigits));
+      final matchesEmail = mEmail.isNotEmpty && mEmail == cleanId.toLowerCase();
+      final matchesName = m.name.toLowerCase().trim() == cleanId.toLowerCase();
+
+      if (!matchesPhone && !matchesEmail && !matchesName) return false;
+      if (m.pinCode.isNotEmpty) {
+        return m.pinCode.trim() == cleanPin;
+      }
+      return true;
+    });
+
+    if (memberMatch == null) {
+      return null;
+    }
+
+    userName = memberMatch.name;
+    userPhone = memberMatch.phone;
+    userEmail = memberMatch.email ?? '';
+    userRole = memberMatch.role;
+    userAssignedCashDesk = memberMatch.assignedCashDesk;
+    if (memberMatch.storeName.isNotEmpty && memberMatch.storeName != 'Toutes les boutiques') {
+      currentStore = memberMatch.storeName;
+    }
+    if (memberMatch.role != 'Propriétaire') {
+      isShiftsTrackingEnabled = true;
+    }
+    isLoggedIn = true;
+    hasSelectedLanguage = true;
+    await _saveToPrefs();
+    notifyListeners();
+    return memberMatch;
   }
 
   Future<void> updateUserProfile({
@@ -857,6 +1020,8 @@ class AppState extends ChangeNotifier {
     String? email,
     required String role,
     String storeName = 'Toutes les boutiques',
+    String pinCode = '',
+    String? assignedCashDesk,
   }) async {
     if (teamMembers.isEmpty) {
       teamMembers.add(TeamMember(
@@ -866,6 +1031,7 @@ class AppState extends ChangeNotifier {
         email: userEmail.isNotEmpty ? userEmail : null,
         role: userRole.isNotEmpty ? userRole : 'Propriétaire',
         storeName: currentStore.isNotEmpty ? currentStore : 'Toutes les boutiques',
+        isActive: true,
       ));
     }
     final member = TeamMember(
@@ -875,8 +1041,17 @@ class AppState extends ChangeNotifier {
       email: email?.trim().isNotEmpty == true ? email!.trim() : null,
       role: role,
       storeName: storeName,
+      pinCode: pinCode,
+      assignedCashDesk: assignedCashDesk,
+      isActive: true,
     );
     teamMembers.add(member);
+
+    // Lorsqu'on invite un équipier (non propriétaire), activer le suivi des shifts par défaut
+    if (role != 'Propriétaire') {
+      isShiftsTrackingEnabled = true;
+    }
+
     notifyListeners();
     await _saveToPrefs();
   }
@@ -888,6 +1063,9 @@ class AppState extends ChangeNotifier {
     String? email,
     required String role,
     required String storeName,
+    String? pinCode,
+    String? assignedCashDesk,
+    bool? isActive,
   }) async {
     final idx = teamMembers.indexWhere((m) => m.id == id);
     if (idx != -1) {
@@ -896,6 +1074,130 @@ class AppState extends ChangeNotifier {
       teamMembers[idx].email = email?.trim().isNotEmpty == true ? email!.trim() : null;
       teamMembers[idx].role = role;
       teamMembers[idx].storeName = storeName;
+      if (pinCode != null) teamMembers[idx].pinCode = pinCode;
+      if (assignedCashDesk != null) teamMembers[idx].assignedCashDesk = assignedCashDesk;
+      if (isActive != null) teamMembers[idx].isActive = isActive;
+      notifyListeners();
+      await _saveToPrefs();
+    }
+  }
+
+  /// Basculer de profil / simuler la session d'un rôle pour tester les restrictions dynamiques
+  Future<void> switchUserSession(TeamMember member) async {
+    userName = member.name;
+    userPhone = member.phone;
+    userEmail = member.email ?? '';
+    userRole = member.role;
+    userAssignedCashDesk = member.assignedCashDesk;
+    if (member.storeName.isNotEmpty && member.storeName != 'Toutes les boutiques') {
+      currentStore = member.storeName;
+    }
+    isLoggedIn = true;
+    await _saveToPrefs();
+    notifyListeners();
+  }
+
+  /// Revenir au compte propriétaire complet
+  Future<void> switchToOwnerSession() async {
+    final owner = teamMembers.firstWhereOrNull((m) => m.role == 'Propriétaire');
+    if (owner != null) {
+      userName = owner.name;
+      userPhone = owner.phone;
+      userEmail = owner.email ?? '';
+    }
+    userRole = 'Propriétaire';
+    userAssignedCashDesk = null;
+    isLoggedIn = true;
+    await _saveToPrefs();
+    notifyListeners();
+  }
+
+  // --- DEMANDES D'APPROVISIONNEMENT & VALIDATION PAR LE PROPRIÉTAIRE ---
+  Future<ApprovalRequest> requestStockRestock({
+    required Product product,
+    required int quantity,
+    String? supplierName,
+    double? customCost,
+    String note = '',
+  }) async {
+    final cost = customCost ?? (product.buyPrice * quantity);
+    final req = ApprovalRequest(
+      id: 'appr_${DateTime.now().millisecondsSinceEpoch}',
+      title: 'Approvisionnement : ${product.name} (x$quantity)',
+      type: 'Approvisionnement',
+      requesterName: displayUserName,
+      storeName: currentStore,
+      amount: cost,
+      details: 'Demande de réapprovisionnement soumise par le magasinier.\n'
+          'Article : ${product.name}\n'
+          'Quantité souhaitée : $quantity ${product.unit}\n'
+          'Stock actuel : ${product.stock} (Alerte min : ${product.minStockAlert})\n'
+          'Fournisseur : ${supplierName ?? product.supplierName ?? "Fournisseur habituel"}\n'
+          'Coût estimé : ${cost.toInt()} F CFA\n'
+          '${note.isNotEmpty ? "Remarque : $note" : ""}',
+      date: DateTime.now(),
+      status: 'pending',
+      paymentStatus: 'unpaid',
+    );
+    approvalRequests.insert(0, req);
+    notifyListeners();
+    await _saveToPrefs();
+    return req;
+  }
+
+  /// Demande de transfert de stock par le magasinier / gérant soumise à l'approbation du propriétaire
+  Future<ApprovalRequest> requestStockTransfer({
+    required String sourceStore,
+    required String destinationStore,
+    required List<TransferItem> items,
+    String note = '',
+  }) async {
+    final totalQty = items.fold(0, (sum, i) => sum + i.quantity);
+    final itemsDesc = items.map((i) => '• ${i.productName} : ${i.quantity} ${i.unit}').join('\n');
+    final req = ApprovalRequest(
+      id: 'appr_trf_${DateTime.now().millisecondsSinceEpoch}',
+      title: 'Transfert stock : $sourceStore ➔ $destinationStore ($totalQty art.)',
+      type: 'Transfert de stock',
+      requesterName: '$displayUserName ($userRole)',
+      storeName: sourceStore,
+      amount: 0,
+      details: 'Demande de transfert de stock soumise par $displayUserName ($userRole).\n'
+          'Départ : $sourceStore ➔ Arrivée : $destinationStore\n'
+          'Articles :\n$itemsDesc\n'
+          '${note.isNotEmpty ? "Motif : $note" : ""}',
+      date: DateTime.now(),
+      status: 'pending',
+      paymentStatus: 'unpaid',
+    );
+    approvalRequests.insert(0, req);
+    notifyListeners();
+    await _saveToPrefs();
+    return req;
+  }
+
+  Future<void> approveAndPaySupplier(String requestId, {String paymentMethod = 'Espèces'}) async {
+    final idx = approvalRequests.indexWhere((r) => r.id == requestId);
+    if (idx != -1) {
+      final req = approvalRequests[idx];
+      req.status = 'approved';
+      req.paymentStatus = 'paid';
+      req.decisionDate = DateTime.now();
+      req.decisionNote = 'Validé et payé au fournisseur par le propriétaire via $paymentMethod';
+
+      // Enregistrer une dépense d'approvisionnement
+      if (req.amount > 0) {
+        expenses.insert(0, Expense(
+          id: 'exp_${DateTime.now().millisecondsSinceEpoch}',
+          category: 'Achat marchandises',
+          description: req.title,
+          amount: req.amount,
+          createdAt: DateTime.now(),
+          paidBy: displayUserName,
+          paidFromCaisse: paymentMethod,
+          reference: req.id,
+        ));
+      }
+
       notifyListeners();
       await _saveToPrefs();
     }
@@ -1715,12 +2017,17 @@ class AppState extends ChangeNotifier {
 
     sales.insert(0, sale);
 
-    // Mise à jour de la session de caisse active (shift) si paiement en espèces
+    // Mise à jour de la session de caisse active (shift)
     if (isShiftsTrackingEnabled && activeCashShift != null && !activeCashShift!.isClosed) {
+      activeCashShift!.salesCount++;
+      activeCashShift!.totalSalesAmount += sale.total;
       final method = sale.paymentMethod.toLowerCase();
       if (method.contains('esp') || method.contains('cash')) {
         activeCashShift!.cashSalesTotal += sale.total;
       }
+      final normKey = sale.paymentMethod.isNotEmpty ? sale.paymentMethod : 'Espèces';
+      activeCashShift!.paymentMethodsBreakdown[normKey] =
+          (activeCashShift!.paymentMethodsBreakdown[normKey] ?? 0.0) + sale.total;
     }
 
     cart.clear();
@@ -2424,15 +2731,36 @@ class AppState extends ChangeNotifier {
   }) async {
     if (activeCashShift == null) return;
     final shift = activeCashShift!;
-    shift.closedAt = DateTime.now();
+    final closedTime = DateTime.now();
+    shift.closedAt = closedTime;
     shift.closingCashCounted = closingCashCounted;
     final expected = shift.openingCash + shift.cashSalesTotal;
     shift.discrepancy = closingCashCounted - expected;
     shift.note = note;
     shift.isClosed = true;
 
+    // Calcul des ventes réalisées pendant ce shift
+    final shiftSales = sales.where((s) =>
+        !s.createdAt.isBefore(shift.openedAt) &&
+        !s.createdAt.isAfter(closedTime)).toList();
+    shift.salesCount = shiftSales.length;
+    shift.totalSalesAmount = shiftSales.fold(0.0, (sum, s) => sum + s.total);
+    final Map<String, double> breakdown = {};
+    for (final s in shiftSales) {
+      final m = s.paymentMethod.isNotEmpty ? s.paymentMethod : 'Espèces';
+      breakdown[m] = (breakdown[m] ?? 0.0) + s.total;
+    }
+    shift.paymentMethodsBreakdown = breakdown;
+
     cashShiftsHistory.insert(0, shift);
     activeCashShift = null;
+    notifyListeners();
+    await _saveToPrefs();
+  }
+
+  /// Supprimer un shift passé de l'historique
+  Future<void> deleteCashShift(String shiftId) async {
+    cashShiftsHistory.removeWhere((s) => s.id == shiftId);
     notifyListeners();
     await _saveToPrefs();
   }

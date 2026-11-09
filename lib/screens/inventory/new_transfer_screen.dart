@@ -213,6 +213,24 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
       ));
     }
 
+    // Si l'utilisateur connecté est un équipier (Magasinier, Gérant...) : soumettre à l'approbation du Propriétaire
+    if (!appState.hasPermission('Validation des approbations')) {
+      appState.requestStockTransfer(
+        sourceStore: _sourceStore,
+        destinationStore: _destinationStore,
+        items: items,
+        note: _noteCtrl.text.trim(),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Demande de transfert de stock envoyée au propriétaire pour approbation !'),
+          backgroundColor: Color(0xFF0D9488),
+        ),
+      );
+      Navigator.pop(context);
+      return;
+    }
+
     final transfer = StockTransfer(
       id: 'trf_${now.millisecondsSinceEpoch}',
       reference: ref,
@@ -426,7 +444,12 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: _confirmTransfer,
-                child: const Text('Confirmer le transfert de stock', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                child: Text(
+                  appState.hasPermission('Validation des approbations')
+                      ? 'Confirmer le transfert de stock'
+                      : 'Soumettre le transfert à l\'approbation du Propriétaire',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
+                ),
               ),
             ),
           ],

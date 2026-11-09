@@ -1,4 +1,8 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/theme/app_theme.dart';
@@ -13,6 +17,220 @@ class TeamScreen extends StatefulWidget {
 class _TeamScreenState extends State<TeamScreen> {
   final appState = AppState.instance;
 
+  Future<void> _shareCredentialsOnWhatsApp(TeamMember member, String pin) async {
+    final store = member.storeName.isNotEmpty ? member.storeName : appState.currentStore;
+    final deskInfo = (member.role.toLowerCase() == 'caissier' && member.assignedCashDesk != null && member.assignedCashDesk!.isNotEmpty)
+        ? '\n💰 *Caisse attribuée :* ${member.assignedCashDesk}'
+        : '';
+    final message = '''🏪 *Invitation Bricelo Stock - ${appState.displayCompanyName}*
+
+Bonjour *${member.name}*,
+Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyName}* en tant que *${member.role}*.
+
+🔑 *Vos identifiants de connexion :*
+📱 *Identifiant (Tél) :* ${member.phone}
+🔒 *Code PIN secret :* $pin
+🏬 *Boutique :* $store$deskInfo
+
+👉 Ouvrez l'application *Bricelo Stock*, connectez-vous avec votre numéro et ce code PIN pour commencer votre service.''';
+
+    final cleanPhone = member.phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    final uriPhone = cleanPhone.startsWith('+') ? cleanPhone.substring(1) : cleanPhone;
+    final waUrl = Uri.parse('https://wa.me/$uriPhone?text=${Uri.encodeComponent(message)}');
+    final directWaUrl = Uri.parse('whatsapp://send?phone=$uriPhone&text=${Uri.encodeComponent(message)}');
+
+    try {
+      if (await canLaunchUrl(directWaUrl)) {
+        await launchUrl(directWaUrl);
+      } else if (await canLaunchUrl(waUrl)) {
+        await launchUrl(waUrl, mode: LaunchMode.externalApplication);
+      } else {
+        await Share.share(message, subject: 'Identifiants Bricelo Stock');
+      }
+    } catch (_) {
+      await Share.share(message, subject: 'Identifiants Bricelo Stock');
+    }
+  }
+
+  void _showCredentialsDialog(BuildContext context, TeamMember member, String pin) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle_rounded, color: Color(0xFF25D366), size: 36),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Membre invité avec succès !',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Transmettez les identifiants générés au collaborateur pour qu\'il puisse se connecter à son compte.',
+              style: TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                children: [
+                  _buildCredentialRow('Nom :', member.name),
+                  const SizedBox(height: 6),
+                  _buildCredentialRow('Rôle :', member.role, isBadge: true),
+                  const SizedBox(height: 6),
+                  _buildCredentialRow('Téléphone (Login) :', member.phone),
+                  const SizedBox(height: 6),
+                  if (member.role.toLowerCase() == 'caissier' && member.assignedCashDesk != null) ...[
+                    _buildCredentialRow('Caisse attribuée :', member.assignedCashDesk!),
+                    const SizedBox(height: 6),
+                  ],
+                  _buildCredentialRow('Boutique :', member.storeName),
+                  const Divider(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Code PIN de connexion :',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.accentGold),
+                        ),
+                        child: Text(
+                          pin,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2.5,
+                            color: Color(0xFF92400E),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            // BOUTON WHATSAPP PROÉMINENT
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                icon: const Icon(Icons.share, size: 20),
+                label: const Text(
+                  'Partager sur WhatsApp',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => _shareCredentialsOnWhatsApp(member, pin),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF334155),
+                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    label: const Text('Copier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(
+                        text: 'Identifiant Bricelo Stock : ${member.phone} | Code PIN : $pin | Rôle : ${member.role}',
+                      ));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Identifiants copiés dans le presse-papier !'),
+                          backgroundColor: Color(0xFF059669),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF64748B),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Fermer', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildCredentialRow(String label, String value, {bool isBadge = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B))),
+        const SizedBox(width: 8),
+        isBadge
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDBEAFE),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  value,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF)),
+                ),
+              )
+            : Flexible(
+                child: Text(
+                  value,
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+      ],
+    );
+  }
+
   void _showInviteDialog(BuildContext context) {
     final prenomCtrl = TextEditingController();
     final nomCtrl = TextEditingController();
@@ -22,6 +240,9 @@ class _TeamScreenState extends State<TeamScreen> {
     String assignedStore = appState.availableStores.isNotEmpty
         ? appState.availableStores.first
         : (appState.currentStore.isNotEmpty ? appState.currentStore : 'Toutes les boutiques');
+    String selectedCashDesk = appState.cashDesks.isNotEmpty ? appState.cashDesks.first.name : 'Caisse Principale';
+    final generatedPin = (100000 + Random().nextInt(900000)).toString();
+    final pinCtrl = TextEditingController(text: generatedPin);
 
     showDialog(
       context: context,
@@ -30,7 +251,7 @@ class _TeamScreenState extends State<TeamScreen> {
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text(
-            'Inviter un membre',
+            'Inviter un rôle / collaborateur',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF111827)),
           ),
           content: SingleChildScrollView(
@@ -69,8 +290,8 @@ class _TeamScreenState extends State<TeamScreen> {
                   controller: phoneCtrl,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: 'Téléphone *',
-                    hintText: 'Ex: 699 00 00 00',
+                    labelText: 'Téléphone (Identifiant WhatsApp) *',
+                    hintText: 'Ex: +237 699 00 00 00',
                     labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -92,7 +313,7 @@ class _TeamScreenState extends State<TeamScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // RÔLE * (Propriétaire / Gérant / Caissier / Magasinier / Vendeur)
+                // RÔLE * (Propriétaire / Gérant / Caissier / Magasinier / Vendeur + Rôles personnalisés)
                 DropdownButtonFormField<String>(
                   initialValue: role,
                   decoration: InputDecoration(
@@ -101,12 +322,18 @@ class _TeamScreenState extends State<TeamScreen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'Propriétaire', child: Text('Propriétaire')),
-                    DropdownMenuItem(value: 'Gérant', child: Text('Gérant')),
-                    DropdownMenuItem(value: 'Caissier', child: Text('Caissier')),
-                    DropdownMenuItem(value: 'Magasinier', child: Text('Magasinier')),
-                    DropdownMenuItem(value: 'Vendeur', child: Text('Vendeur')),
+                  items: [
+                    const DropdownMenuItem(value: 'Caissier', child: Text('Caissier (POS, encaissement, reçu)')),
+                    const DropdownMenuItem(value: 'Magasinier', child: Text('Magasinier (Stock, réappro à valider)')),
+                    const DropdownMenuItem(value: 'Gérant', child: Text('Gérant (Supervision sous validation)')),
+                    const DropdownMenuItem(value: 'Vendeur', child: Text('Vendeur (POS & Catalogue)')),
+                    const DropdownMenuItem(value: 'Propriétaire', child: Text('Propriétaire (Tous droits & validations)')),
+                    ...appState.accessGroups
+                        .map((g) => (g['role'] ?? '').toString())
+                        .where((r) =>
+                            r.isNotEmpty &&
+                            !['Caissier', 'Magasinier', 'Gérant', 'Vendeur', 'Propriétaire'].contains(r))
+                        .map((r) => DropdownMenuItem(value: r, child: Text('$r (Rôle personnalisé)'))),
                   ],
                   onChanged: (v) {
                     setDlgState(() {
@@ -119,7 +346,63 @@ class _TeamScreenState extends State<TeamScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Si Propriétaire alors il gère tout : le champ Boutique assignée n'a pas sa place
+                // Si Caissier -> Sélection obligatoire de la caisse à lui attribuer
+                if (role == 'Caissier') ...[
+                  DropdownButtonFormField<String>(
+                    value: selectedCashDesk,
+                    decoration: InputDecoration(
+                      labelText: 'Caisse attribuée au caissier *',
+                      labelStyle: const TextStyle(color: Color(0xFF0284C7), fontSize: 13, fontWeight: FontWeight.bold),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFF0284C7)),
+                      ),
+                      prefixIcon: const Icon(Icons.point_of_sale_rounded, color: Color(0xFF0284C7)),
+                    ),
+                    items: appState.cashDesks.isNotEmpty
+                        ? appState.cashDesks.map((d) => DropdownMenuItem(value: d.name, child: Text(d.name))).toList()
+                        : [
+                            const DropdownMenuItem(value: 'Caisse Principale', child: Text('Caisse Principale')),
+                            const DropdownMenuItem(value: 'Caisse 1', child: Text('Caisse 1')),
+                            const DropdownMenuItem(value: 'Caisse 2', child: Text('Caisse 2')),
+                          ],
+                    onChanged: (v) => setDlgState(() => selectedCashDesk = v ?? 'Caisse Principale'),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Le caissier ne pourra ouvrir et fermer que cette caisse attribuée.',
+                    style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Si Magasinier -> Indication approbation requise
+                if (role == 'Magasinier') ...[
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.security_rounded, color: Color(0xFF92400E), size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Le magasinier peut demander des réapprovisionnements et transferts. Toute action sera soumise à votre validation dans "Approbations".',
+                            style: TextStyle(fontSize: 11.5, color: Color(0xFF92400E), fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Si Propriétaire alors il gère tout
                 if (role == 'Propriétaire') ...[
                   Container(
                     width: double.infinity,
@@ -135,13 +418,14 @@ class _TeamScreenState extends State<TeamScreen> {
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Le Propriétaire gère l\'ensemble des boutiques et stocks.',
+                            'Le Propriétaire gère l\'ensemble des boutiques, valide les approbations et effectue les paiements fournisseurs.',
                             style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
                           ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 12),
                 ] else ...[
                   // BOUTIQUE ASSIGNÉE (pour les autres rôles)
                   DropdownButtonFormField<String>(
@@ -158,7 +442,23 @@ class _TeamScreenState extends State<TeamScreen> {
                     ],
                     onChanged: (v) => setDlgState(() => assignedStore = v ?? 'Toutes les boutiques'),
                   ),
+                  const SizedBox(height: 12),
                 ],
+
+                // CODE PIN GÉNÉRÉ
+                TextField(
+                  controller: pinCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Code PIN secret (Généré) *',
+                    hintText: '6 chiffres',
+                    helperText: 'Code de connexion qui sera envoyé au collaborateur',
+                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    prefixIcon: const Icon(Icons.password_rounded, color: AppTheme.accentGold),
+                  ),
+                ),
               ],
             ),
           ),
@@ -190,34 +490,38 @@ class _TeamScreenState extends State<TeamScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         final prenom = prenomCtrl.text.trim();
                         final nom = nomCtrl.text.trim();
                         final phone = phoneCtrl.text.trim();
+                        final pin = pinCtrl.text.trim();
                         if (prenom.isEmpty || nom.isEmpty || phone.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Veuillez remplir le prénom, le nom et le téléphone.'), backgroundColor: Color(0xFFDC2626)),
+                            const SnackBar(content: Text('Veuillez renseigner le prénom, le nom et le téléphone.'), backgroundColor: Color(0xFFDC2626)),
                           );
                           return;
                         }
 
                         final fullName = '$prenom $nom';
-                        appState.addTeamMember(
+                        final desk = role == 'Caissier' ? selectedCashDesk : null;
+
+                        await appState.addTeamMember(
                           name: fullName,
                           phone: phone,
                           email: emailCtrl.text.trim().isNotEmpty ? emailCtrl.text.trim() : null,
                           role: role,
                           storeName: role == 'Propriétaire' ? 'Toutes les boutiques' : assignedStore,
+                          pinCode: pin.isNotEmpty ? pin : generatedPin,
+                          assignedCashDesk: desk,
                         );
 
                         Navigator.pop(ctx);
                         setState(() {});
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: const Color(0xFF059669),
-                            content: Text('$fullName ajouté(e) avec succès avec le rôle $role.'),
-                          ),
-                        );
+
+                        final createdMember = appState.teamMembers.last;
+                        if (mounted) {
+                          _showCredentialsDialog(context, createdMember, pin.isNotEmpty ? pin : generatedPin);
+                        }
                       },
                       child: const Text('Inviter', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5)),
                     ),
@@ -572,9 +876,17 @@ class _TeamScreenState extends State<TeamScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildDetailRow('Téléphone', member.phone),
+                      _buildDetailRow('Téléphone (Identifiant)', member.phone),
+                      if (member.pinCode.isNotEmpty) ...[
+                        const Divider(height: 14, color: Color(0xFFE2E8F0)),
+                        _buildDetailRow('Code PIN secret', member.pinCode),
+                      ],
                       const Divider(height: 14, color: Color(0xFFE2E8F0)),
                       _buildDetailRow('Email', member.email?.isNotEmpty == true ? member.email! : 'Non renseigné'),
+                      if (member.role.toLowerCase() == 'caissier' && member.assignedCashDesk != null) ...[
+                        const Divider(height: 14, color: Color(0xFFE2E8F0)),
+                        _buildDetailRow('Caisse attribuée', member.assignedCashDesk!),
+                      ],
                       if (!isOwner) ...[
                         const Divider(height: 14, color: Color(0xFFE2E8F0)),
                         _buildDetailRow('Boutique assignée', member.storeName),
@@ -584,14 +896,65 @@ class _TeamScreenState extends State<TeamScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+
+                // Partager sur WhatsApp
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF25D366),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.share, size: 18),
+                    label: const Text('Partager identifiants sur WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _shareCredentialsOnWhatsApp(member, member.pinCode.isNotEmpty ? member.pinCode : '------');
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Tester la session de ce membre / switcher
+                if (!isOwner) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 42,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryNavy,
+                        side: const BorderSide(color: AppTheme.primaryNavy),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                      label: Text('Tester la session en tant que ${member.role}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await appState.switchUserSession(member);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Session basculée sur ${member.name} (${member.role}). Vos droits sont désormais restreints à ce rôle.'),
+                              backgroundColor: const Color(0xFF0284C7),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
 
                 // Boutons d'actions
                 Row(
                   children: [
                     Expanded(
                       child: SizedBox(
-                        height: 46,
+                        height: 44,
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -610,7 +973,7 @@ class _TeamScreenState extends State<TeamScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: SizedBox(
-                          height: 46,
+                          height: 44,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFFEE2E2),
@@ -800,20 +1163,42 @@ class _TeamScreenState extends State<TeamScreen> {
                                     ),
                                   ],
                                   const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFEF3C7),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      m.role,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF92400E),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 4,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEF3C7),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          m.role,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF92400E),
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                      if (m.role.toLowerCase() == 'caissier' && m.assignedCashDesk != null)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE0F2FE),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            '💰 ${m.assignedCashDesk}',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF0369A1),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ],
                               ),

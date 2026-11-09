@@ -435,7 +435,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
     );
   }
 
-  void _saveSupply() {
+  Future<void> _saveSupply() async {
     if (_items.isEmpty && _fees.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -453,6 +453,31 @@ class _SupplyScreenState extends State<SupplyScreen> {
           content: Text('Veuillez renseigner le coût unitaire de tous les articles ($_itemsWithoutCostCount manquant(s)).'),
         ),
       );
+      return;
+    }
+
+    // Si l'utilisateur connecté est un équipier (Magasinier, Gérant...) sans droit de validation directe :
+    // L'approvisionnement est soumis à l'approbation du Propriétaire !
+    if (!appState.hasPermission('Validation des approbations')) {
+      for (final item in _items) {
+        await appState.requestStockRestock(
+          product: item.product,
+          quantity: item.quantity,
+          supplierName: _selectedSupplier ?? 'Fournisseur',
+          customCost: item.total,
+          note: _notesCtrl.text.trim(),
+        );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF0D9488),
+          content: Text(
+            'Demande d\'approvisionnement (${_items.length} article(s)) envoyée au propriétaire pour validation et paiement !',
+          ),
+        ),
+      );
+      Navigator.pop(context);
       return;
     }
 
@@ -1658,10 +1683,12 @@ class _SupplyScreenState extends State<SupplyScreen> {
                         color: canSave ? AppTheme.accentGold : const Color(0xFF94A3B8),
                       ),
                       label: Text(
-                        'Enregistrer',
+                        appState.hasPermission('Validation des approbations')
+                            ? 'Enregistrer'
+                            : 'Soumettre au Propriétaire',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 13.5,
                           color: canSave ? Colors.white : const Color(0xFF64748B),
                         ),
                       ),

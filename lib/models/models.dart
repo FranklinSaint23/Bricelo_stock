@@ -1285,6 +1285,9 @@ class TeamMember {
   String? email;
   String role; // 'Propriétaire', 'Gérant', 'Caissier', 'Magasinier'
   String storeName;
+  String pinCode;
+  String? assignedCashDesk;
+  bool isActive;
   DateTime createdAt;
 
   TeamMember({
@@ -1294,6 +1297,9 @@ class TeamMember {
     this.email,
     required this.role,
     this.storeName = 'Toutes les boutiques',
+    this.pinCode = '',
+    this.assignedCashDesk,
+    this.isActive = true,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -1304,6 +1310,9 @@ class TeamMember {
         'email': email,
         'role': role,
         'storeName': storeName,
+        'pinCode': pinCode,
+        'assignedCashDesk': assignedCashDesk,
+        'isActive': isActive,
         'createdAt': createdAt.toIso8601String(),
       };
 
@@ -1314,6 +1323,9 @@ class TeamMember {
         email: j['email']?.toString(),
         role: (j['role'] ?? 'Caissier').toString(),
         storeName: (j['storeName'] ?? 'Toutes les boutiques').toString(),
+        pinCode: (j['pinCode'] ?? '').toString(),
+        assignedCashDesk: j['assignedCashDesk']?.toString(),
+        isActive: j['isActive'] as bool? ?? true,
         createdAt: DateTime.tryParse((j['createdAt'] ?? j['created_at'] ?? '').toString()) ?? DateTime.now(),
       );
 }
@@ -1381,7 +1393,7 @@ class PaymentAccount {
 class ApprovalRequest {
   final String id;
   final String title;
-  final String type; // 'Remise', 'Dépense', 'Dépréciation', 'Crédit', 'Annulation'
+  final String type; // 'Remise', 'Dépense', 'Dépréciation', 'Crédit', 'Annulation', 'Approvisionnement', 'Transfert de stock'
   final String requesterName;
   final String storeName;
   final double amount;
@@ -1390,6 +1402,7 @@ class ApprovalRequest {
   String status; // 'pending', 'approved', 'rejected'
   String? decisionNote;
   DateTime? decisionDate;
+  String paymentStatus; // 'unpaid', 'paid'
 
   ApprovalRequest({
     required this.id,
@@ -1403,6 +1416,7 @@ class ApprovalRequest {
     this.status = 'pending',
     this.decisionNote,
     this.decisionDate,
+    this.paymentStatus = 'unpaid',
   });
 
   Map<String, dynamic> toJson() => {
@@ -1417,6 +1431,7 @@ class ApprovalRequest {
         'status': status,
         'decisionNote': decisionNote,
         'decisionDate': decisionDate?.toIso8601String(),
+        'paymentStatus': paymentStatus,
       };
 
   factory ApprovalRequest.fromJson(Map<String, dynamic> j) => ApprovalRequest(
@@ -1431,6 +1446,7 @@ class ApprovalRequest {
         status: (j['status'] ?? 'pending').toString(),
         decisionNote: j['decisionNote']?.toString(),
         decisionDate: j['decisionDate'] != null ? DateTime.tryParse(j['decisionDate'].toString()) : null,
+        paymentStatus: (j['paymentStatus'] ?? 'unpaid').toString(),
       );
 }
 
@@ -1447,6 +1463,9 @@ class CashShift {
   double discrepancy;
   String note;
   bool isClosed;
+  int salesCount;
+  double totalSalesAmount;
+  Map<String, double> paymentMethodsBreakdown;
 
   CashShift({
     required this.id,
@@ -1461,7 +1480,22 @@ class CashShift {
     this.discrepancy = 0.0,
     this.note = '',
     this.isClosed = false,
-  });
+    this.salesCount = 0,
+    this.totalSalesAmount = 0.0,
+    Map<String, double>? paymentMethodsBreakdown,
+  }) : paymentMethodsBreakdown = paymentMethodsBreakdown ?? {};
+
+  Duration get duration => (closedAt ?? DateTime.now()).difference(openedAt);
+
+  String get formattedDuration {
+    final d = duration;
+    final hours = d.inHours;
+    final minutes = d.inMinutes.remainder(60);
+    if (hours > 0) {
+      return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
+    }
+    return '${minutes}m';
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -1476,22 +1510,40 @@ class CashShift {
         'discrepancy': discrepancy,
         'note': note,
         'isClosed': isClosed,
+        'salesCount': salesCount,
+        'totalSalesAmount': totalSalesAmount,
+        'paymentMethodsBreakdown': paymentMethodsBreakdown,
       };
 
-  factory CashShift.fromJson(Map<String, dynamic> j) => CashShift(
-        id: (j['id'] ?? '').toString(),
-        cashierName: (j['cashierName'] ?? '').toString(),
-        cashDeskName: (j['cashDeskName'] ?? '').toString(),
-        storeName: (j['storeName'] ?? '').toString(),
-        openedAt: DateTime.tryParse((j['openedAt'] ?? '').toString()) ?? DateTime.now(),
-        openingCash: (j['openingCash'] as num?)?.toDouble() ?? 0.0,
-        closedAt: j['closedAt'] != null ? DateTime.tryParse(j['closedAt'].toString()) : null,
-        cashSalesTotal: (j['cashSalesTotal'] as num?)?.toDouble() ?? 0.0,
-        closingCashCounted: (j['closingCashCounted'] as num?)?.toDouble() ?? 0.0,
-        discrepancy: (j['discrepancy'] as num?)?.toDouble() ?? 0.0,
-        note: (j['note'] ?? '').toString(),
-        isClosed: j['isClosed'] as bool? ?? false,
-      );
+  factory CashShift.fromJson(Map<String, dynamic> j) {
+    Map<String, double> breakdown = {};
+    if (j['paymentMethodsBreakdown'] is Map) {
+      (j['paymentMethodsBreakdown'] as Map).forEach((k, v) {
+        breakdown[k.toString()] = (v as num?)?.toDouble() ?? 0.0;
+      });
+    }
+
+    final cashSales = (j['cashSalesTotal'] as num?)?.toDouble() ?? 0.0;
+    final totalSales = (j['totalSalesAmount'] as num?)?.toDouble() ?? cashSales;
+
+    return CashShift(
+      id: (j['id'] ?? '').toString(),
+      cashierName: (j['cashierName'] ?? '').toString(),
+      cashDeskName: (j['cashDeskName'] ?? '').toString(),
+      storeName: (j['storeName'] ?? '').toString(),
+      openedAt: DateTime.tryParse((j['openedAt'] ?? '').toString()) ?? DateTime.now(),
+      openingCash: (j['openingCash'] as num?)?.toDouble() ?? 0.0,
+      closedAt: j['closedAt'] != null ? DateTime.tryParse(j['closedAt'].toString()) : null,
+      cashSalesTotal: cashSales,
+      closingCashCounted: (j['closingCashCounted'] as num?)?.toDouble() ?? 0.0,
+      discrepancy: (j['discrepancy'] as num?)?.toDouble() ?? 0.0,
+      note: (j['note'] ?? '').toString(),
+      isClosed: j['isClosed'] as bool? ?? false,
+      salesCount: (j['salesCount'] as num?)?.toInt() ?? 0,
+      totalSalesAmount: totalSales,
+      paymentMethodsBreakdown: breakdown,
+    );
+  }
 }
 
 
