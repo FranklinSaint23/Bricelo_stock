@@ -4,6 +4,7 @@ import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/screens/pos/shift_dialog_helper.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/theme/app_theme.dart';
+import 'package:stock_prime/widgets/widgets.dart';
 
 class ShiftsTrackingScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -1096,23 +1097,12 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.5, color: isDark ? Colors.white : const Color(0xFF111827)),
                               ),
                               const SizedBox(width: 8),
-                              Container(
+                              ShiftDurationBadge(
+                                shift: activeShift,
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF065F46),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.timer_outlined, size: 12, color: Color(0xFF6EE7B7)),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      activeShift.formattedDuration,
-                                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7)),
-                                    ),
-                                  ],
-                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                textStyle: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7)),
+                                iconSize: 12,
                               ),
                             ],
                           ),
@@ -1593,7 +1583,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                                 Icon(Icons.timer_outlined, size: 12, color: isDark ? AppTheme.accentGold : const Color(0xFF475569)),
                                 const SizedBox(width: 4),
                                 Text(
-                                  shift.formattedDuration,
+                                  shift.formattedDurationHms,
                                   style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : const Color(0xFF334155)),
                                 ),
                               ],

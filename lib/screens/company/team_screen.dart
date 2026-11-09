@@ -323,6 +323,14 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
+                  selectedItemBuilder: (BuildContext context) {
+                    return const [
+                      Text('Caissier', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      Text('Magasinier', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      Text('Gérant', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      Text('Propriétaire', overflow: TextOverflow.ellipsis, maxLines: 1),
+                    ];
+                  },
                   items: const [
                     DropdownMenuItem(
                       value: 'Caissier',

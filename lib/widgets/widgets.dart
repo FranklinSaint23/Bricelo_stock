@@ -7,3 +7,4 @@ export 'buttons/primary_button.dart';
 export 'feedback/empty_state_view.dart';
 export 'navigation/stock_bottom_bar.dart';
 export 'product_image_widget.dart';
+export 'shift_duration_badge.dart';

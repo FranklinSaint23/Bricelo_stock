@@ -300,7 +300,18 @@ class AppState extends ChangeNotifier {
   /// Indique si l'utilisateur actuellement connecté est le Propriétaire
   bool get isOwnerAccount =>
       userRole.toLowerCase().contains('propriétaire') ||
-      userRole.toLowerCase().contains('owner');
+      userRole.toLowerCase().contains('owner') ||
+      isSuperAdmin;
+
+  /// Indique si l'utilisateur est le Super Administrateur (rôle Supabase dédié)
+  bool get isSuperAdmin {
+    final r = userRole.toLowerCase().trim();
+    return r.contains('super_admin') ||
+        r.contains('superadmin') ||
+        r.contains('super administrateur') ||
+        r.contains('super-admin') ||
+        r.contains('super_administrateur');
+  }
 
   /// Collaborateur invité actuellement connecté (null si Propriétaire)
   TeamMember? get currentCollaborator {
@@ -350,7 +361,7 @@ class AppState extends ChangeNotifier {
 
   /// Vérification dynamique des droits accordés par le propriétaire
   bool hasPermission(String permissionKey) {
-    if (userRole.toLowerCase().contains('propriétaire') || userRole.toLowerCase().contains('owner')) {
+    if (isSuperAdmin || userRole.toLowerCase().contains('propriétaire') || userRole.toLowerCase().contains('owner')) {
       return true;
     }
     final normRole = userRole.toLowerCase().trim();
@@ -896,7 +907,7 @@ class AppState extends ChangeNotifier {
   /// Synchronise la configuration de la boutique du propriétaire vers user_profiles Supabase
   Future<void> syncOwnerWorkspaceConfigToCloud() async {
     if (companyName.trim().isEmpty && userPhone.trim().isEmpty) return;
-    final isOwner = userRole.toLowerCase().contains('propriétaire') || userRole.toLowerCase().contains('owner');
+    final isOwner = isSuperAdmin || userRole.toLowerCase().contains('propriétaire') || userRole.toLowerCase().contains('owner');
     if (!isOwner) return;
 
     final profileId = normalizePhoneDigits(userPhone).isNotEmpty
@@ -912,11 +923,13 @@ class AppState extends ChangeNotifier {
         'company_name': companyName,
         'email': userEmail,
         'phone': userPhone,
-        'role': 'Propriétaire',
+        'role': isSuperAdmin ? userRole : 'Propriétaire',
         'language': currentLanguage,
         if (ownerPasswordHash.isNotEmpty) 'password_hash': ownerPasswordHash,
         'subscription_plan': subscriptionPlan,
+        'subscription_billing': subscriptionBilling,
         'subscription_status': subscriptionStatus,
+        'subscription_expires_at': subscriptionExpiresAt?.toIso8601String(),
         'access_groups': accessGroups,
         'cash_desks': cashDesks.map((e) => e.toJson()).toList(),
         'available_stores': availableStores,
@@ -958,8 +971,24 @@ class AppState extends ChangeNotifier {
             if (prof['subscription_plan'] != null && prof['subscription_plan'].toString().trim().isNotEmpty) {
               subscriptionPlan = prof['subscription_plan'].toString().trim();
             }
+            if (prof['subscription_billing'] != null && prof['subscription_billing'].toString().trim().isNotEmpty) {
+              subscriptionBilling = prof['subscription_billing'].toString().trim();
+            }
             if (prof['subscription_status'] != null && prof['subscription_status'].toString().trim().isNotEmpty) {
               subscriptionStatus = prof['subscription_status'].toString().trim();
+            }
+            if (prof['subscription_expires_at'] != null && prof['subscription_expires_at'].toString().trim().isNotEmpty) {
+              try {
+                subscriptionExpiresAt = DateTime.parse(prof['subscription_expires_at'].toString());
+              } catch (_) {}
+            }
+            final remoteRole = (prof['role'] ?? prof['user_role'] ?? '').toString().trim();
+            final isRemoteSuper = prof['is_super_admin'] == true ||
+                remoteRole.toLowerCase().contains('super_admin') ||
+                remoteRole.toLowerCase().contains('superadmin') ||
+                remoteRole.toLowerCase().contains('super administrateur');
+            if (isRemoteSuper) {
+              userRole = 'Super Administrateur';
             }
             if (prof['access_groups'] is List && (prof['access_groups'] as List).isNotEmpty) {
               accessGroups = (prof['access_groups'] as List)
@@ -1065,27 +1094,7 @@ class AppState extends ChangeNotifier {
           if ((rows as List).isNotEmpty) {
             for (final raw in rows) {
               final r = Map<String, dynamic>.from(raw as Map);
-              final rawBreakdown = r['payment_methods_breakdown'];
-              final Map<String, double> breakdown = {};
-              if (rawBreakdown is Map) {
-                rawBreakdown.forEach((k, v) {
-                  breakdown[k.toString()] = (v as num?)?.toDouble() ?? 0.0;
-                });
-              }
-              final shift = CashShift(
-                id: (r['id'] ?? '').toString(),
-                cashierName: (r['cashier_name'] ?? '').toString(),
-                cashDeskName: (r['cash_desk_name'] ?? 'Caisse Principale').toString(),
-                storeName: (r['store_name'] ?? currentStore).toString(),
-                openedAt: DateTime.tryParse((r['opened_at'] ?? '').toString()) ?? DateTime.now(),
-                closedAt: r['closed_at'] != null ? DateTime.tryParse(r['closed_at'].toString()) : null,
-                openingCash: (r['opening_cash'] as num?)?.toDouble() ?? 0.0,
-                closingCashCounted: (r['closing_cash'] as num?)?.toDouble() ?? 0.0,
-                salesCount: (r['sales_count'] as num?)?.toInt() ?? 0,
-                totalSalesAmount: (r['total_sales_amount'] as num?)?.toDouble() ?? 0.0,
-                paymentMethodsBreakdown: breakdown,
-                isClosed: r['is_closed'] as bool? ?? false,
-              );
+              final shift = CashShift.fromJson(r);
               if (!shift.isClosed) {
                 if (activeCashShift == null || activeCashShift!.id == shift.id) {
                   activeCashShift = shift;
@@ -1338,13 +1347,38 @@ class AppState extends ChangeNotifier {
       userPhone = (matchedRemoteProfile['phone'] ?? cleanPhone).toString().trim();
       final remoteEmail = (matchedRemoteProfile['email'] ?? '').toString().trim();
       userEmail = cleanEmail.isNotEmpty ? cleanEmail : remoteEmail;
-      userRole = 'Propriétaire';
+      final remoteRole = (matchedRemoteProfile['role'] ?? matchedRemoteProfile['user_role'] ?? '').toString().trim();
+      final isRemoteSuper = matchedRemoteProfile['is_super_admin'] == true ||
+          remoteRole.toLowerCase().contains('super_admin') ||
+          remoteRole.toLowerCase().contains('superadmin') ||
+          remoteRole.toLowerCase().contains('super administrateur');
+      if (isRemoteSuper) {
+        userRole = 'Super Administrateur';
+      } else if (remoteRole.isNotEmpty) {
+        userRole = remoteRole;
+      } else {
+        userRole = 'Propriétaire';
+      }
       userAssignedCashDesk = null;
       ownerPasswordHash = inputHash;
 
       if (matchedRemoteProfile['subscription_plan'] != null &&
           matchedRemoteProfile['subscription_plan'].toString().trim().isNotEmpty) {
         subscriptionPlan = matchedRemoteProfile['subscription_plan'].toString().trim();
+      }
+      if (matchedRemoteProfile['subscription_billing'] != null &&
+          matchedRemoteProfile['subscription_billing'].toString().trim().isNotEmpty) {
+        subscriptionBilling = matchedRemoteProfile['subscription_billing'].toString().trim();
+      }
+      if (matchedRemoteProfile['subscription_status'] != null &&
+          matchedRemoteProfile['subscription_status'].toString().trim().isNotEmpty) {
+        subscriptionStatus = matchedRemoteProfile['subscription_status'].toString().trim();
+      }
+      if (matchedRemoteProfile['subscription_expires_at'] != null &&
+          matchedRemoteProfile['subscription_expires_at'].toString().trim().isNotEmpty) {
+        try {
+          subscriptionExpiresAt = DateTime.parse(matchedRemoteProfile['subscription_expires_at'].toString());
+        } catch (_) {}
       }
       if (matchedRemoteProfile['access_groups'] is List &&
           (matchedRemoteProfile['access_groups'] as List).isNotEmpty) {
@@ -3515,15 +3549,15 @@ class AppState extends ChangeNotifier {
         'cashier_name': shift.cashierName,
         'cash_desk_name': shift.cashDeskName,
         'store_name': shift.storeName,
-        'opened_at': shift.openedAt.toIso8601String(),
-        'closed_at': shift.closedAt?.toIso8601String(),
+        'opened_at': shift.openedAt.toUtc().toIso8601String(),
+        'closed_at': shift.closedAt?.toUtc().toIso8601String(),
         'opening_cash': shift.openingCash,
         'closing_cash': shift.closingCashCounted,
         'sales_count': shift.salesCount,
         'total_sales_amount': shift.totalSalesAmount,
         'payment_methods_breakdown': shift.paymentMethodsBreakdown,
         'is_closed': shift.isClosed,
-        'updated_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
       },
     );
   }
@@ -3651,5 +3685,178 @@ class AppState extends ChangeNotifier {
     openingCash = 0.0;
     notifyListeners();
     await _saveToPrefs();
+  }
+
+  // =========================================================================
+  // --- SUPER ADMINISTRATEUR (Console de Gestion & Monitoring Cloud) ---
+  // =========================================================================
+
+  /// Active ou désactive le mode Super Administrateur pour la session actuelle (utile pour test/dev)
+  void setSuperAdminRole(bool enable) {
+    if (enable) {
+      userRole = 'Super Administrateur';
+    } else {
+      userRole = 'Propriétaire';
+    }
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  /// Récupère la liste de tous les comptes / profils entreprises depuis Supabase
+  Future<List<Map<String, dynamic>>> fetchSuperAdminAllProfiles() async {
+    final sb = _supabase;
+    if (sb == null) {
+      return [
+        {
+          'id': normalizePhoneDigits(userPhone).isNotEmpty ? normalizePhoneDigits(userPhone) : 'local_owner',
+          'full_name': userName,
+          'company_name': companyName,
+          'phone': userPhone,
+          'email': userEmail,
+          'role': userRole,
+          'subscription_plan': subscriptionPlan,
+          'subscription_billing': subscriptionBilling,
+          'subscription_status': subscriptionStatus,
+          'subscription_expires_at': subscriptionExpiresAt?.toIso8601String(),
+          'available_stores': availableStores,
+          'created_at': DateTime.now().toIso8601String(),
+          'is_active': true,
+        }
+      ];
+    }
+    try {
+      final rows = await sb.from('user_profiles').select();
+      final list = (rows as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      return list;
+    } catch (e) {
+      debugPrint('Erreur fetchSuperAdminAllProfiles: $e');
+      return [];
+    }
+  }
+
+  /// Mesure la latence ping aller-retour vers Supabase en millisecondes
+  Future<int> checkSupabaseLatencyMs() async {
+    final sb = _supabase;
+    if (sb == null) return -1;
+    final sw = Stopwatch()..start();
+    try {
+      await sb.from('stores').select('name').limit(1);
+      sw.stop();
+      return sw.elapsedMilliseconds;
+    } catch (_) {
+      try {
+        await sb.from('user_profiles').select('id').limit(1);
+        sw.stop();
+        return sw.elapsedMilliseconds;
+      } catch (_) {
+        return -1;
+      }
+    }
+  }
+
+  /// Récupère les compteurs globaux du système pour le monitoring
+  Future<Map<String, int>> fetchSupabaseSystemCounts() async {
+    final sb = _supabase;
+    if (sb == null) {
+      return {
+        'profiles': 1,
+        'products': products.length,
+        'sales': sales.length,
+        'stores': availableStores.length,
+        'team': teamMembers.length,
+      };
+    }
+    try {
+      final profs = await sb.from('user_profiles').select('id');
+      final prods = await sb.from('products').select('id');
+      final sls = await sb.from('sales').select('id');
+      final tm = await sb.from('team_members').select('id');
+      return {
+        'profiles': (profs as List).length,
+        'products': (prods as List).length,
+        'sales': (sls as List).length,
+        'stores': availableStores.length,
+        'team': (tm as List).length,
+      };
+    } catch (e) {
+      return {
+        'profiles': 1,
+        'products': products.length,
+        'sales': sales.length,
+        'stores': availableStores.length,
+        'team': teamMembers.length,
+      };
+    }
+  }
+
+  /// Met à jour manuellement ou active un abonnement pour un compte donné
+  Future<void> superAdminUpdateSubscription({
+    required String profileId,
+    required String plan,
+    required String billing,
+    int durationMonths = 1,
+    String? notes,
+    String? status,
+  }) async {
+    final sb = _supabase;
+    final now = DateTime.now();
+    final exp = plan == 'Gratuit' ? null : now.add(Duration(days: durationMonths * 30));
+    final payload = <String, dynamic>{
+      'subscription_plan': plan,
+      'subscription_billing': billing,
+      'subscription_status': status ?? 'Actif',
+      'subscription_expires_at': exp?.toIso8601String(),
+      if (notes != null && notes.isNotEmpty) 'subscription_notes': notes,
+      'updated_at': now.toIso8601String(),
+    };
+
+    if (sb != null) {
+      try {
+        await sb.from('user_profiles').update(payload).eq('id', profileId);
+      } catch (e) {
+        debugPrint('Erreur superAdminUpdateSubscription: $e');
+      }
+    }
+
+    // Si on met à jour le profil actuel connecté
+    final currentId = normalizePhoneDigits(userPhone).isNotEmpty ? normalizePhoneDigits(userPhone) : userPhone;
+    if (profileId == currentId || profileId == userPhone || profileId == userEmail || profileId == companyName) {
+      subscriptionPlan = plan;
+      subscriptionBilling = billing;
+      subscriptionStatus = status ?? 'Actif';
+      subscriptionExpiresAt = exp;
+      notifyListeners();
+      await _saveToPrefs();
+    }
+  }
+
+  /// Résilie ou rétrograde un abonnement vers la formule Découverte (Gratuit)
+  Future<void> superAdminCancelSubscription({required String profileId}) async {
+    await superAdminUpdateSubscription(
+      profileId: profileId,
+      plan: 'Gratuit',
+      billing: 'mensuel',
+      durationMonths: 0,
+      notes: 'Abonnement résilié par le Super Administrateur',
+      status: 'Résilié',
+    );
+  }
+
+  /// Active ou suspend un compte utilisateur
+  Future<void> superAdminToggleAccountStatus({
+    required String profileId,
+    required bool isActive,
+  }) async {
+    final sb = _supabase;
+    if (sb != null) {
+      try {
+        await sb.from('user_profiles').update({
+          'is_active': isActive,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', profileId);
+      } catch (e) {
+        debugPrint('Erreur superAdminToggleAccountStatus: $e');
+      }
+    }
   }
 }

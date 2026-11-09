@@ -1280,24 +1280,7 @@ class _PosScreenState extends State<PosScreen> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF065F46),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.timer_outlined, color: Color(0xFF6EE7B7), size: 11),
-                                const SizedBox(width: 3),
-                                Text(
-                                  shift.formattedDuration,
-                                  style: const TextStyle(color: Color(0xFF6EE7B7), fontSize: 11, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
+                          ShiftDurationBadge(shift: shift),
                         ],
                       ),
                       const SizedBox(height: 2),

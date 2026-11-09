@@ -53,6 +53,33 @@ void main() {
       shift.isClosed = true;
 
       expect(shift.formattedDuration, '8h 45m');
+      expect(shift.formattedDurationHms, '08h 45m 00s');
+    });
+
+    test('CashShift formattedDurationHms formats in hours minutes seconds without negative values', () {
+      final now = DateTime.now();
+      // Cas 1: shift ouvert il y a 2 minutes et 15 secondes
+      final shiftRecent = CashShift(
+        id: 'shift_${now.subtract(const Duration(minutes: 2, seconds: 15)).millisecondsSinceEpoch}',
+        cashierName: 'Caissier',
+        cashDeskName: 'Caisse test',
+        storeName: 'Boutique',
+        openedAt: now.subtract(const Duration(minutes: 2, seconds: 15)),
+        openingCash: 0,
+      );
+      expect(shiftRecent.formattedDurationHms.startsWith('00h 02m'), true);
+
+      // Cas 2: anomalie de fuseau horaire (openedAt dans le futur d'une heure)
+      final shiftOffset = CashShift(
+        id: 'shift_legacy_future',
+        cashierName: 'Caissier',
+        cashDeskName: 'Caisse test',
+        storeName: 'Boutique',
+        openedAt: now.add(const Duration(hours: 1)),
+        openingCash: 0,
+      );
+      expect(shiftOffset.duration.isNegative, false);
+      expect(shiftOffset.formattedDurationHms.contains('-'), false);
     });
 
     test('CashShift payment breakdown serialization', () {

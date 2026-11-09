@@ -660,7 +660,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                               subtitle: Text(
                                 appState.activeCashShift != null
-                                    ? '${appState.activeCashShift!.cashDeskName} ouvert (${appState.activeCashShift!.formattedDuration})'
+                                    ? '${appState.activeCashShift!.cashDeskName} ${'ouvert'.tr} (${appState.activeCashShift!.formattedDurationHms})'
                                     : (appState.isOwnerAccount
                                         ? 'Caissiers, Magasiniers & Gérants'
                                         : 'Mes statistiques personnelles • ${appState.assignedStoreForCurrentUser}'),

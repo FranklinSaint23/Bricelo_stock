@@ -1485,16 +1485,45 @@ class CashShift {
     Map<String, double>? paymentMethodsBreakdown,
   }) : paymentMethodsBreakdown = paymentMethodsBreakdown ?? {};
 
-  Duration get duration => (closedAt ?? DateTime.now()).difference(openedAt);
+  Duration get duration {
+    DateTime start = openedAt;
+    if (id.startsWith('shift_')) {
+      final ms = int.tryParse(id.replaceFirst('shift_', ''));
+      if (ms != null && ms > 1600000000000) {
+        start = DateTime.fromMillisecondsSinceEpoch(ms);
+      }
+    }
+    final end = closedAt ?? DateTime.now();
+    final localStart = start.isUtc ? start.toLocal() : start;
+    final localEnd = end.isUtc ? end.toLocal() : end;
+    var diff = localEnd.difference(localStart);
+    if (diff.isNegative) {
+      final altDiff = localEnd.difference(localStart.subtract(DateTime.now().timeZoneOffset));
+      if (!altDiff.isNegative && altDiff < const Duration(days: 30)) {
+        diff = altDiff;
+      } else {
+        diff = Duration.zero;
+      }
+    }
+    return diff;
+  }
 
   String get formattedDuration {
     final d = duration;
     final hours = d.inHours;
-    final minutes = d.inMinutes.remainder(60);
+    final minutes = d.inMinutes.remainder(60).abs();
     if (hours > 0) {
       return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
     }
     return '${minutes}m';
+  }
+
+  String get formattedDurationHms {
+    final d = duration;
+    final hours = d.inHours;
+    final minutes = d.inMinutes.remainder(60).abs();
+    final seconds = d.inSeconds.remainder(60).abs();
+    return '${hours.toString().padLeft(2, '0')}h ${minutes.toString().padLeft(2, '0')}m ${seconds.toString().padLeft(2, '0')}s';
   }
 
   Map<String, dynamic> toJson() => {
@@ -1502,9 +1531,9 @@ class CashShift {
         'cashierName': cashierName,
         'cashDeskName': cashDeskName,
         'storeName': storeName,
-        'openedAt': openedAt.toIso8601String(),
+        'openedAt': openedAt.toUtc().toIso8601String(),
         'openingCash': openingCash,
-        'closedAt': closedAt?.toIso8601String(),
+        'closedAt': closedAt?.toUtc().toIso8601String(),
         'cashSalesTotal': cashSalesTotal,
         'closingCashCounted': closingCashCounted,
         'discrepancy': discrepancy,
@@ -1517,30 +1546,62 @@ class CashShift {
 
   factory CashShift.fromJson(Map<String, dynamic> j) {
     Map<String, double> breakdown = {};
-    if (j['paymentMethodsBreakdown'] is Map) {
-      (j['paymentMethodsBreakdown'] as Map).forEach((k, v) {
+    final rawBreakdown = j['paymentMethodsBreakdown'] ?? j['payment_methods_breakdown'];
+    if (rawBreakdown is Map) {
+      rawBreakdown.forEach((k, v) {
         breakdown[k.toString()] = (v as num?)?.toDouble() ?? 0.0;
       });
     }
 
-    final cashSales = (j['cashSalesTotal'] as num?)?.toDouble() ?? 0.0;
-    final totalSales = (j['totalSalesAmount'] as num?)?.toDouble() ?? cashSales;
+    final cashSales = (j['cashSalesTotal'] ?? j['cash_sales_total'] ?? j['cash_sales']) as num?;
+    final totalSales = (j['totalSalesAmount'] ?? j['total_sales_amount'] ?? j['total_sales']) as num?;
+    final finalCashSales = cashSales?.toDouble() ?? 0.0;
+    final finalTotalSales = totalSales?.toDouble() ?? finalCashSales;
+
+    final idStr = (j['id'] ?? '').toString();
+    DateTime? parsedOpened;
+    if (idStr.startsWith('shift_')) {
+      final ms = int.tryParse(idStr.replaceFirst('shift_', ''));
+      if (ms != null && ms > 1600000000000) {
+        parsedOpened = DateTime.fromMillisecondsSinceEpoch(ms);
+      }
+    }
+    if (parsedOpened == null) {
+      final rawOpen = (j['openedAt'] ?? j['opened_at'] ?? '').toString();
+      if (rawOpen.isNotEmpty) {
+        final dt = DateTime.tryParse(rawOpen);
+        if (dt != null) {
+          parsedOpened = dt.toLocal();
+        }
+      }
+    }
+
+    DateTime? parsedClosed;
+    final rawClosed = (j['closedAt'] ?? j['closed_at'])?.toString();
+    if (rawClosed != null && rawClosed.isNotEmpty) {
+      final dt = DateTime.tryParse(rawClosed);
+      if (dt != null) {
+        parsedClosed = dt.toLocal();
+      }
+    }
 
     return CashShift(
-      id: (j['id'] ?? '').toString(),
-      cashierName: (j['cashierName'] ?? '').toString(),
-      cashDeskName: (j['cashDeskName'] ?? '').toString(),
-      storeName: (j['storeName'] ?? '').toString(),
-      openedAt: DateTime.tryParse((j['openedAt'] ?? '').toString()) ?? DateTime.now(),
-      openingCash: (j['openingCash'] as num?)?.toDouble() ?? 0.0,
-      closedAt: j['closedAt'] != null ? DateTime.tryParse(j['closedAt'].toString()) : null,
-      cashSalesTotal: cashSales,
-      closingCashCounted: (j['closingCashCounted'] as num?)?.toDouble() ?? 0.0,
+      id: idStr,
+      cashierName: (j['cashierName'] ?? j['cashier_name'] ?? '').toString(),
+      cashDeskName: ((j['cashDeskName'] ?? j['cash_desk_name'] ?? '').toString()).isNotEmpty
+          ? (j['cashDeskName'] ?? j['cash_desk_name']).toString()
+          : 'Caisse Principale',
+      storeName: (j['storeName'] ?? j['store_name'] ?? '').toString(),
+      openedAt: parsedOpened ?? DateTime.now(),
+      openingCash: (j['openingCash'] ?? j['opening_cash'] as num?)?.toDouble() ?? 0.0,
+      closedAt: parsedClosed,
+      cashSalesTotal: finalCashSales,
+      closingCashCounted: (j['closingCashCounted'] ?? j['closing_cash'] as num?)?.toDouble() ?? 0.0,
       discrepancy: (j['discrepancy'] as num?)?.toDouble() ?? 0.0,
       note: (j['note'] ?? '').toString(),
-      isClosed: j['isClosed'] as bool? ?? false,
-      salesCount: (j['salesCount'] as num?)?.toInt() ?? 0,
-      totalSalesAmount: totalSales,
+      isClosed: (j['isClosed'] ?? j['is_closed']) as bool? ?? false,
+      salesCount: (j['salesCount'] ?? j['sales_count'] as num?)?.toInt() ?? 0,
+      totalSalesAmount: finalTotalSales,
       paymentMethodsBreakdown: breakdown,
     );
   }

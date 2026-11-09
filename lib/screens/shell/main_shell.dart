@@ -3,6 +3,7 @@ import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/screens.dart';
 import 'package:stock_prime/screens/pos/shift_dialog_helper.dart';
+import 'package:stock_prime/widgets/widgets.dart';
 
 class _DynamicNavTab {
   final String id;
@@ -147,6 +148,20 @@ class _MainShellState extends State<MainShell> {
           activeIcon: Icons.workspace_premium_rounded,
           badge: appState.subscriptionPlan,
           badgeColor: const Color(0xFF059669),
+        ));
+      }
+
+      // Console Super Administrateur Bricelo (Gestion des abonnements, comptes et monitoring)
+      if (isDesktop && (appState.isSuperAdmin || isOwner)) {
+        tabs.add(const _DynamicNavTab(
+          id: 'super_admin',
+          screen: SuperAdminScreen(),
+          label: 'Super Admin',
+          webTitle: 'Console Super Administrateur • Abonnements & Monitoring',
+          icon: Icons.admin_panel_settings_outlined,
+          activeIcon: Icons.admin_panel_settings_rounded,
+          badge: 'ADMIN',
+          badgeColor: Color(0xFFD97706),
         ));
       }
     }
@@ -592,8 +607,15 @@ class _MainShellState extends State<MainShell> {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      '${activeShift.cashDeskName} ouvert • ${activeShift.formattedDuration}',
+                                      '${activeShift.cashDeskName} ${'ouvert'.tr} • ',
                                       style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                    ),
+                                    ShiftDurationBadge(
+                                      shift: activeShift,
+                                      padding: EdgeInsets.zero,
+                                      backgroundColor: Colors.transparent,
+                                      textStyle: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                      showIcon: false,
                                     ),
                                     const SizedBox(width: 8),
                                     InkWell(
