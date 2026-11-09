@@ -17,31 +17,43 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
 
   bool _isEmailVerified(AppState state) {
     try {
-      return (state as dynamic).isEmailVerified == true;
+      return state.isEmailVerified;
     } catch (_) {
-      return false;
+      try {
+        return (state as dynamic).isEmailVerified == true;
+      } catch (_) {
+        return false;
+      }
     }
   }
 
   String _getSubscriptionPlan(AppState state) {
     try {
-      return (state as dynamic).subscriptionPlan?.toString() ?? 'Gratuit';
+      return state.subscriptionPlan;
     } catch (_) {
-      return 'Gratuit';
+      try {
+        return (state as dynamic).subscriptionPlan?.toString() ?? 'Gratuit';
+      } catch (_) {
+        return 'Gratuit';
+      }
     }
   }
 
   String _getSubscriptionBilling(AppState state) {
     try {
-      return (state as dynamic).subscriptionBilling?.toString() ?? 'mensuel';
+      return state.subscriptionBilling;
     } catch (_) {
-      return 'mensuel';
+      try {
+        return (state as dynamic).subscriptionBilling?.toString() ?? 'mensuel';
+      } catch (_) {
+        return 'mensuel';
+      }
     }
   }
 
   Future<void> _safeUpdateCompanyLogo(String base64String) async {
     try {
-      await (appState as dynamic).updateCompanyLogo(base64String);
+      await appState.updateCompanyLogo(base64String);
       return;
     } catch (_) {}
 
@@ -54,6 +66,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       appState.companyLogo = base64String;
       // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
       appState.notifyListeners();
+      await appState.saveSettings();
     } catch (_) {}
   }
 

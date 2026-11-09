@@ -205,7 +205,7 @@ class _MainShellState extends State<MainShell> {
                                       color: AppTheme.accentGold,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Icon(Icons.smart_toy_outlined, color: AppTheme.primaryNavy, size: 18),
+                                    child: const Icon(Icons.auto_awesome_rounded, color: AppTheme.primaryNavy, size: 18),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -387,7 +387,7 @@ class _MainShellState extends State<MainShell> {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               ),
-                              icon: const Icon(Icons.smart_toy_outlined, color: AppTheme.accentGold, size: 16),
+                              icon: const Icon(Icons.auto_awesome_rounded, color: AppTheme.accentGold, size: 16),
                               label: Text('Assistant Bricelo'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                               onPressed: () {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const BriceloAssistantScreen()));

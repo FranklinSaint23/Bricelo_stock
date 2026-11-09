@@ -387,7 +387,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
                             OutlinedButton.icon(
                               onPressed: _showNewRequestDialog,
                               icon: const Icon(Icons.add, size: 18),
-                              label: const Text('Créer une demande de test'),
+                              label: const Text('Créer une demande'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppTheme.primaryNavy,
                                 side: const BorderSide(color: Color(0xFFCBD5E1)),

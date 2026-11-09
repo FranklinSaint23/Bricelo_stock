@@ -408,7 +408,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     color: AppTheme.accentGold,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(Icons.smart_toy_outlined, color: AppTheme.primaryNavy, size: 26),
+                                  child: const Icon(Icons.auto_awesome_rounded, color: AppTheme.primaryNavy, size: 24),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -1175,7 +1175,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onPressed: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const BriceloAssistantScreen()));
         },
-        child: const Icon(Icons.smart_toy_rounded, size: 28),
+        child: const Icon(Icons.auto_awesome_rounded, size: 26),
       ),
     );
   }

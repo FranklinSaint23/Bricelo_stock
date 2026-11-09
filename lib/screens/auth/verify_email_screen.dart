@@ -16,18 +16,25 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   bool _isEmailVerified(AppState state) {
     try {
-      return (state as dynamic).isEmailVerified == true;
+      return state.isEmailVerified;
     } catch (_) {
-      return false;
+      try {
+        return (state as dynamic).isEmailVerified == true;
+      } catch (_) {
+        return false;
+      }
     }
   }
 
   Future<void> _setEmailVerifiedSafe(AppState state, bool verified) async {
     try {
-      await (state as dynamic).setEmailVerified(verified);
-    } catch (_) {
-      // safe fallback
-    }
+      await state.setEmailVerified(verified);
+      return;
+    } catch (_) {}
+    try {
+      state.isEmailVerified = verified;
+      await state.saveSettings();
+    } catch (_) {}
   }
   late final TextEditingController _emailController;
   final TextEditingController _codeController = TextEditingController();

@@ -1199,33 +1199,33 @@ class _PosScreenState extends State<PosScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          'Shift : ${shift.cashierName}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  Text.rich(
+                    TextSpan(
+                      text: 'Shift : ${shift.cashierName} ',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '· ${shift.cashDeskName}',
                           style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12.5,
+                            color: Color(0xFF94A3B8),
+                            fontWeight: FontWeight.normal,
+                            fontSize: 11,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '· ${shift.cashDeskName}',
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Décompte : ${AppTheme.formatFCFA(shift.cashSalesTotal)} encaissés · Fond: ${AppTheme.formatFCFA(shift.openingCash)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: AppTheme.accentGold,
                       fontSize: 11.5,

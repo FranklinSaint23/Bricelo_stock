@@ -32,7 +32,12 @@ class ShiftDialogHelper {
                 children: [
                   Icon(Icons.point_of_sale, color: AppTheme.primaryNavy),
                   SizedBox(width: 8),
-                  Text('Ouvrir un shift de caisse', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Expanded(
+                    child: Text(
+                      'Ouvrir un shift de caisse',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
                 ],
               ),
               content: SingleChildScrollView(
@@ -146,7 +151,12 @@ class ShiftDialogHelper {
                 children: [
                   Icon(Icons.lock_clock, color: AppTheme.primaryNavy),
                   SizedBox(width: 8),
-                  Text('Fermer le shift (Faire la caisse)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Expanded(
+                    child: Text(
+                      'Fermer le shift (Faire la caisse)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
                 ],
               ),
               content: SingleChildScrollView(

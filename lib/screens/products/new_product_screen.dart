@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:stock_prime/services/bricelo_ai_service.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/models/models.dart';
@@ -32,8 +33,41 @@ class _NewProductScreenState extends State<NewProductScreen> {
   String? _selectedCategory;
   bool _showAdvancedOptions = false;
   String? _pickedImagePath;
+  bool _isGeneratingDesc = false;
 
   final List<String> _units = ['Pièce', 'Kg', 'Litre', 'Carton', 'Paquet', 'Sac', 'Mètre'];
+
+  Future<void> _generateAiDescription() async {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez d\'abord saisir le nom du produit.')),
+      );
+      return;
+    }
+
+    setState(() => _isGeneratingDesc = true);
+    final desc = await BriceloAIService.instance.generateProductDescription(
+      productName: name,
+      category: _selectedCategory,
+    );
+    if (mounted) {
+      setState(() => _isGeneratingDesc = false);
+      if (desc != null && desc.isNotEmpty) {
+        _descCtrl.text = desc;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Description générée par Bricelo IA !'),
+            backgroundColor: Color(0xFF059669),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible de générer la description actuellement.')),
+        );
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -459,7 +493,43 @@ class _NewProductScreenState extends State<NewProductScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 7. DESCRIPTION (FACULTATIF)
+                // 7. DESCRIPTION (FACULTATIF) + BOUTON MAGIQUE IA
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Description (facultatif)',
+                      style: TextStyle(color: Color(0xFF374151), fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                    InkWell(
+                      onTap: _isGeneratingDesc ? null : _generateAiDescription,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.6)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_isGeneratingDesc) ...[
+                              const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.8, color: AppTheme.primaryNavy)),
+                              const SizedBox(width: 6),
+                              const Text('Rédaction...', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                            ] else ...[
+                              const Icon(Icons.auto_awesome, size: 13, color: AppTheme.primaryNavy),
+                              const SizedBox(width: 4),
+                              const Text('Rédiger avec Bricelo IA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
                 TextField(
                   controller: _descCtrl,
                   maxLines: 2,

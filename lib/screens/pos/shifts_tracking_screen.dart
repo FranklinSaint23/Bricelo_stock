@@ -376,12 +376,16 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                shift.cashierName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
+                              Expanded(
+                                child: Text(
+                                  shift.cashierName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
@@ -414,12 +418,16 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> {
                           ),
                           const SizedBox(height: 6),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Fond: ${AppTheme.formatFCFA(shift.openingCash)} · Ventes: ${AppTheme.formatFCFA(shift.cashSalesTotal)}',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
+                              Expanded(
+                                child: Text(
+                                  'Fond: ${AppTheme.formatFCFA(shift.openingCash)} · Ventes: ${AppTheme.formatFCFA(shift.cashSalesTotal)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               Text(
                                 'Compté: ${AppTheme.formatFCFA(shift.closingCashCounted)}',
                                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),

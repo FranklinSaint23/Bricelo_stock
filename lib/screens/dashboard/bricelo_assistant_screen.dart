@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:stock_prime/models/models.dart';
+import 'package:stock_prime/services/bricelo_ai_service.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 
@@ -11,83 +14,138 @@ class BriceloAssistantScreen extends StatefulWidget {
 
 class _BriceloAssistantScreenState extends State<BriceloAssistantScreen> {
   final _msgCtrl = TextEditingController();
-  final List<Map<String, String>> _messages = [];
+  final ScrollController _scrollCtrl = ScrollController();
+  final List<Map<String, dynamic>> _messages = [];
+  bool _isLoading = false;
 
   List<String> get _prompts {
     final isEn = AppState.instance.currentLanguage == 'en';
     if (isEn) {
       return [
         'How much did I sell today?',
-        'How to record a credit sale?',
         'Which items are low on stock?',
-        'Complete my store setup',
+        'What is a hammer?',
+        'Write a description for a power drill',
       ];
     }
     return [
       'Combien j\'ai vendu aujourd\'hui ?',
-      'Comment enregistrer une vente à crédit ?',
-      'Quel est mon stock bas ?',
-      'Termine la configuration de ma boutique',
+      'Quel est mon stock actuel ?',
+      'C\'est quoi une perceuse ?',
+      'C\'est quoi une banane ?',
+      'Rédige une description pour un produit',
     ];
   }
 
   @override
   void dispose() {
     _msgCtrl.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
-  void _sendMessage(String text) {
-    if (text.trim().isEmpty) return;
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _sendMessage(String text) async {
+    final query = text.trim();
+    if (query.isEmpty || _isLoading) return;
+
     setState(() {
-      _messages.add({'sender': 'user', 'text': text});
+      _messages.add({'sender': 'user', 'text': query});
+      _isLoading = true;
     });
     _msgCtrl.clear();
+    _scrollToBottom();
 
-    // Réponse intelligente de Bricelo
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      final state = AppState.instance;
-      final isEn = state.currentLanguage == 'en';
-      String reply = '';
-      final t = text.toLowerCase();
+    try {
+      final history = _messages
+          .map((m) => {
+                'sender': (m['sender'] ?? '').toString(),
+                'text': (m['text'] ?? '').toString(),
+              })
+          .toList();
 
-      if (t.contains('vendu') || t.contains('aujourd') || t.contains('sell') || t.contains('today')) {
-        if (isEn) {
-          reply = 'Today, you completed ${state.todaySalesCount} sales for a total revenue of ${AppTheme.formatFCFA(state.todayRevenue)}.';
-        } else {
-          reply = 'Aujourd\'hui, vous avez réalisé ${state.todaySalesCount} ventes pour un chiffre d\'affaires total de ${AppTheme.formatFCFA(state.todayRevenue)}.';
-        }
-      } else if (t.contains('crédit') || t.contains('dette') || t.contains('credit') || t.contains('debt')) {
-        if (isEn) {
-          reply = 'To record a credit sale: Go to Point of Sale, add items to cart, tap Checkout then select Customer Debt / Credit.';
-        } else {
-          reply = 'Pour enregistrer une vente à crédit : Rendez-vous dans Point de vente, ajoutez les articles au panier, touchez Payer puis sélectionnez Crédit / Dette client.';
-        }
-      } else if (t.contains('stock') || t.contains('bas') || t.contains('low')) {
-        if (isEn) {
-          reply = 'Your catalog currently has ${state.products.length} registered products. Be sure to check the minimum threshold of 5 units in the Inventory tab.';
-        } else {
-          reply = 'Votre inventaire compte actuellement ${state.products.length} articles référencés. Pensez à vérifier le seuil minimal de 5 unités dans l\'onglet Stock.';
-        }
-      } else if (t.contains('configuration') || t.contains('termine') || t.contains('setup')) {
-        if (isEn) {
-          reply = 'Recommended steps: 1. Customize your Company Profile, 2. Configure Mobile Money & Cash payments, 3. Invite your team/cashiers.';
-        } else {
-          reply = 'Voici les étapes recommandées : 1. Personnaliser le profil d\'entreprise, 2. Configurer les moyens de paiement Mobile Money & Cash, 3. Inviter vos caissiers.';
-        }
-      } else {
-        if (isEn) {
-          reply = 'Understood! I am Bricelo, your intelligent AI assistant connected to your store. What would you like to inspect next (sales, inventory, debts)?';
-        } else {
-          reply = 'Bien reçu ! Je suis Bricelo, votre assistant intelligent connecté à votre commerce. Que souhaitez-vous vérifier ensuite (ventes, inventaire, clients) ?';
-        }
+      final response = await BriceloAIService.instance.chat(
+        userMessage: query,
+        history: history,
+      );
+
+      final cleanText = BriceloAIService.instance.cleanDisplayText(response);
+      final productAction = BriceloAIService.instance.extractProductAction(response);
+
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'sender': 'bricelo',
+            'text': cleanText,
+            'productAction': productAction,
+            'isProductAdded': false,
+          });
+          _isLoading = false;
+        });
+        _scrollToBottom();
       }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'sender': 'bricelo',
+            'text': 'Une erreur est survenue lors de la communication. Veuillez vérifier votre connexion.',
+          });
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    }
+  }
+
+  void _addProductFromChat(Map<String, dynamic> actionData, int messageIndex) {
+    try {
+      final name = (actionData['name'] ?? 'Nouveau produit').toString();
+      final price = (actionData['price'] as num?)?.toDouble() ?? 1000.0;
+      final buyPrice = (actionData['buyPrice'] as num?)?.toDouble() ?? (price * 0.7);
+      final quantity = (actionData['quantity'] as num?)?.toInt() ?? 1;
+      final category = (actionData['category'] ?? 'Général').toString();
+
+      final newProduct = Product(
+        id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
+        name: name,
+        category: category,
+        barcode: '690${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}',
+        buyPrice: buyPrice,
+        sellPrice: price,
+        stock: quantity,
+        minStockAlert: 5,
+        unit: 'Pièce',
+      );
+
+      AppState.instance.addProduct(newProduct);
 
       setState(() {
-        _messages.add({'sender': 'bricelo', 'text': reply});
+        _messages[messageIndex]['isProductAdded'] = true;
       });
-    });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Produit "$name" ($quantity unités) ajouté au stock avec succès !'),
+          backgroundColor: const Color(0xFF059669),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur ajout produit: $e')),
+      );
+    }
   }
 
   @override
@@ -98,33 +156,42 @@ class _BriceloAssistantScreenState extends State<BriceloAssistantScreen> {
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
-        title: Text(
-          'Assistant Bricelo'.tr,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: Color(0xFF10B981),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Assistant Bricelo'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
+            ),
+          ],
         ),
         centerTitle: true,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.white),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    isEn
-                      ? 'Ask your questions to Bricelo, your smart assistant'
-                      : 'Posez vos questions à Bricelo, votre assistant intelligent',
-                  ),
-                ),
-              );
-            },
-          ),
+          if (_messages.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_outlined, color: Colors.white),
+              tooltip: 'Effacer la conversation',
+              onPressed: () {
+                setState(() => _messages.clear());
+              },
+            ),
         ],
       ),
       body: Column(
         children: [
           Expanded(
             child: ListView(
+              controller: _scrollCtrl,
               padding: const EdgeInsets.all(16),
               children: [
                 // En-tête Bricelo AI
@@ -132,8 +199,8 @@ class _BriceloAssistantScreenState extends State<BriceloAssistantScreen> {
                   child: Column(
                     children: [
                       Container(
-                        width: 72,
-                        height: 72,
+                        width: 68,
+                        height: 68,
                         decoration: BoxDecoration(
                           color: AppTheme.primaryNavy,
                           borderRadius: BorderRadius.circular(22),
@@ -142,73 +209,197 @@ class _BriceloAssistantScreenState extends State<BriceloAssistantScreen> {
                           ],
                         ),
                         child: const Center(
-                          child: Icon(Icons.smart_toy_outlined, color: AppTheme.accentGold, size: 40),
+                          child: Icon(Icons.auto_awesome, color: AppTheme.accentGold, size: 36),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       Text(
                         isEn ? 'Hello, I\'m Bricelo' : 'Salut, je suis Bricelo',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
                         isEn
-                          ? 'Your store\'s smart copilot. Ask me about your sales, inventory or debts.'
-                          : 'Le copilote intelligent de votre boutique Bricelo. Posez une question sur vos ventes, votre stock ou vos dettes.',
+                            ? 'Your store\'s smart copilot. I can draft descriptions, add items or inspect your sales.'
+                            : 'Copilote intelligent connecté à votre boutique. Je rédige des descriptions, aide à l\'ajout de produits et analyse votre commerce.',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                        style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12.5),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Questions suggérées
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _prompts.map((p) {
-                    return ActionChip(
-                      label: Text(p, style: const TextStyle(fontSize: 12, color: Color(0xFF1F2937))),
-                      backgroundColor: Colors.white,
-                      elevation: 1,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: const BorderSide(color: Color(0xFFE5E7EB)),
-                      ),
-                      onPressed: () => _sendMessage(p),
-                    );
-                  }).toList(),
-                ),
                 const SizedBox(height: 20),
 
-                // Historique des messages
-                ..._messages.map((m) {
-                  final isUser = m['sender'] == 'user';
-                  return Align(
-                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(14),
-                      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
-                      decoration: BoxDecoration(
-                        color: isUser ? AppTheme.primaryNavy : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: isUser ? null : Border.all(color: const Color(0xFFE5E7EB)),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
-                        ],
-                      ),
-                      child: Text(
-                        m['text'] ?? '',
-                        style: TextStyle(
-                          color: isUser ? Colors.white : const Color(0xFF1F2937),
-                          fontSize: 14,
+                // Questions suggérées
+                if (_messages.isEmpty) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _prompts.map((p) {
+                      return ActionChip(
+                        label: Text(p, style: const TextStyle(fontSize: 12, color: Color(0xFF1F2937))),
+                        backgroundColor: Colors.white,
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        ),
+                        onPressed: () => _sendMessage(p),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                // Messages
+                for (int i = 0; i < _messages.length; i++) ...[
+                  Builder(builder: (_) {
+                    final m = _messages[i];
+                    final isUser = m['sender'] == 'user';
+                    final productAction = m['productAction'] as Map<String, dynamic>?;
+                    final isAdded = m['isProductAdded'] as bool? ?? false;
+
+                    return Align(
+                      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(14),
+                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
+                        decoration: BoxDecoration(
+                          color: isUser ? AppTheme.primaryNavy : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: isUser ? null : Border.all(color: const Color(0xFFE5E7EB)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isUser ? 0.08 : 0.04),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!isUser) ...[
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.auto_awesome, size: 14, color: AppTheme.accentGold),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Bricelo IA',
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                                  ),
+                                  const Spacer(),
+                                  InkWell(
+                                    onTap: () {
+                                      Clipboard.setData(ClipboardData(text: m['text'] ?? ''));
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Texte copié')),
+                                      );
+                                    },
+                                    child: const Icon(Icons.copy, size: 14, color: Color(0xFF9CA3AF)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                            ],
+                            SelectableText(
+                              m['text'] ?? '',
+                              style: TextStyle(
+                                color: isUser ? Colors.white : const Color(0xFF1F2937),
+                                fontSize: 13.5,
+                                height: 1.4,
+                              ),
+                            ),
+                            // Action Card si l'IA propose un ajout de produit
+                            if (productAction != null) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0FDF4),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.add_shopping_cart, size: 18, color: Color(0xFF16A34A)),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            (productAction['name'] ?? 'Produit').toString(),
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF166534)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Prix de vente : ${AppTheme.formatFCFA((productAction['price'] as num?)?.toDouble() ?? 0)} · Quantité : ${productAction['quantity'] ?? 1}',
+                                      style: const TextStyle(fontSize: 11.5, color: Color(0xFF15803D)),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: isAdded ? const Color(0xFF6B7280) : const Color(0xFF16A34A),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        ),
+                                        icon: Icon(isAdded ? Icons.check : Icons.add, size: 16),
+                                        label: Text(
+                                          isAdded ? 'Article déjà ajouté' : 'Confirmer l\'ajout au stock',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                        onPressed: isAdded ? null : () => _addProductFromChat(productAction, i),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
+                    );
+                  }),
+                ],
+
+                // Indicateur de chargement
+                if (_isLoading)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accentGold),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Bricelo réfléchit...',
+                            style: TextStyle(fontSize: 12.5, color: Color(0xFF6B7280), fontStyle: FontStyle.italic),
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                }),
+                  ),
               ],
             ),
           ),
@@ -227,8 +418,8 @@ class _BriceloAssistantScreenState extends State<BriceloAssistantScreen> {
                     child: TextField(
                       controller: _msgCtrl,
                       decoration: InputDecoration(
-                        hintText: isEn ? 'Ask Bricelo a question...' : 'Posez une question à Bricelo...',
-                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                        hintText: isEn ? 'Ask Bricelo a question...' : 'Posez une question ou demandez d\'ajouter un article...',
+                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                           borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -245,7 +436,7 @@ class _BriceloAssistantScreenState extends State<BriceloAssistantScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.send, color: AppTheme.accentGold, size: 20),
+                      icon: const Icon(Icons.send_rounded, color: AppTheme.accentGold, size: 20),
                       onPressed: () => _sendMessage(_msgCtrl.text),
                     ),
                   ),

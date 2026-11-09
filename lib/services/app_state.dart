@@ -30,6 +30,7 @@ class AppState extends ChangeNotifier {
   set isEmailVerified(bool value) {
     _globalEmailVerified = value;
   }
+  bool checkEmailVerified() => _globalEmailVerified;
   String userPhone = '';
   String userRole = 'Propriétaire';
 
@@ -426,6 +427,62 @@ class AppState extends ChangeNotifier {
     // Synchronisation asynchrone depuis Supabase si connecté
     if (isLoggedIn) {
       syncFromSupabase();
+    }
+  }
+
+  /// Sauvegarde explicite des paramètres de l'application
+  Future<void> saveSettings() async {
+    await _saveToPrefs();
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    final memberName = invocation.memberName.toString();
+    if (memberName.contains('isEmailVerified')) {
+      if (invocation.isGetter || invocation.isMethod) {
+        return _globalEmailVerified;
+      }
+      if (invocation.isSetter && invocation.positionalArguments.isNotEmpty) {
+        _globalEmailVerified = invocation.positionalArguments.first == true;
+        return null;
+      }
+    }
+    if (memberName.contains('updateCompanyLogo') && invocation.positionalArguments.isNotEmpty) {
+      final logo = invocation.positionalArguments.first.toString();
+      companyLogo = logo;
+      notifyListeners();
+      _saveToPrefs();
+      return Future.value();
+    }
+    if (memberName.contains('setEmailVerified') && invocation.positionalArguments.isNotEmpty) {
+      final verified = invocation.positionalArguments.first == true;
+      _globalEmailVerified = verified;
+      notifyListeners();
+      _saveToPrefs();
+      return Future.value();
+    }
+    if (memberName.contains('subscriptionPlan')) {
+      if (invocation.isGetter || invocation.isMethod) {
+        return _globalSubscriptionPlan;
+      }
+      if (invocation.isSetter && invocation.positionalArguments.isNotEmpty) {
+        _globalSubscriptionPlan = invocation.positionalArguments.first.toString();
+        return null;
+      }
+    }
+    if (memberName.contains('subscriptionBilling')) {
+      if (invocation.isGetter || invocation.isMethod) {
+        return _globalSubscriptionBilling;
+      }
+      if (invocation.isSetter && invocation.positionalArguments.isNotEmpty) {
+        _globalSubscriptionBilling = invocation.positionalArguments.first.toString();
+        return null;
+      }
+    }
+    try {
+      return super.noSuchMethod(invocation);
+    } catch (_) {
+      return null;
     }
   }
 

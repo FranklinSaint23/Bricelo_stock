@@ -768,7 +768,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                             color: AppTheme.accentGold.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.smart_toy_outlined, color: Color(0xFFB45309), size: 24),
+                          child: const Icon(Icons.auto_awesome_rounded, color: Color(0xFFB45309), size: 24),
                         ),
                         const SizedBox(width: 14),
                         Expanded(

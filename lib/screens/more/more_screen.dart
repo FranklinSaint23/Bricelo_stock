@@ -181,9 +181,13 @@ class _MoreScreenState extends State<MoreScreen> {
 
   bool _isEmailVerified(AppState state) {
     try {
-      return (state as dynamic).isEmailVerified == true;
+      return state.isEmailVerified;
     } catch (_) {
-      return false;
+      try {
+        return (state as dynamic).isEmailVerified == true;
+      } catch (_) {
+        return false;
+      }
     }
   }
 
