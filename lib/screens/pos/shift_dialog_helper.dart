@@ -164,7 +164,12 @@ class ShiftDialogHelper {
                         children: [
                           _buildDetailRow('Caissier :', shift.cashierName),
                           const SizedBox(height: 4),
-                          _buildDetailRow('Poste de caisse :', '${shift.cashDeskName} · ${shift.storeName}'),
+                          _buildDetailRow(
+                            'Poste de caisse :',
+                            shift.storeName.isNotEmpty && !shift.cashDeskName.toLowerCase().contains(shift.storeName.toLowerCase())
+                                ? '${shift.cashDeskName} · ${shift.storeName}'
+                                : shift.cashDeskName,
+                          ),
                           const SizedBox(height: 4),
                           _buildDetailRow('Fond initial :', AppTheme.formatFCFA(shift.openingCash)),
                           const SizedBox(height: 4),
@@ -200,20 +205,22 @@ class ShiftDialogHelper {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            discrepancy == 0
-                                ? 'Caisse parfaite (Aucun écart)'
-                                : (discrepancy > 0 ? 'Excédent de caisse :' : 'Déficit de caisse :'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: discrepancy == 0
-                                  ? const Color(0xFF065F46)
-                                  : (discrepancy > 0 ? const Color(0xFF1E40AF) : const Color(0xFF991B1B)),
+                          Expanded(
+                            child: Text(
+                              discrepancy == 0
+                                  ? 'Caisse parfaite (Aucun écart)'
+                                  : (discrepancy > 0 ? 'Excédent de caisse :' : 'Déficit de caisse :'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: discrepancy == 0
+                                    ? const Color(0xFF065F46)
+                                    : (discrepancy > 0 ? const Color(0xFF1E40AF) : const Color(0xFF991B1B)),
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             AppTheme.formatFCFA(discrepancy.abs()),
                             style: TextStyle(
@@ -280,7 +287,7 @@ class ShiftDialogHelper {
 
   static Widget _buildDetailRow(String label, String value, {bool isBold = false}) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -290,15 +297,22 @@ class ShiftDialogHelper {
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 12.5,
-            color: const Color(0xFF111827),
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12.5,
+              color: const Color(0xFF111827),
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            ),
           ),
         ),
       ],
     );
   }
 }
+

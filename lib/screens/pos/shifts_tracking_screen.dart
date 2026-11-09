@@ -24,7 +24,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> {
 
   Widget _buildDetailRow(String label, String value, {bool isBold = false}) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -34,12 +34,18 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> {
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 12.5,
-            color: const Color(0xFF111827),
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12.5,
+              color: const Color(0xFF111827),
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            ),
           ),
         ),
       ],
