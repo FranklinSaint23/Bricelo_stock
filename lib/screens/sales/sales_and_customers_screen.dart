@@ -82,17 +82,19 @@ class SalesAndCustomersScreen extends StatelessWidget {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const QuotesScreen()));
                       },
                     ),
-                    Divider(height: 1, indent: 52, color: dividerCol),
-                    _buildRow(
-                      icon: Icons.analytics_rounded,
-                      title: 'Analyse des ventes'.tr,
-                      trailingIcon: Icons.chevron_right,
-                      textPrimary: textPrimary,
-                      isDark: isDark,
-                      onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesAnalyticsScreen()));
-                      },
-                    ),
+                    if (appState.isOwnerAccount) ...[
+                      Divider(height: 1, indent: 52, color: dividerCol),
+                      _buildRow(
+                        icon: Icons.analytics_rounded,
+                        title: 'Analyse des ventes'.tr,
+                        trailingIcon: Icons.chevron_right,
+                        textPrimary: textPrimary,
+                        isDark: isDark,
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesAnalyticsScreen()));
+                        },
+                      ),
+                    ],
                   ],
                 ),
               ),

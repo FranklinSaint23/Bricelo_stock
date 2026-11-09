@@ -906,23 +906,23 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                   ),
                   child: Column(
                     children: [
-                      _buildDetailRow('Téléphone (Identifiant)', member.phone),
+                      _buildDetailRow('Téléphone (Identifiant)', member.phone, isDark: isDark),
                       if (member.pinCode.isNotEmpty) ...[
-                        const Divider(height: 14, color: Color(0xFFE2E8F0)),
-                        _buildDetailRow('Code PIN secret', member.pinCode),
+                        Divider(height: 14, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        _buildDetailRow('Code PIN secret', member.pinCode, isDark: isDark),
                       ],
-                      const Divider(height: 14, color: Color(0xFFE2E8F0)),
-                      _buildDetailRow('Email', member.email?.isNotEmpty == true ? member.email! : 'Non renseigné'),
+                      Divider(height: 14, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      _buildDetailRow('Email', member.email?.isNotEmpty == true ? member.email! : 'Non renseigné', isDark: isDark),
                       if (member.role.toLowerCase() == 'caissier' && member.assignedCashDesk != null) ...[
-                        const Divider(height: 14, color: Color(0xFFE2E8F0)),
-                        _buildDetailRow('Caisse attribuée', member.assignedCashDesk!),
+                        Divider(height: 14, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        _buildDetailRow('Caisse attribuée', member.assignedCashDesk!, isDark: isDark),
                       ],
                       if (!isOwner) ...[
-                        const Divider(height: 14, color: Color(0xFFE2E8F0)),
-                        _buildDetailRow('Boutique assignée', member.storeName),
+                        Divider(height: 14, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        _buildDetailRow('Boutique assignée', member.storeName, isDark: isDark),
                       ],
-                      const Divider(height: 14, color: Color(0xFFE2E8F0)),
-                      _buildDetailRow('Performance ventes', '${memberSales.length} transaction(s) • ${AppTheme.formatFCFA(totalRevenue)}'),
+                      Divider(height: 14, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      _buildDetailRow('Performance ventes', '${memberSales.length} transaction(s) • ${AppTheme.formatFCFA(totalRevenue)}', isDark: isDark),
                     ],
                   ),
                 ),
@@ -940,44 +940,14 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     icon: const Icon(Icons.share, size: 18),
-                    label: const Text('Partager identifiants sur WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                    label: Text('Partager identifiants sur WhatsApp'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
                     onPressed: () {
                       Navigator.pop(ctx);
                       _shareCredentialsOnWhatsApp(member, member.pinCode.isNotEmpty ? member.pinCode : '------');
                     },
                   ),
                 ),
-                const SizedBox(height: 10),
-
-                // Tester la session de ce membre / switcher
-                if (!isOwner) ...[
-                  SizedBox(
-                    width: double.infinity,
-                    height: 42,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primaryNavy,
-                        side: const BorderSide(color: AppTheme.primaryNavy),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-                      label: Text('Tester la session en tant que ${member.role}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      onPressed: () async {
-                        Navigator.pop(ctx);
-                        await appState.switchUserSession(member);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Session basculée sur ${member.name} (${member.role}). Vos droits sont désormais restreints à ce rôle.'),
-                              backgroundColor: const Color(0xFF0284C7),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
+                const SizedBox(height: 12),
 
                 // Boutons d'actions
                 Row(
@@ -987,11 +957,11 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                         height: 44,
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primaryNavy),
-                          label: const Text('Modifier', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                          icon: Icon(Icons.edit_outlined, size: 18, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                          label: Text('Modifier'.tr, style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy)),
                           onPressed: () {
                             Navigator.pop(ctx);
                             _showEditMemberDialog(context, member);
@@ -1012,7 +982,7 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                             icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFDC2626)),
-                            label: const Text('Supprimer', style: TextStyle(fontWeight: FontWeight.bold)),
+                            label: Text('Supprimer'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
                             onPressed: () {
                               Navigator.pop(ctx);
                               _confirmDeleteMember(context, member);
@@ -1031,16 +1001,16 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(String label, String value, {bool isDark = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B))),
+        Text(label.tr, style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
         const SizedBox(width: 10),
         Flexible(
           child: Text(
-            value,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            value.tr,
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A)),
             textAlign: TextAlign.end,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1050,17 +1020,21 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
   }
 
   void _confirmDeleteMember(BuildContext context, TeamMember member) {
+    final isDark = AppTheme.isDark(context);
     showDialog(
       context: context,
       builder: (dlgCtx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text('Supprimer ce membre ?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-        content: Text('Voulez-vous vraiment retirer ${member.name} de l\'équipe ?'),
+        title: Text('Supprimer ce membre ?'.tr, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+        content: Text(
+          'Voulez-vous vraiment retirer ${member.name} de l\'équipe ? Ses accès, identifiants et permissions seront définitivement révoqués en base de données.'.tr,
+          style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dlgCtx),
-            child: const Text('Annuler', style: TextStyle(color: Color(0xFF64748B))),
+            child: Text('Annuler'.tr, style: const TextStyle(color: Color(0xFF64748B))),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -1068,15 +1042,17 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(dlgCtx);
-              appState.removeTeamMember(member.id);
-              setState(() {});
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${member.name} a été retiré(e) de l\'équipe.')),
-              );
+              await appState.removeTeamMember(member.id);
+              if (mounted) setState(() {});
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${member.name} a été retiré(e) de l\'équipe et ses identifiants supprimés.'.tr)),
+                );
+              }
             },
-            child: const Text('Supprimer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text('Supprimer'.tr, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

@@ -166,8 +166,8 @@ class _MoreScreenState extends State<MoreScreen> {
       ));
     }
 
-    // 6. Statistiques (globales)
-    if (canFinance) {
+    // 6. Statistiques (globales) — Réservé au Propriétaire (les comptes invités n'analysent pas les ventes)
+    if (isOwner && canFinance) {
       items.add(_OriginalMenuItem(
         icon: Icons.bar_chart_rounded,
         title: 'Statistiques (globales)'.tr,
@@ -176,8 +176,8 @@ class _MoreScreenState extends State<MoreScreen> {
       ));
     }
 
-    // 7. Rapports
-    if (canFinance) {
+    // 7. Rapports — Réservé au Propriétaire
+    if (isOwner && canFinance) {
       items.add(_OriginalMenuItem(
         icon: Icons.assessment_rounded,
         title: 'Rapports'.tr,

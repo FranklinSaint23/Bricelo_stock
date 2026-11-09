@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:stock_prime/theme/app_theme.dart';
@@ -39,6 +38,23 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
         return 'Gratuit';
       }
     }
+  }
+
+  bool _isPaidSubscription(AppState state) {
+    final p = _getSubscriptionPlan(state).toLowerCase();
+    return !p.contains('gratuit') && !p.contains('découverte') && !p.contains('decouverte');
+  }
+
+  String _formatSubscriptionExpiration(AppState state) {
+    final exp = state.subscriptionExpiresAt;
+    final billing = (state.subscriptionBilling.toLowerCase() == 'annuel') ? 'annuelle' : 'mensuelle';
+    if (exp == null) {
+      return 'Facturation $billing active';
+    }
+    final d = exp.day.toString().padLeft(2, '0');
+    final m = exp.month.toString().padLeft(2, '0');
+    final y = exp.year.toString();
+    return 'Expire le $d/$m/$y · Facturation $billing';
   }
 
   Future<void> _safeUpdateCompanyLogo(String base64String) async {
@@ -399,7 +415,9 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       builder: (context, _) {
         final emailDisplay = appState.userEmail.isNotEmpty ? appState.userEmail : 'Non renseigné';
         final phoneDisplay = appState.userPhone.isNotEmpty ? appState.userPhone : 'Non renseigné';
-        final isWebPortal = kIsWeb || MediaQuery.of(context).size.width >= 800;
+        final isOwner = appState.isOwnerAccount;
+        final isWebPortal = MediaQuery.of(context).size.width >= 800;
+        final storeDisplay = isOwner ? appState.currentStore : appState.assignedStoreForCurrentUser;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF9FAFB),
@@ -451,11 +469,11 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                   ),
                   child: Row(
                     children: [
-                      // LOGO DE LA BOUTIQUE AVEC BADGE MODIFICATION
+                      // LOGO DE LA BOUTIQUE (MODIFIABLE UNIQUEMENT PAR LE PROPRIÉTAIRE)
                       Stack(
                         children: [
                           InkWell(
-                            onTap: _pickShopLogo,
+                            onTap: isOwner ? _pickShopLogo : null,
                             borderRadius: BorderRadius.circular(30),
                             child: Container(
                               width: 60,
@@ -471,25 +489,26 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                               child: _buildShopLogoAvatar(size: 60),
                             ),
                           ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: InkWell(
-                              onTap: _pickShopLogo,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: AppTheme.primaryNavy,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt_rounded,
-                                  color: Colors.white,
-                                  size: 13,
+                          if (isOwner)
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: InkWell(
+                                onTap: _pickShopLogo,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: AppTheme.primaryNavy,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt_rounded,
+                                    color: Colors.white,
+                                    size: 13,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                       const SizedBox(width: 14),
@@ -520,14 +539,16 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                                     style: const TextStyle(color: AppTheme.primaryNavy, fontSize: 11, fontWeight: FontWeight.bold),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                InkWell(
-                                  onTap: _pickShopLogo,
-                                  child: const Text(
-                                    'Changer le logo',
-                                    style: TextStyle(fontSize: 11.5, color: AppTheme.primaryNavy, fontWeight: FontWeight.bold),
+                                if (isOwner) ...[
+                                  const SizedBox(width: 8),
+                                  InkWell(
+                                    onTap: _pickShopLogo,
+                                    child: const Text(
+                                      'Changer le logo',
+                                      style: TextStyle(fontSize: 11.5, color: AppTheme.primaryNavy, fontWeight: FontWeight.bold),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ],
                             ),
                           ],
@@ -538,7 +559,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // 2. INFORMATIONS PERSONNELLES DYNAMIQUES
+                // 2. INFORMATIONS PERSONNELLES DYNAMIQUES (Lecture seule pour les comptes invités)
                 const Text(
                   'Informations personnelles',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
@@ -570,8 +591,8 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF1F2937)),
                             ),
                           ),
-                          // BADGE ÉTAT DE VÉRIFICATION EMAIL
-                          if (_isEmailVerified(appState))
+                          // BADGE ÉTAT DE VÉRIFICATION EMAIL (Uniquement pour le Propriétaire)
+                          if (isOwner && _isEmailVerified(appState))
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
@@ -591,7 +612,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                                 ],
                               ),
                             )
-                          else
+                          else if (isOwner)
                             InkWell(
                               onTap: () {
                                 Navigator.push(
@@ -623,193 +644,236 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                       ),
                       const Divider(height: 24, color: Color(0xFFF3F4F6)),
 
-                      const Text('BOUTIQUE PRINCIPALE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF9CA3AF))),
+                      Text(
+                        isOwner ? 'BOUTIQUE PRINCIPALE' : 'BOUTIQUE RATTACHÉE',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF9CA3AF)),
+                      ),
                       const SizedBox(height: 4),
-                      Text(appState.currentStore, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
-                      const SizedBox(height: 20),
+                      Text(storeDisplay, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
 
-                      SizedBox(
-                        width: double.infinity,
-                        height: 44,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppTheme.primaryNavy),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                      if (!isOwner && appState.userAssignedCashDesk != null && appState.userAssignedCashDesk!.trim().isNotEmpty) ...[
+                        const Divider(height: 24, color: Color(0xFFF3F4F6)),
+                        const Text('CAISSE ATTRIBUÉE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF9CA3AF))),
+                        const SizedBox(height: 4),
+                        Text(appState.userAssignedCashDesk!, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                      ],
+
+                      if (isOwner) ...[
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppTheme.primaryNavy),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                            ),
+                            icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primaryNavy),
+                            label: const Text('Modifier le profil', style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 13)),
+                            onPressed: _showEditProfileDialog,
                           ),
-                          icon: const Icon(Icons.edit_outlined, size: 18, color: AppTheme.primaryNavy),
-                          label: const Text('Modifier le profil', style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 13)),
-                          onPressed: _showEditProfileDialog,
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
                 const SizedBox(height: 22),
 
-                // 3. SÉCURITÉ
-                const Text(
-                  'Sécurité',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                // 3. SÉCURITÉ (Uniquement pour le Propriétaire — enlevée pour les comptes invités)
+                if (isOwner) ...[
+                  const Text(
+                    'Sécurité',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Gardez votre compte en sécurité en mettant à jour votre mot de passe régulièrement.',
-                        style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF4B5563)),
-                      ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 44,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                          ),
-                          icon: const Icon(Icons.sync_lock_rounded, size: 18, color: AppTheme.primaryNavy),
-                          label: const Text(
-                            'Changer le mot de passe',
-                            style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.w600, fontSize: 13),
-                          ),
-                          onPressed: () => _showChangePasswordDialog(context),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 44,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                          ),
-                          icon: const Icon(Icons.mark_email_read_outlined, size: 18, color: AppTheme.primaryNavy),
-                          label: const Text(
-                            'Email de récupération',
-                            style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.w600, fontSize: 13),
-                          ),
-                          onPressed: () => _showRecoveryEmailDialog(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 22),
-
-                // 4. ABONNEMENT
-                // Sur Mobile (!isWebPortal) : consommation uniquement (lecture seule sans lien ni chevron).
-                // Sur le Portail Web (isWebPortal) : gestion complète des formules synchronisée vers Supabase & Mobile.
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Abonnement',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
-                    ),
-                    if (isWebPortal)
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
-                          );
-                        },
-                        child: const Text(
-                          'Voir les formules',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primaryNavy),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: isWebPortal
-                      ? () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
-                          );
-                        }
-                      : null,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: const Color(0xFFE5E7EB)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.accentGold.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.workspace_premium_rounded, color: AppTheme.accentGold, size: 24),
+                        const Text(
+                          'Gardez votre compte en sécurité en mettant à jour votre mot de passe régulièrement.',
+                          style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF4B5563)),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  'Formule : ${_getSubscriptionPlan(appState)}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFDCFCE7),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  'Actif',
-                                  style: TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                            ),
+                            icon: const Icon(Icons.sync_lock_rounded, size: 18, color: AppTheme.primaryNavy),
+                            label: const Text(
+                              'Changer le mot de passe',
+                              style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.w600, fontSize: 13),
+                            ),
+                            onPressed: () => _showChangePasswordDialog(context),
                           ),
                         ),
-                        if (isWebPortal)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryNavy,
-                              borderRadius: BorderRadius.circular(8),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                             ),
-                            child: const Text(
-                              'Changer de formule',
-                              style: TextStyle(color: AppTheme.accentGold, fontSize: 11.5, fontWeight: FontWeight.bold),
+                            icon: const Icon(Icons.mark_email_read_outlined, size: 18, color: AppTheme.primaryNavy),
+                            label: const Text(
+                              'Email de récupération',
+                              style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.w600, fontSize: 13),
                             ),
+                            onPressed: () => _showRecoveryEmailDialog(context),
                           ),
+                        ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 22),
+                  const SizedBox(height: 22),
+                ],
 
-                // 5. SUR LE WEB
+                // 4. ABONNEMENT (Uniquement pour le Propriétaire — enlevé pour les comptes invités)
+                // Sur Mobile (!isWebPortal) : consommation uniquement (lecture seule sans lien ni chevron).
+                // Sur le Portail Web (isWebPortal) : gestion complète des formules synchronisée vers Supabase & Mobile.
+                if (isOwner) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Abonnement',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                      ),
+                      if (isWebPortal)
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                            );
+                          },
+                          child: const Text(
+                            'Voir les formules',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primaryNavy),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: isWebPortal
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                            );
+                          }
+                        : null,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accentGold.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.workspace_premium_rounded, color: AppTheme.accentGold, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        'Formule : ${_getSubscriptionPlan(appState)}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFDCFCE7),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Text(
+                                        'Actif',
+                                        style: TextStyle(color: Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                // Date d'expiration affichée UNIQUEMENT pour les abonnements différents de Découverte
+                                if (_isPaidSubscription(appState)) ...[
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.event_available_rounded, size: 13, color: Color(0xFF059669)),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          _formatSubscriptionExpiration(appState),
+                                          style: const TextStyle(
+                                            fontSize: 11.5,
+                                            color: Color(0xFF4B5563),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          if (isWebPortal)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryNavy,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'Changer de formule',
+                                style: TextStyle(color: AppTheme.accentGold, fontSize: 11.5, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                ],
+
+                // 5. SUR LE WEB (Conservé pour le Propriétaire et les Comptes Invités qui peuvent gérer leur caisse/stock sur le Portail Web)
                 const Text(
                   'Sur le web',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
@@ -824,10 +888,18 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                   ),
                   child: InkWell(
                     onTap: () {
-                      if (isWebPortal) {
+                      if (isOwner && isWebPortal) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                        );
+                      } else if (!isOwner) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Connectez-vous sur le portail web Bricelo Stock avec votre téléphone et code PIN pour gérer votre caisse ou votre stock ($storeDisplay).',
+                            ),
+                          ),
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -837,8 +909,8 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                         );
                       }
                     },
-                    child: Row(
-                      children: const [
+                    child: const Row(
+                      children: [
                         Icon(Icons.open_in_new_rounded, color: AppTheme.primaryNavy, size: 20),
                         SizedBox(width: 14),
                         Text(
@@ -851,7 +923,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // 6. ACTIONS ROUGES (DÉCONNEXION & SUPPRESSION)
+                // 6. ACTIONS ROUGES (DÉCONNEXION & SUPPRESSION POUR LE PROPRIÉTAIRE UNIQUEMENT)
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -881,20 +953,22 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                           ),
                         ),
                       ),
-                      const Divider(height: 1, indent: 48, color: Color(0xFFF3F4F6)),
-                      InkWell(
-                        onTap: () => _showDeleteAccountDialog(context),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete_outline, size: 20, color: Color(0xFFDC2626)),
-                              SizedBox(width: 14),
-                              Text('Supprimer mon compte', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFFDC2626))),
-                            ],
+                      if (isOwner) ...[
+                        const Divider(height: 1, indent: 48, color: Color(0xFFF3F4F6)),
+                        InkWell(
+                          onTap: () => _showDeleteAccountDialog(context),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline, size: 20, color: Color(0xFFDC2626)),
+                                SizedBox(width: 14),
+                                Text('Supprimer mon compte', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFFDC2626))),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

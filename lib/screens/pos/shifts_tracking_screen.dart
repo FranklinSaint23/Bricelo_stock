@@ -19,12 +19,19 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
   Timer? _refreshTimer;
   String _selectedPeriod = 'Aujourd\'hui';
   String _selectedStore = 'Toutes les boutiques';
+  String _selectedMemberFilter = 'ALL'; // 'ALL', 'ROLE:Caissier', 'ROLE:Magasinier', 'ROLE:Gérant', ou 'MEMBER:<nom>'
   DateTimeRange? _customDateRange;
 
   List<String> _getStoreOptions() {
+    if (!appState.isOwnerAccount) {
+      return [appState.assignedStoreForCurrentUser];
+    }
     final stores = <String>{'Toutes les boutiques'};
     for (final s in appState.availableStores) {
       if (s.trim().isNotEmpty) stores.add(s.trim());
+    }
+    for (final o in appState.outlets) {
+      if (o.name.trim().isNotEmpty) stores.add(o.name.trim());
     }
     if (appState.currentStore.trim().isNotEmpty) {
       stores.add(appState.currentStore.trim());
@@ -43,11 +50,34 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
   }
 
   bool _matchesSelectedStore(String? storeName, {bool includeGlobal = true}) {
+    // Un compte invité ne voit que les données de la boutique à laquelle il est rattaché
+    if (!appState.isOwnerAccount) {
+      return appState.matchesAssignedStore(storeName);
+    }
     if (_selectedStore == 'Toutes les boutiques') return true;
     final clean = (storeName ?? '').trim();
     if (clean.isEmpty) return true;
     if (includeGlobal && clean.toLowerCase() == 'toutes les boutiques') return true;
     return clean.toLowerCase() == _selectedStore.trim().toLowerCase();
+  }
+
+  String? get _activeFilteredMemberName {
+    if (!appState.isOwnerAccount) {
+      return appState.displayUserName.trim();
+    }
+    if (_selectedMemberFilter.startsWith('MEMBER:')) {
+      return _selectedMemberFilter.substring('MEMBER:'.length).trim();
+    }
+    return null;
+  }
+
+  bool _matchesSelectedPerson(String? personName) {
+    final targetName = _activeFilteredMemberName;
+    if (targetName == null || targetName.isEmpty) return true;
+    final cleanPerson = (personName ?? '').trim().toLowerCase();
+    final cleanTarget = targetName.toLowerCase();
+    if (cleanPerson.isEmpty) return false;
+    return cleanPerson.contains(cleanTarget) || cleanTarget.contains(cleanPerson);
   }
 
   static const List<String> _periodOptions = [
@@ -432,30 +462,134 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
 
   List<CashShift> _filterShifts(List<CashShift> all) {
     return all
-        .where((s) => _isDateInSelectedPeriod(s.openedAt) && _matchesSelectedStore(s.storeName))
+        .where((s) =>
+            _isDateInSelectedPeriod(s.openedAt) &&
+            _matchesSelectedStore(s.storeName) &&
+            _matchesSelectedPerson(s.cashierName))
         .toList();
   }
 
   List<Sale> _filterSales(List<Sale> all) {
     return all
-        .where((s) => _isDateInSelectedPeriod(s.createdAt) && _matchesSelectedStore(s.storeName))
+        .where((s) =>
+            _isDateInSelectedPeriod(s.createdAt) &&
+            _matchesSelectedStore(s.storeName) &&
+            _matchesSelectedPerson(s.cashierName))
         .toList();
   }
 
+  void _applyMemberOrRoleFilter(String filterVal) {
+    setState(() {
+      _selectedMemberFilter = filterVal;
+      if (filterVal == 'ROLE:Caissier') {
+        _tabController.animateTo(0);
+      } else if (filterVal == 'ROLE:Magasinier') {
+        _tabController.animateTo(1);
+      } else if (filterVal == 'ROLE:Gérant') {
+        _tabController.animateTo(2);
+      } else if (filterVal.startsWith('MEMBER:')) {
+        final memberName = filterVal.substring('MEMBER:'.length).trim().toLowerCase();
+        final m = appState.teamMembers.firstWhere(
+          (tm) => tm.name.trim().toLowerCase() == memberName,
+          orElse: () => TeamMember(id: '', name: '', phone: '', role: 'Caissier'),
+        );
+        final r = m.role.toLowerCase();
+        if (r.contains('magasinier')) {
+          _tabController.animateTo(1);
+        } else if (r.contains('gérant')) {
+          _tabController.animateTo(2);
+        } else {
+          _tabController.animateTo(0);
+        }
+      }
+    });
+  }
+
   Widget _buildStoreSelectorBar() {
+    if (!appState.isOwnerAccount) {
+      final myStore = appState.assignedStoreForCurrentUser;
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.storefront_rounded, size: 18, color: AppTheme.primaryNavy),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Boutique rattachée : $myStore • ${appState.displayUserName}',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                appState.userRole,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final storeOptions = _getStoreOptions();
     if (!storeOptions.contains(_selectedStore)) {
       _selectedStore = 'Toutes les boutiques';
     }
-    final attachedCashiers = appState.teamMembers
-        .where((m) => m.role.toLowerCase() == 'caissier' && _matchesSelectedStore(m.storeName))
+    final attachedMembers = appState.teamMembers
+        .where((m) =>
+            m.role.toLowerCase() != 'propriétaire' &&
+            _matchesSelectedStore(m.storeName))
+        .toList();
+    final attachedCashiers = attachedMembers
+        .where((m) => m.role.toLowerCase() == 'caissier')
         .length;
-    final attachedWarehouse = appState.teamMembers
-        .where((m) => m.role.toLowerCase().contains('magasinier') && _matchesSelectedStore(m.storeName))
+    final attachedWarehouse = attachedMembers
+        .where((m) => m.role.toLowerCase().contains('magasinier'))
         .length;
-    final attachedManagers = appState.teamMembers
-        .where((m) => m.role.toLowerCase() == 'gérant' && _matchesSelectedStore(m.storeName))
+    final attachedManagers = attachedMembers
+        .where((m) => m.role.toLowerCase() == 'gérant')
         .length;
+
+    final roleOrMemberItems = <DropdownMenuItem<String>>[
+      DropdownMenuItem(
+        value: 'ALL',
+        child: Text('Tous les rôles & équipiers (${attachedMembers.length})', overflow: TextOverflow.ellipsis),
+      ),
+      DropdownMenuItem(
+        value: 'ROLE:Caissier',
+        child: Text('Rôle : Tous les Caissiers ($attachedCashiers)', overflow: TextOverflow.ellipsis),
+      ),
+      DropdownMenuItem(
+        value: 'ROLE:Magasinier',
+        child: Text('Rôle : Tous les Magasiniers ($attachedWarehouse)', overflow: TextOverflow.ellipsis),
+      ),
+      DropdownMenuItem(
+        value: 'ROLE:Gérant',
+        child: Text('Rôle : Tous les Gérants ($attachedManagers)', overflow: TextOverflow.ellipsis),
+      ),
+      ...attachedMembers.map(
+        (m) => DropdownMenuItem(
+          value: 'MEMBER:${m.name}',
+          child: Text('👤 ${m.name} (${m.role} · ${m.storeName})', overflow: TextOverflow.ellipsis),
+        ),
+      ),
+    ];
+
+    final validFilterValues = roleOrMemberItems.map((e) => e.value).toSet();
+    if (!validFilterValues.contains(_selectedMemberFilter)) {
+      _selectedMemberFilter = 'ALL';
+    }
 
     return Container(
       width: double.infinity,
@@ -471,11 +605,13 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
             children: [
               const Icon(Icons.storefront_rounded, size: 18, color: AppTheme.primaryNavy),
               const SizedBox(width: 8),
-              const Text(
-                'Boutique :',
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF374151)),
+              const SizedBox(
+                width: 72,
+                child: Text(
+                  'Boutique :',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF374151)),
+                ),
               ),
-              const SizedBox(width: 10),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
@@ -501,7 +637,10 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           .toList(),
                       onChanged: (val) {
                         if (val != null) {
-                          setState(() => _selectedStore = val);
+                          setState(() {
+                            _selectedStore = val;
+                            _selectedMemberFilter = 'ALL';
+                          });
                         }
                       },
                     ),
@@ -511,13 +650,84 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
             ],
           ),
           const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.badge_outlined, size: 18, color: AppTheme.primaryNavy),
+              const SizedBox(width: 8),
+              const SizedBox(
+                width: 72,
+                child: Text(
+                  'Équipier :',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF374151)),
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _selectedMemberFilter != 'ALL' ? const Color(0xFFFFFBEB) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _selectedMemberFilter != 'ALL' ? AppTheme.accentGold : const Color(0xFFCBD5E1),
+                    ),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedMemberFilter,
+                      isExpanded: true,
+                      isDense: true,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primaryNavy),
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                      items: roleOrMemberItems,
+                      onChanged: (val) {
+                        if (val != null) {
+                          _applyMemberOrRoleFilter(val);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              if (_selectedMemberFilter != 'ALL') ...[
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: () => setState(() => _selectedMemberFilter = 'ALL'),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Tous',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 6,
             children: [
-              _buildStoreRoleBadge(Icons.point_of_sale_rounded, '$attachedCashiers Caissier(s)', const Color(0xFF0284C7)),
-              _buildStoreRoleBadge(Icons.warehouse_rounded, '$attachedWarehouse Magasinier(s)', const Color(0xFF0D9488)),
-              _buildStoreRoleBadge(Icons.supervisor_account_rounded, '$attachedManagers Gérant(s)', const Color(0xFF92400E)),
+              InkWell(
+                onTap: () => _applyMemberOrRoleFilter('ROLE:Caissier'),
+                borderRadius: BorderRadius.circular(8),
+                child: _buildStoreRoleBadge(Icons.point_of_sale_rounded, '$attachedCashiers Caissier(s)', const Color(0xFF0284C7)),
+              ),
+              InkWell(
+                onTap: () => _applyMemberOrRoleFilter('ROLE:Magasinier'),
+                borderRadius: BorderRadius.circular(8),
+                child: _buildStoreRoleBadge(Icons.warehouse_rounded, '$attachedWarehouse Magasinier(s)', const Color(0xFF0D9488)),
+              ),
+              InkWell(
+                onTap: () => _applyMemberOrRoleFilter('ROLE:Gérant'),
+                borderRadius: BorderRadius.circular(8),
+                child: _buildStoreRoleBadge(Icons.supervisor_account_rounded, '$attachedManagers Gérant(s)', const Color(0xFF92400E)),
+              ),
             ],
           ),
         ],
@@ -586,8 +796,14 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         final rawHistory = appState.cashShiftsHistory;
         final filteredHistory = _filterShifts(rawHistory);
         final filteredSales = _filterSales(appState.sales);
-        final isCashierOnly = !appState.hasPermission('Validation des approbations') &&
-            appState.userRole.toLowerCase() == 'caissier';
+        final isOwner = appState.isOwnerAccount;
+        final isInvited = !isOwner;
+        final invitedRole = appState.userRole.toLowerCase().trim();
+        final invitedTitle = invitedRole.contains('magasinier')
+            ? 'Mon Espace Magasinier (${appState.assignedStoreForCurrentUser})'
+            : invitedRole.contains('gérant')
+                ? 'Mon Suivi & Mes Activités (${appState.assignedStoreForCurrentUser})'
+                : 'Mes Shifts & Ma Caisse (${appState.assignedStoreForCurrentUser})';
 
         return Scaffold(
           backgroundColor: const Color(0xFFF9FAFB),
@@ -610,18 +826,18 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               ),
             ),
             title: Text(
-              isCashierOnly ? 'Mes Shifts & Ma Caisse' : 'Suivi Shifts & Activités Équipe',
+              isInvited ? invitedTitle : 'Suivi Shifts & Activités Équipe',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5, color: Colors.white),
             ),
             actions: [
-              if (appState.hasPermission('Validation des approbations'))
+              if (isOwner)
                 IconButton(
                   icon: const Icon(Icons.tune_rounded, color: Colors.white),
                   tooltip: 'Paramètres du suivi',
                   onPressed: _showSettingsToggleDialog,
                 ),
             ],
-            bottom: isCashierOnly
+            bottom: isInvited
                 ? null
                 : TabBar(
                     controller: _tabController,
@@ -680,13 +896,17 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                     ],
                   ),
           ),
-          body: isCashierOnly
-              ? _buildCashiersTab(isEnabled, activeShift, filteredHistory, filteredSales)
-              : Column(
-                  children: [
-                    _buildStoreSelectorBar(),
-                    Expanded(
-                      child: TabBarView(
+          body: Column(
+            children: [
+              _buildStoreSelectorBar(),
+              Expanded(
+                child: isInvited
+                    ? (invitedRole.contains('magasinier')
+                        ? _buildWarehouseTab()
+                        : invitedRole.contains('gérant')
+                            ? _buildManagersTab()
+                            : _buildCashiersTab(isEnabled, activeShift, filteredHistory, filteredSales))
+                    : TabBarView(
                         controller: _tabController,
                         children: [
                           // TAB 1: CAISSIERS & SHIFTS
@@ -699,9 +919,9 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
                           _buildManagersTab(),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -719,8 +939,10 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
     final now = DateTime.now();
     final isPast17h30 = now.hour > 17 || (now.hour == 17 && now.minute >= 30);
 
-    // Calculs de synthèse globale sur la période
-    final activeInStore = activeShift != null && _matchesSelectedStore(activeShift.storeName);
+    // Calculs de synthèse globale sur la période (et filtrés par boutique et équipier)
+    final activeInStore = activeShift != null &&
+        _matchesSelectedStore(activeShift.storeName) &&
+        _matchesSelectedPerson(activeShift.cashierName);
     final totalShiftsCount = history.length + (activeInStore ? 1 : 0);
     final totalSalesCount = periodSales.length;
     final totalSalesVolume = periodSales.fold(0.0, (sum, s) => sum + s.total);
@@ -728,8 +950,7 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         .where((s) => s.paymentMethod.toLowerCase().contains('esp') || s.paymentMethod.toLowerCase().contains('cash'))
         .fold(0.0, (sum, s) => sum + s.total);
 
-    final isOwnerOrManager = appState.hasPermission('Validation des approbations') ||
-        appState.userRole.toLowerCase() != 'caissier';
+    final isOwner = appState.isOwnerAccount;
     final attachedCashiers = appState.teamMembers
         .where((m) => m.role.toLowerCase() == 'caissier' && _matchesSelectedStore(m.storeName))
         .toList();
@@ -1022,11 +1243,11 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         ),
         const SizedBox(height: 20),
 
-        // 3B. CAISSIERS RATTACHÉS À LA BOUTIQUE & STATS PAR CAISSIER
-        if (isOwnerOrManager) ...[
+        // 3B. CAISSIERS RATTACHÉS À LA BOUTIQUE & STATS PAR CAISSIER (Visible uniquement par le Propriétaire)
+        if (isOwner) ...[
           Text(
             _selectedStore == 'Toutes les boutiques'
-                ? 'Caissiers rattachés (${attachedCashiers.length})'
+                ? 'Caissiers rattachés (${attachedCashiers.length}) — touchez un équipier pour filtrer ses stats'
                 : 'Caissiers rattachés à $_selectedStore (${attachedCashiers.length})',
             style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
           ),
@@ -1057,62 +1278,82 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
           else
             ...attachedCashiers.map((m) {
               final mLower = m.name.trim().toLowerCase();
-              final mShifts = history
-                  .where((sh) => sh.cashierName.trim().toLowerCase().contains(mLower))
+              final isSelectedMember = _selectedMemberFilter == 'MEMBER:${m.name}';
+              final mShifts = appState.cashShiftsHistory
+                  .where((sh) =>
+                      _isDateInSelectedPeriod(sh.openedAt) &&
+                      _matchesSelectedStore(sh.storeName) &&
+                      sh.cashierName.trim().toLowerCase().contains(mLower))
                   .length +
-                  ((activeInStore && activeShift.cashierName.trim().toLowerCase().contains(mLower)) ? 1 : 0);
-              final mSales = periodSales
-                  .where((s) => s.cashierName.trim().toLowerCase().contains(mLower))
+                  ((activeShift != null &&
+                          _matchesSelectedStore(activeShift.storeName) &&
+                          activeShift.cashierName.trim().toLowerCase().contains(mLower))
+                      ? 1
+                      : 0);
+              final mSales = appState.sales
+                  .where((s) =>
+                      _isDateInSelectedPeriod(s.createdAt) &&
+                      _matchesSelectedStore(s.storeName) &&
+                      s.cashierName.trim().toLowerCase().contains(mLower))
                   .toList();
               final mRevenue = mSales.fold(0.0, (sum, s) => sum + s.total);
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 19,
-                      backgroundColor: const Color(0xFF0284C7).withValues(alpha: 0.12),
-                      child: const Icon(Icons.point_of_sale_rounded, color: Color(0xFF0284C7), size: 18),
+              return InkWell(
+                onTap: () {
+                  _applyMemberOrRoleFilter(isSelectedMember ? 'ALL' : 'MEMBER:${m.name}');
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isSelectedMember ? const Color(0xFFEFF6FF) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelectedMember ? const Color(0xFF0284C7) : const Color(0xFFE5E7EB),
+                      width: isSelectedMember ? 1.5 : 1.0,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 19,
+                        backgroundColor: const Color(0xFF0284C7).withValues(alpha: 0.12),
+                        child: const Icon(Icons.point_of_sale_rounded, color: Color(0xFF0284C7), size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              m.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF111827)),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${m.assignedCashDesk ?? "Caisse Principale"} · ${m.storeName}',
+                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            m.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF111827)),
+                            AppTheme.formatFCFA(mRevenue),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${m.assignedCashDesk ?? "Caisse Principale"} · ${m.storeName}',
-                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
-                            overflow: TextOverflow.ellipsis,
+                            '${mSales.length} vente(s) · $mShifts shift(s)',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF0284C7)),
                           ),
                         ],
                       ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          AppTheme.formatFCFA(mRevenue),
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${mSales.length} vente(s) · $mShifts shift(s)',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF0284C7)),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             }),
@@ -1430,19 +1671,21 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
   // TAB 2: MAGASINIERS (Supervision Propriétaire & Suivi des demandes de stock)
   // ===========================================================================
   Widget _buildWarehouseTab() {
+    final isOwner = appState.isOwnerAccount;
+    final effectiveStore = isOwner ? _selectedStore : appState.assignedStoreForCurrentUser;
     final lowStockProds = appState.products.where((p) {
-      if (_selectedStore == 'Toutes les boutiques') {
+      if (effectiveStore == 'Toutes les boutiques') {
         return p.isLowStock || p.isOutOfStock;
       }
-      final storeStock = p.stockForStore(_selectedStore);
+      final storeStock = p.stockForStore(effectiveStore);
       return storeStock <= p.minStockAlert;
     }).toList();
     final restockRequests = appState.approvalRequests
         .where((r) =>
             (r.type == 'Approvisionnement' || r.type == 'Transfert de stock') &&
-            _matchesSelectedStore(r.storeName))
+            _matchesSelectedStore(r.storeName) &&
+            _matchesSelectedPerson(r.requesterName))
         .toList();
-    final isOwner = appState.hasPermission('Validation des approbations');
     final warehouseMembers = appState.teamMembers
         .where((m) => m.role.toLowerCase().contains('magasinier') && _matchesSelectedStore(m.storeName))
         .toList();
@@ -1611,61 +1854,73 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
               final mPending = mReqs.where((r) => r.status == 'pending').length;
               final mApproved = mReqs.where((r) => r.status == 'approved').length;
               final mVolume = mReqs.fold(0.0, (sum, r) => sum + r.amount);
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 19,
-                      backgroundColor: const Color(0xFF0D9488).withValues(alpha: 0.12),
-                      child: const Icon(Icons.warehouse_rounded, color: Color(0xFF0F766E), size: 18),
+              final isSelectedMember = _selectedMemberFilter == 'MEMBER:${m.name}';
+              return InkWell(
+                onTap: () {
+                  _applyMemberOrRoleFilter(
+                    isSelectedMember ? 'Tous les rôles & équipiers' : 'MEMBER:${m.name}',
+                  );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isSelectedMember ? const Color(0xFFF0FDFA) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelectedMember ? const Color(0xFF0D9488) : const Color(0xFFE5E7EB),
+                      width: isSelectedMember ? 1.5 : 1.0,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 19,
+                        backgroundColor: const Color(0xFF0D9488).withValues(alpha: 0.12),
+                        child: const Icon(Icons.warehouse_rounded, color: Color(0xFF0F766E), size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              m.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF111827)),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${m.storeName} · Tél: ${m.phone}',
+                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            m.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF111827)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDFA),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFF99F6E4)),
+                            ),
+                            child: Text(
+                              '${mReqs.length} demande(s) ($mApproved validée(s))',
+                              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
+                            ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 3),
                           Text(
-                            '${m.storeName} · Tél: ${m.phone}',
-                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                            mPending > 0 ? '$mPending en attente · ${AppTheme.formatFCFA(mVolume)}' : AppTheme.formatFCFA(mVolume),
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
                           ),
                         ],
                       ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDFA),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFF99F6E4)),
-                          ),
-                          child: Text(
-                            '${mReqs.length} demande(s) ($mApproved validée(s))',
-                            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          mPending > 0 ? '$mPending en attente · ${AppTheme.formatFCFA(mVolume)}' : AppTheme.formatFCFA(mVolume),
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             }),
@@ -2069,10 +2324,13 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
   // TAB 3: GÉRANTS (Supervision Propriétaire & Statistiques par Boutique)
   // ===========================================================================
   Widget _buildManagersTab() {
+    final isOwner = appState.isOwnerAccount;
     final managerRequests = appState.approvalRequests
-        .where((r) => r.type != 'Approvisionnement' && _matchesSelectedStore(r.storeName))
+        .where((r) =>
+            r.type != 'Approvisionnement' &&
+            _matchesSelectedStore(r.storeName) &&
+            _matchesSelectedPerson(r.requesterName))
         .toList();
-    final isOwner = appState.hasPermission('Validation des approbations');
 
     // Gérants rattachés à la boutique sélectionnée
     final managerMembers = appState.teamMembers.where((m) {
@@ -2080,7 +2338,11 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
       return r == 'gérant' && _matchesSelectedStore(m.storeName);
     }).toList();
 
-    final storeSales = appState.sales.where((s) => _matchesSelectedStore(s.storeName)).toList();
+    final storeSales = appState.sales
+        .where((s) =>
+            _matchesSelectedStore(s.storeName) &&
+            (_activeFilteredMemberName == null || _matchesSelectedPerson(s.cashierName)))
+        .toList();
     final storeRevenue = storeSales.fold(0.0, (sum, s) => sum + s.total);
     final pendingManagerReqs = managerRequests.where((r) => r.status == 'pending').length;
 
@@ -2165,126 +2427,139 @@ class _ShiftsTrackingScreenState extends State<ShiftsTrackingScreen> with Single
         ),
         const SizedBox(height: 20),
 
-        // Section Gérants rattachés à la boutique
-        Text(
-          _selectedStore == 'Toutes les boutiques'
-              ? 'Gérants rattachés (${managerMembers.length})'
-              : 'Gérants rattachés à $_selectedStore (${managerMembers.length})',
-          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
-        ),
-        const SizedBox(height: 10),
-        if (managerMembers.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.group_add_outlined, color: Color(0xFF64748B), size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _selectedStore == 'Toutes les boutiques'
-                        ? 'Aucun Gérant invité pour l\'instant. Dès que vous invitez un Gérant dans Équipe, ses statistiques s\'affichent ici.'
-                        : 'Aucun Gérant rattaché à la boutique "$_selectedStore".',
-                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          ...managerMembers.map((member) {
-            final group = appState.accessGroups.firstWhere(
-              (g) => (g['role'] ?? '').toString().toLowerCase() == member.role.toLowerCase(),
-              orElse: () => <String, dynamic>{},
-            );
-            final rawPerms = group['permissions'];
-            final activePermsCount = rawPerms is Map
-                ? rawPerms.values.where((v) => v == true).length
-                : (rawPerms is List ? rawPerms.length : 0);
-            final memberReqsCount = managerRequests
-                .where((r) => r.requesterName.toLowerCase().contains(member.name.toLowerCase()))
-                .length;
-            final memberSales = storeSales
-                .where((s) => s.cashierName.toLowerCase().contains(member.name.toLowerCase()))
-                .toList();
-            final memberSalesVol = memberSales.fold(0.0, (sum, s) => sum + s.total);
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
+        // Section Gérants rattachés à la boutique (visible uniquement pour le Propriétaire)
+        if (isOwner) ...[
+          Text(
+            _selectedStore == 'Toutes les boutiques'
+                ? 'Gérants rattachés (${managerMembers.length})'
+                : 'Gérants rattachés à $_selectedStore (${managerMembers.length})',
+            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+          ),
+          const SizedBox(height: 10),
+          if (managerMembers.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 19,
-                        backgroundColor: AppTheme.primaryNavy.withValues(alpha: 0.1),
-                        child: const Icon(Icons.supervisor_account_rounded, color: AppTheme.primaryNavy, size: 20),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              member.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
-                            ),
-                            Text(
-                              '${member.storeName} · Tél: ${member.phone}',
-                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          member.role,
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '$activePermsCount droit(s) actif(s) · ${memberSales.length} vente(s) (${AppTheme.formatFCFA(memberSalesVol)})',
-                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF475569), fontWeight: FontWeight.w600),
-                      ),
-                      Text(
-                        '$memberReqsCount opération(s)',
-                        style: const TextStyle(fontSize: 11.5, color: AppTheme.primaryNavy, fontWeight: FontWeight.bold),
-                      ),
-                    ],
+                  const Icon(Icons.group_add_outlined, color: Color(0xFF64748B), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedStore == 'Toutes les boutiques'
+                          ? 'Aucun Gérant invité pour l\'instant. Dès que vous invitez un Gérant dans Équipe, ses statistiques s\'affichent ici.'
+                          : 'Aucun Gérant rattaché à la boutique "$_selectedStore".',
+                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
+                    ),
                   ),
                 ],
               ),
-            );
-          }),
+            )
+          else
+            ...managerMembers.map((member) {
+              final group = appState.accessGroups.firstWhere(
+                (g) => (g['role'] ?? '').toString().toLowerCase() == member.role.toLowerCase(),
+                orElse: () => <String, dynamic>{},
+              );
+              final rawPerms = group['permissions'];
+              final activePermsCount = rawPerms is Map
+                  ? rawPerms.values.where((v) => v == true).length
+                  : (rawPerms is List ? rawPerms.length : 0);
+              final memberReqsCount = managerRequests
+                  .where((r) => r.requesterName.toLowerCase().contains(member.name.toLowerCase()))
+                  .length;
+              final memberSales = storeSales
+                  .where((s) => s.cashierName.toLowerCase().contains(member.name.toLowerCase()))
+                  .toList();
+              final memberSalesVol = memberSales.fold(0.0, (sum, s) => sum + s.total);
+              final isSelectedMember = _selectedMemberFilter == 'MEMBER:${member.name}';
 
-        const SizedBox(height: 20),
+              return InkWell(
+                onTap: () {
+                  _applyMemberOrRoleFilter(
+                    isSelectedMember ? 'Tous les rôles & équipiers' : 'MEMBER:${member.name}',
+                  );
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isSelectedMember ? const Color(0xFFFEF3C7).withValues(alpha: 0.35) : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelectedMember ? const Color(0xFFD97706) : const Color(0xFFE5E7EB),
+                      width: isSelectedMember ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 19,
+                            backgroundColor: AppTheme.primaryNavy.withValues(alpha: 0.1),
+                            child: const Icon(Icons.supervisor_account_rounded, color: AppTheme.primaryNavy, size: 20),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  member.name,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
+                                ),
+                                Text(
+                                  '${member.storeName} · Tél: ${member.phone}',
+                                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              member.role,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '$activePermsCount droit(s) actif(s) · ${memberSales.length} vente(s) (${AppTheme.formatFCFA(memberSalesVol)})',
+                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF475569), fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            '$memberReqsCount opération(s)',
+                            style: const TextStyle(fontSize: 11.5, color: AppTheme.primaryNavy, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          const SizedBox(height: 20),
+        ],
 
-        const Text(
-          'Opérations sous validation du Propriétaire',
-          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+        Text(
+          isOwner ? 'Opérations sous validation du Propriétaire' : 'Mes opérations soumises au Propriétaire',
+          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
         ),
         const SizedBox(height: 10),
 

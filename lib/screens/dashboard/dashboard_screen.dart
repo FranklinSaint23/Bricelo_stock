@@ -333,7 +333,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ],
                             ),
                             const Divider(height: 24),
-                            if (salesCount == 0)
+                            if (appState.visibleSales.isEmpty)
                               Center(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 28),
@@ -353,10 +353,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ListView.separated(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                itemCount: appState.sales.take(5).length,
+                                itemCount: appState.visibleSales.take(5).length,
                                 separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
                                 itemBuilder: (context, idx) {
-                                  final sale = appState.sales[idx];
+                                  final sale = appState.visibleSales[idx];
                                   return InkWell(
                                     onTap: () => SaleReceiptDialog.show(context, sale),
                                     child: Padding(
@@ -589,7 +589,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     const Icon(Icons.groups_rounded, color: AppTheme.primaryNavy, size: 20),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Équipe, Shifts & Approbations',
+                                      appState.isOwnerAccount
+                                          ? 'Équipe, Shifts & Approbations'
+                                          : 'Mon Suivi Shifts & Activités (${appState.assignedStoreForCurrentUser})',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14.5,
@@ -598,7 +600,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ],
                                 ),
-                                if (appState.pendingApprovalsCount > 0)
+                                if (appState.isOwnerAccount && appState.pendingApprovalsCount > 0)
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
@@ -613,30 +615,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            ListTile(
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              leading: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFEF2F2),
-                                  borderRadius: BorderRadius.circular(8),
+                            if (appState.isOwnerAccount) ...[
+                              ListTile(
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF2F2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.verified_user_rounded, color: Color(0xFFDC2626), size: 18),
                                 ),
-                                child: const Icon(Icons.verified_user_rounded, color: Color(0xFFDC2626), size: 18),
+                                title: const Text('Approbations (Stock & Transferts)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                                subtitle: Text(
+                                  appState.pendingApprovalsCount > 0
+                                      ? '${appState.pendingApprovalsCount} demande(s) d\'équipiers à valider'
+                                      : 'Aucune demande en attente',
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                                trailing: const Icon(Icons.chevron_right_rounded, size: 18),
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ApprovalsScreen()));
+                                },
                               ),
-                              title: const Text('Approbations (Stock & Transferts)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
-                              subtitle: Text(
-                                appState.pendingApprovalsCount > 0
-                                    ? '${appState.pendingApprovalsCount} demande(s) d\'équipiers à valider'
-                                    : 'Aucune demande en attente',
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              trailing: const Icon(Icons.chevron_right_rounded, size: 18),
-                              onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => const ApprovalsScreen()));
-                              },
-                            ),
-                            const Divider(height: 12),
+                              const Divider(height: 12),
+                            ],
                             ListTile(
                               dense: true,
                               contentPadding: EdgeInsets.zero,
@@ -648,11 +652,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                                 child: const Icon(Icons.punch_clock_rounded, color: Color(0xFF059669), size: 18),
                               ),
-                              title: const Text('Suivi Shifts & Activités par Boutique', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                              title: Text(
+                                appState.isOwnerAccount
+                                    ? 'Suivi Shifts & Activités par Boutique'
+                                    : 'Mon Suivi Shifts & Activités',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                              ),
                               subtitle: Text(
                                 appState.activeCashShift != null
                                     ? '${appState.activeCashShift!.cashDeskName} ouvert (${appState.activeCashShift!.formattedDuration})'
-                                    : 'Caissiers, Magasiniers & Gérants',
+                                    : (appState.isOwnerAccount
+                                        ? 'Caissiers, Magasiniers & Gérants'
+                                        : 'Mes statistiques personnelles • ${appState.assignedStoreForCurrentUser}'),
                                 style: const TextStyle(fontSize: 11),
                               ),
                               trailing: const Icon(Icons.chevron_right_rounded, size: 18),
@@ -660,28 +671,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ShiftsTrackingScreen()));
                               },
                             ),
-                            const Divider(height: 12),
-                            ListTile(
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              leading: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEFF6FF),
-                                  borderRadius: BorderRadius.circular(8),
+                            if (appState.isOwnerAccount) ...[
+                              const Divider(height: 12),
+                              ListTile(
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEFF6FF),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.badge_rounded, color: AppTheme.primaryNavy, size: 18),
                                 ),
-                                child: const Icon(Icons.badge_rounded, color: AppTheme.primaryNavy, size: 18),
+                                title: const Text('Équipe & Groupes d\'accès', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                                subtitle: Text(
+                                  '${appState.teamMembers.length} collaborateur(s) invité(s)',
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                                trailing: const Icon(Icons.chevron_right_rounded, size: 18),
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamScreen()));
+                                },
                               ),
-                              title: const Text('Équipe & Groupes d\'accès', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
-                              subtitle: Text(
-                                '${appState.teamMembers.length} collaborateur(s) invité(s)',
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              trailing: const Icon(Icons.chevron_right_rounded, size: 18),
-                              onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamScreen()));
-                              },
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -824,7 +837,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     int salesCount,
     double totalDebt,
   ) {
-    final filteredSales = appState.sales.where((s) {
+    final filteredSales = appState.visibleSales.where((s) {
       if (_searchQuery.trim().isNotEmpty) {
         final q = _searchQuery.trim().toLowerCase();
         final matchTicket = s.ticketNumber.toLowerCase().contains(q);

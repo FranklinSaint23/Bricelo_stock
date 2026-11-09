@@ -26,8 +26,17 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
     final stores = appState.outlets.map((o) => o.name).toList();
     if (stores.isEmpty) stores.add(appState.currentStore);
 
-    _sourceStore = appState.currentStore;
-    _destinationStore = stores.firstWhere((s) => s != _sourceStore, orElse: () => 'Entrepôt Central');
+    if (!appState.isOwnerAccount) {
+      // Un compte invité demande un transfert depuis une autre boutique vers sa boutique rattachée
+      _destinationStore = appState.assignedStoreForCurrentUser;
+      _sourceStore = stores.firstWhere(
+        (s) => s != _destinationStore,
+        orElse: () => 'Entrepôt Central',
+      );
+    } else {
+      _sourceStore = appState.currentStore;
+      _destinationStore = stores.firstWhere((s) => s != _sourceStore, orElse: () => 'Entrepôt Central');
+    }
   }
 
   @override

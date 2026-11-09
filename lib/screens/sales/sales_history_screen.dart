@@ -19,9 +19,40 @@ class SalesHistoryScreen extends StatefulWidget {
 class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   final appState = AppState.instance;
   String _selectedPeriod = 'Aujourd\'hui';
+  String _selectedStore = 'Toutes les boutiques';
   String _statusFilter = 'Actives'; // Actives, Tout, Annulées, Remboursées
   DateTimeRange? _customDateRange;
   final _searchCtrl = TextEditingController();
+
+  List<String> _getStoreOptions() {
+    final stores = <String>{'Toutes les boutiques'};
+    for (final s in appState.availableStores) {
+      if (s.trim().isNotEmpty) stores.add(s.trim());
+    }
+    for (final o in appState.outlets) {
+      if (o.name.trim().isNotEmpty) stores.add(o.name.trim());
+    }
+    if (appState.currentStore.trim().isNotEmpty) {
+      stores.add(appState.currentStore.trim());
+    }
+    for (final sale in appState.sales) {
+      if (sale.storeName.trim().isNotEmpty) {
+        stores.add(sale.storeName.trim());
+      }
+    }
+    return stores.toList();
+  }
+
+  bool _matchesSelectedStore(String? storeName) {
+    // Un compte invité ne voit que l'historique des ventes de sa boutique rattachée
+    if (!appState.isOwnerAccount) {
+      return appState.matchesAssignedStore(storeName);
+    }
+    if (_selectedStore == 'Toutes les boutiques') return true;
+    final clean = (storeName ?? '').trim();
+    if (clean.isEmpty) return appState.availableStores.length <= 1;
+    return clean.toLowerCase() == _selectedStore.trim().toLowerCase();
+  }
 
   final List<String> _periods = const [
     'Aujourd\'hui',
@@ -192,6 +223,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     final range = _getDateRangeForPeriod(_selectedPeriod, now);
 
     return appState.sales.where((s) {
+      if (!_matchesSelectedStore(s.storeName)) return false;
+
       if (q.isNotEmpty) {
         final matchId = s.ticketNumber.toLowerCase().contains(q) ||
             s.historyReference.toLowerCase().contains(q) ||
@@ -492,6 +525,93 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 0. SÉLECTEUR DE BOUTIQUE (PROPRIÉTAIRE) OU BOUTIQUE RATTACHÉE (COMPTE INVITÉ)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  border: Border(bottom: BorderSide(color: cardBorder)),
+                ),
+                child: appState.isOwnerAccount
+                    ? Builder(
+                        builder: (context) {
+                          final storeOptions = _getStoreOptions();
+                          if (!storeOptions.contains(_selectedStore)) {
+                            _selectedStore = 'Toutes les boutiques';
+                          }
+                          return Row(
+                            children: [
+                              Icon(Icons.storefront_rounded, size: 18, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Boutique :',
+                                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: textPrimary),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: pageBg,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: cardBorder),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: _selectedStore,
+                                      dropdownColor: cardBg,
+                                      isExpanded: true,
+                                      isDense: true,
+                                      icon: Icon(Icons.keyboard_arrow_down_rounded, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textPrimary),
+                                      items: storeOptions
+                                          .map(
+                                            (st) => DropdownMenuItem(
+                                              value: st,
+                                              child: Text(st, overflow: TextOverflow.ellipsis),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (val) {
+                                        if (val != null) {
+                                          setState(() => _selectedStore = val);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      )
+                    : Row(
+                        children: [
+                          Icon(Icons.storefront_rounded, size: 18, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Boutique rattachée : ${appState.assignedStoreForCurrentUser}',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textPrimary),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              appState.userRole,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+
               // 1. RECHERCHE & BOUTON FILTRE
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -706,8 +826,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                             ),
                                             const SizedBox(height: 3),
                                             Text(
-                                              _formatDateTime(sale.createdAt),
+                                              '${_formatDateTime(sale.createdAt)} • ${sale.storeName} (${sale.cashierName})',
                                               style: TextStyle(fontSize: 11.5, color: textSecondary),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ],
                                         ),

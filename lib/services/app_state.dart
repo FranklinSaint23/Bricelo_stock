@@ -113,6 +113,27 @@ class AppState extends ChangeNotifier {
     _globalSubscriptionExpiresAt = value;
   }
 
+  // Quotas & vérifications de la formule d'abonnement
+  bool get isFreePlan =>
+      subscriptionPlan.toLowerCase().contains('gratuit') ||
+      subscriptionPlan.toLowerCase().contains('découverte') ||
+      subscriptionPlan.toLowerCase().contains('decouverte');
+  bool get isProPlan => subscriptionPlan.toLowerCase().contains('pro');
+  bool get isEnterprisePlan => subscriptionPlan.toLowerCase().contains('entreprise');
+
+  int get maxSalesQuota => isFreePlan ? 50 : 999999;
+  int get maxProductsQuota => isFreePlan ? 30 : 999999;
+  int get maxCollaboratorsQuota => isFreePlan ? 0 : (isProPlan ? 3 : 999999);
+  int get maxCreditCustomersQuota => isFreePlan ? 5 : 999999;
+
+  int get currentMonthSalesCount {
+    final now = DateTime.now();
+    return sales.where((s) => s.createdAt.year == now.year && s.createdAt.month == now.month).length;
+  }
+
+  bool get hasReachedSalesQuota => isFreePlan && currentMonthSalesCount >= 50;
+  bool get hasReachedProductsQuota => isFreePlan && products.length >= 30;
+
   // --- Profil Entreprise & Facturation Dynamique ---
   String companyLogo = '';
   String companyAddress = 'Situé à FOURGEROLE ( Face Tradex avant le Petit Marché)';
@@ -271,6 +292,54 @@ class AppState extends ChangeNotifier {
   }
 
   String? userAssignedCashDesk;
+
+  /// Indique si l'utilisateur actuellement connecté est le Propriétaire
+  bool get isOwnerAccount =>
+      userRole.toLowerCase().contains('propriétaire') ||
+      userRole.toLowerCase().contains('owner');
+
+  /// Collaborateur invité actuellement connecté (null si Propriétaire)
+  TeamMember? get currentCollaborator {
+    if (isOwnerAccount) return null;
+    final cleanPhone = userPhone.trim();
+    final cleanName = userName.trim().toLowerCase();
+    return teamMembers.firstWhereOrNull((m) {
+      if (cleanPhone.isNotEmpty && phonesMatch(m.phone, cleanPhone)) return true;
+      if (cleanName.isNotEmpty && m.name.trim().toLowerCase() == cleanName) return true;
+      return false;
+    });
+  }
+
+  /// Boutique rattachée au compte invité (ou boutique active pour le propriétaire)
+  String get assignedStoreForCurrentUser {
+    if (isOwnerAccount) {
+      return currentStore.trim().isNotEmpty ? currentStore.trim() : displayCompanyName;
+    }
+    final collab = currentCollaborator;
+    if (collab != null &&
+        collab.storeName.trim().isNotEmpty &&
+        collab.storeName.trim().toLowerCase() != 'toutes les boutiques') {
+      return collab.storeName.trim();
+    }
+    return currentStore.trim().isNotEmpty ? currentStore.trim() : displayCompanyName;
+  }
+
+  /// Vérifie si une boutique correspond à la boutique rattachée du compte invité
+  bool matchesAssignedStore(String? storeName) {
+    if (isOwnerAccount) return true;
+    final assigned = assignedStoreForCurrentUser.trim().toLowerCase();
+    final target = (storeName ?? '').trim().toLowerCase();
+    if (target.isEmpty) {
+      return availableStores.length <= 1;
+    }
+    return target == assigned;
+  }
+
+  /// Liste des ventes visibles pour le compte connecté (toutes pour le propriétaire, uniquement la boutique rattachée pour l'invité)
+  List<Sale> get visibleSales {
+    if (isOwnerAccount) return sales;
+    return sales.where((s) => matchesAssignedStore(s.storeName)).toList();
+  }
 
   /// Nombre de demandes d'approbation en attente (visuel rouge)
   int get pendingApprovalsCount => approvalRequests.where((r) => r.status == 'pending').length;
@@ -843,7 +912,9 @@ class AppState extends ChangeNotifier {
         'language': currentLanguage,
         if (ownerPasswordHash.isNotEmpty) 'password_hash': ownerPasswordHash,
         'subscription_plan': subscriptionPlan,
+        'subscription_billing': subscriptionBilling,
         'subscription_status': subscriptionStatus,
+        'subscription_expires_at': subscriptionExpiresAt?.toIso8601String(),
         'access_groups': accessGroups,
         'cash_desks': cashDesks.map((e) => e.toJson()).toList(),
         'available_stores': availableStores,
@@ -885,8 +956,14 @@ class AppState extends ChangeNotifier {
             if (prof['subscription_plan'] != null && prof['subscription_plan'].toString().trim().isNotEmpty) {
               subscriptionPlan = prof['subscription_plan'].toString().trim();
             }
+            if (prof['subscription_billing'] != null && prof['subscription_billing'].toString().trim().isNotEmpty) {
+              subscriptionBilling = prof['subscription_billing'].toString().trim();
+            }
             if (prof['subscription_status'] != null && prof['subscription_status'].toString().trim().isNotEmpty) {
               subscriptionStatus = prof['subscription_status'].toString().trim();
+            }
+            if (prof['subscription_expires_at'] != null && prof['subscription_expires_at'].toString().trim().isNotEmpty) {
+              subscriptionExpiresAt = DateTime.tryParse(prof['subscription_expires_at'].toString());
             }
             if (prof['access_groups'] is List && (prof['access_groups'] as List).isNotEmpty) {
               accessGroups = (prof['access_groups'] as List)
@@ -1272,6 +1349,18 @@ class AppState extends ChangeNotifier {
       if (matchedRemoteProfile['subscription_plan'] != null &&
           matchedRemoteProfile['subscription_plan'].toString().trim().isNotEmpty) {
         subscriptionPlan = matchedRemoteProfile['subscription_plan'].toString().trim();
+      }
+      if (matchedRemoteProfile['subscription_billing'] != null &&
+          matchedRemoteProfile['subscription_billing'].toString().trim().isNotEmpty) {
+        subscriptionBilling = matchedRemoteProfile['subscription_billing'].toString().trim();
+      }
+      if (matchedRemoteProfile['subscription_status'] != null &&
+          matchedRemoteProfile['subscription_status'].toString().trim().isNotEmpty) {
+        subscriptionStatus = matchedRemoteProfile['subscription_status'].toString().trim();
+      }
+      if (matchedRemoteProfile['subscription_expires_at'] != null &&
+          matchedRemoteProfile['subscription_expires_at'].toString().trim().isNotEmpty) {
+        subscriptionExpiresAt = DateTime.tryParse(matchedRemoteProfile['subscription_expires_at'].toString());
       }
       if (matchedRemoteProfile['access_groups'] is List &&
           (matchedRemoteProfile['access_groups'] as List).isNotEmpty) {
@@ -1765,15 +1854,61 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> removeTeamMember(String id) async {
+    final member = teamMembers.firstWhereOrNull((m) => m.id == id);
     teamMembers.removeWhere((m) => m.id == id);
     notifyListeners();
     await _saveToPrefs();
+
+    // 1. Suppression immédiate en base de données Supabase si en ligne
+    final sb = _supabase;
+    if (sb != null) {
+      try {
+        await sb.from('team_members').delete().eq('id', id);
+        if (member != null && member.phone.trim().isNotEmpty) {
+          final cleanPhone = member.phone.trim();
+          await sb.from('team_members').delete().eq('phone', cleanPhone);
+          try {
+            await sb.from('app_users').delete().eq('phone', cleanPhone);
+          } catch (_) {}
+          try {
+            await sb.from('user_profiles').delete().eq('phone', cleanPhone);
+          } catch (_) {}
+        }
+      } catch (_) {}
+    }
+
+    // 2. Mise en file d'attente persistante pour garantir la purge définitive même hors-ligne
     await enqueueOrSendSupabase(
       table: 'team_members',
       action: 'delete',
       matchCol: 'id',
       matchVal: id,
     );
+    if (member != null && member.phone.trim().isNotEmpty) {
+      await enqueueOrSendSupabase(
+        table: 'team_members',
+        action: 'delete',
+        matchCol: 'phone',
+        matchVal: member.phone.trim(),
+      );
+      await enqueueOrSendSupabase(
+        table: 'app_users',
+        action: 'delete',
+        matchCol: 'phone',
+        matchVal: member.phone.trim(),
+      );
+    }
+
+    // 3. Synchronisation de la configuration entreprise dans le cloud pour révoquer tous les droits
+    await syncOwnerWorkspaceConfigToCloud();
+
+    // 4. Si la session en cours correspond à l'équipier supprimé, réinitialiser la session
+    if (member != null && (userPhone == member.phone || userName == member.name)) {
+      final owner = teamMembers.firstWhereOrNull((m) => m.role == 'Propriétaire');
+      if (owner != null) {
+        await switchUserSession(owner);
+      }
+    }
   }
 
   // --- GESTION DU PROFIL ENTREPRISE & FACTURATION ---
@@ -2310,12 +2445,12 @@ class AppState extends ChangeNotifier {
   double get cartTotal => cart.fold(0.0, (sum, item) => sum + item.total);
   int get cartCount => cart.fold(0, (sum, item) => sum + item.quantity);
 
-  int get todaySalesCount => sales.length;
-  double get todayRevenue => sales.fold(0.0, (sum, sale) => sum + sale.total);
+  int get todaySalesCount => visibleSales.length;
+  double get todayRevenue => visibleSales.fold(0.0, (sum, sale) => sum + sale.total);
 
   double get todayGrossMargin {
     double totalMargin = 0;
-    for (var sale in sales) {
+    for (var sale in visibleSales) {
       for (var item in sale.items) {
         final p = products.firstWhere(
           (prod) => prod.name == item.productName,
@@ -3264,6 +3399,12 @@ class AppState extends ChangeNotifier {
 
   // --- PARAMÈTRES & BOUTIQUE ---
   void switchStore(String store) {
+    if (!isOwnerAccount) {
+      currentStore = assignedStoreForCurrentUser;
+      _saveToPrefs();
+      notifyListeners();
+      return;
+    }
     currentStore = store;
     _saveToPrefs();
     notifyListeners();

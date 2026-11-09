@@ -23,9 +23,22 @@ class _InventoryScreenState extends State<InventoryScreen> {
       animation: appState,
       builder: (context, _) {
         final isDesktop = MediaQuery.of(context).size.width >= 800;
-        final availableStores = ['Tous', ...appState.outlets.map((o) => o.name)];
-        if (!availableStores.contains(_selectedStoreTab)) {
-          _selectedStoreTab = 'Tous';
+        final isOwner = appState.isOwnerAccount;
+        final assignedStore = appState.assignedStoreForCurrentUser;
+        final outletNames = appState.outlets.map((o) => o.name).toList();
+        if (!outletNames.contains(assignedStore)) {
+          outletNames.insert(0, assignedStore);
+        }
+        // Un compte invité voit sa boutique rattachée en premier, et peut uniquement consulter
+        // le stock d'une autre boutique pour demander un transfert vers sa boutique rattachée.
+        final availableStores = isOwner
+            ? ['Tous', ...outletNames]
+            : [
+                assignedStore,
+                ...outletNames.where((s) => s != assignedStore),
+              ];
+        if (!availableStores.contains(_selectedStoreTab) || (!isOwner && _selectedStoreTab == 'Tous')) {
+          _selectedStoreTab = isOwner ? 'Tous' : assignedStore;
         }
 
         if (isDesktop) {
@@ -133,8 +146,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ),
             ],
 
-            // 1. CARTE VALEUR DU STOCK EN 3 COLONNES (Si droit Comptabilité & Finances ou Propriétaire)
-            if (appState.hasPermission('Comptabilité & Finances')) ...[
+            // 1. CARTE VALEUR DU STOCK EN 3 COLONNES (Uniquement Propriétaire)
+            if (appState.isOwnerAccount && appState.hasPermission('Comptabilité & Finances')) ...[
               Row(
                 children: [
                   Expanded(
@@ -216,6 +229,44 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ),
             ),
             const SizedBox(height: 20),
+
+            if (!appState.isOwnerAccount && _selectedStoreTab != appState.assignedStoreForCurrentUser) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFCD34D)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.swap_horiz_rounded, color: Color(0xFFD97706), size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Consultation du stock de "$_selectedStoreTab" uniquement pour demander un transfert vers votre boutique rattachée (${appState.assignedStoreForCurrentUser}).',
+                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryNavy,
+                        foregroundColor: AppTheme.accentGold,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      icon: const Icon(Icons.swap_horiz_rounded, size: 15),
+                      label: const Text('Demander un transfert', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const NewTransferScreen()));
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             // 3. TABLEAU OU LISTE DES ARTICLES
             _buildProductsList(filteredProducts, isDark),
@@ -387,10 +438,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     ),
                   ),
 
-                  // Suivi des demandes soumises par cet équipier
+                  // Suivi des demandes soumises uniquement par cet équipier
                   Builder(builder: (_) {
+                    final currentUserName = appState.displayUserName.trim().toLowerCase();
                     final myRequests = appState.approvalRequests
-                        .where((r) => r.type == 'Approvisionnement' || r.type == 'Transfert de stock')
+                        .where((r) =>
+                            (r.type == 'Approvisionnement' || r.type == 'Transfert de stock') &&
+                            (appState.isOwnerAccount || r.requesterName.toLowerCase().contains(currentUserName)))
                         .take(3)
                         .toList();
                     if (myRequests.isEmpty) return const SizedBox.shrink();
@@ -468,8 +522,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   }),
                 ],
 
-                // 1. CARTE VALEUR DU STOCK MOBILE (100% Dynamique — Masquée si l'équipier n'a pas accès aux finances)
-                if (appState.hasPermission('Comptabilité & Finances')) ...[
+                // 1. CARTE VALEUR DU STOCK MOBILE (Uniquement Propriétaire ayant accès aux finances)
+                if (appState.isOwnerAccount && appState.hasPermission('Comptabilité & Finances')) ...[
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -595,7 +649,54 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     }).toList(),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
+
+                if (!appState.isOwnerAccount && _selectedStoreTab != appState.assignedStoreForCurrentUser) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFCD34D)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.swap_horiz_rounded, color: Color(0xFFD97706), size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Consultation du stock de "$_selectedStoreTab" (pour transfert vers ${appState.assignedStoreForCurrentUser})',
+                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryNavy,
+                              foregroundColor: AppTheme.accentGold,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            icon: const Icon(Icons.swap_horiz_rounded, size: 15),
+                            label: const Text('Demander un transfert vers ma boutique', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const NewTransferScreen()));
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 // 4. LISTE DYNAMIQUE DES ARTICLES EN INVENTAIRE
                 Row(
