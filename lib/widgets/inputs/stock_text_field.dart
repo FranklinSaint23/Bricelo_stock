@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:stock_prime/services/app_state.dart';
+import 'package:stock_prime/theme/app_theme.dart';
 
 class StockTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -26,6 +28,8 @@ class StockTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppState.instance.isDarkMode;
+
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
@@ -33,30 +37,42 @@ class StockTextField extends StatelessWidget {
       maxLines: maxLines,
       autofocus: autofocus,
       onChanged: onChanged,
-      style: const TextStyle(fontSize: 15, color: Color(0xFF111827)),
+      style: TextStyle(
+        fontSize: 15,
+        color: isDark ? Colors.white : const Color(0xFF111827),
+      ),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(
-          color: Color(0xFF374151),
+        hintStyle: TextStyle(
+          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
           fontSize: 15,
           fontWeight: FontWeight.normal,
         ),
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: const Color(0xFFFAFAFA),
+        fillColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFFAFAFA),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFF6B7280), width: 1),
+          borderSide: BorderSide(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+            width: 1,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFF6B7280), width: 1),
+          borderSide: BorderSide(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFFFFB800), width: 1.5),
+          borderSide: BorderSide(
+            color: isDark ? AppTheme.accentGold : const Color(0xFFFFB800),
+            width: 1.5,
+          ),
         ),
       ),
     );

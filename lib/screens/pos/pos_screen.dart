@@ -1043,7 +1043,7 @@ class _PosScreenState extends State<PosScreen> {
                       crossAxisCount: 2,
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 1.08,
+                      childAspectRatio: 0.94,
                     ),
                     itemCount: products.length,
                     itemBuilder: (context, idx) {

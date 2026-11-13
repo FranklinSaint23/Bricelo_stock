@@ -454,8 +454,8 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryNavy,
-                          foregroundColor: Colors.white,
+                          backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                          foregroundColor: isDark ? Colors.black : Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
