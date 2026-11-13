@@ -886,28 +886,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(st, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: textPrimary), overflow: TextOverflow.ellipsis),
-                                      ),
-                                      if (!isOwner && st == assignedStore) ...[
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            'Ma boutique'.tr,
-                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
-                                          ),
+                                Row(
+                                  children: [
+                                    Text(st, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: textPrimary)),
+                                    if (!isOwner && st == assignedStore) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(4),
                                         ),
-                                      ],
+                                        child: Text(
+                                          'Ma boutique'.tr,
+                                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                                        ),
+                                      ),
                                     ],
-                                  ),
+                                  ],
                                 ),
                                 Row(
                                   children: [
@@ -1239,11 +1235,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
 
           // BARRE FIXE EN BAS : MODIFIER & ÉTIQUETTES
-          bottomNavigationBar: SafeArea(
+          bottomSheet: SafeArea(
             top: false,
-            bottom: true,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               decoration: BoxDecoration(
                 color: isDark ? AppTheme.darkSurface : Colors.white,
                 border: Border(top: BorderSide(color: cardBorder)),

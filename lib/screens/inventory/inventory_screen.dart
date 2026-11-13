@@ -69,16 +69,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     final filteredProducts = _selectedStoreTab == 'Tous'
         ? products
-        : products.where((p) {
-            final qty = p.stockForStore(_selectedStoreTab);
-            final belongs = p.storeName.trim().toLowerCase() == _selectedStoreTab.trim().toLowerCase();
-            final inStoreMap = p.stockByStore.containsKey(_selectedStoreTab);
-            return qty > 0 || belongs || inStoreMap;
-          }).toList();
+        : products.where((p) => p.stockForStore(_selectedStoreTab) > 0 || p.stockByStore.containsKey(_selectedStoreTab)).toList();
 
     double totalVente = 0;
     double totalAchat = 0;
-    for (final p in (_selectedStoreTab == 'Tous' ? products : filteredProducts)) {
+    for (final p in products) {
       final qty = p.stockForStore(_selectedStoreTab);
       totalVente += p.sellPrice * qty;
       totalAchat += p.buyPrice * qty;
@@ -214,11 +209,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: const EdgeInsets.all(3),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: availableStores.map((st) => _buildStoreTabPill(st)).toList(),
-                      ),
+                    child: Row(
+                      children: availableStores.map((st) => _buildStoreTabPill(st)).toList(),
                     ),
                   ),
                   const Spacer(),
@@ -331,16 +323,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final products = appState.products;
     final filteredProducts = _selectedStoreTab == 'Tous'
         ? products
-        : products.where((p) {
-            final qty = p.stockForStore(_selectedStoreTab);
-            final belongs = p.storeName.trim().toLowerCase() == _selectedStoreTab.trim().toLowerCase();
-            final inStoreMap = p.stockByStore.containsKey(_selectedStoreTab);
-            return qty > 0 || belongs || inStoreMap;
-          }).toList();
+        : products.where((p) => p.stockForStore(_selectedStoreTab) > 0 || p.stockByStore.containsKey(_selectedStoreTab)).toList();
 
     double totalVente = 0;
     double totalAchat = 0;
-    for (final p in (_selectedStoreTab == 'Tous' ? products : filteredProducts)) {
+    for (final p in products) {
       final qty = p.stockForStore(_selectedStoreTab);
       totalVente += p.sellPrice * qty;
       totalAchat += p.buyPrice * qty;
@@ -663,61 +650,37 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 3. SÉLECTEUR DE BOUTIQUES (LISTE DÉROULANTE ÉVITANT TOUT DÉBORDEMENT)
+                // 3. SÉLECTEUR DYNAMIQUE DE BOUTIQUES / DÉPÔTS (Pilule délimitée)
                 Container(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: cardBorder),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
+                    color: isDark ? AppTheme.darkSurface : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: isDark ? const Color(0xFF1E3352) : const Color(0xFFCBD5E1), width: 1.2),
                   ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      dropdownColor: cardBg,
-                      value: availableStores.contains(_selectedStoreTab) ? _selectedStoreTab : 'Tous',
-                      isExpanded: true,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.accentGold),
-                      items: availableStores.map((st) {
-                        final isGlobal = st == 'Tous';
-                        return DropdownMenuItem<String>(
-                          value: st,
-                          child: Row(
-                            children: [
-                              Icon(
-                                isGlobal ? Icons.store_mall_directory_rounded : Icons.storefront_rounded,
-                                size: 18,
-                                color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  isGlobal ? 'Toutes les boutiques (Stock global)'.tr : st,
-                                  style: TextStyle(
-                                    color: textColor,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13.5,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: availableStores.map((st) {
+                      final isSel = _selectedStoreTab == st;
+                      return InkWell(
+                        onTap: () => setState(() => _selectedStoreTab = st),
+                        borderRadius: BorderRadius.circular(22),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: isSel ? (isDark ? AppTheme.accentGold : const Color(0xFFFED7AA)) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(22),
                           ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => _selectedStoreTab = val);
-                        }
-                      },
-                    ),
+                          child: Text(
+                            st.tr,
+                            style: TextStyle(
+                              color: isSel ? (isDark ? AppTheme.primaryNavy : const Color(0xFF9A3412)) : (isDark ? Colors.white70 : const Color(0xFF1E293B)),
+                              fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
                 const SizedBox(height: 14),

@@ -132,7 +132,7 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                         ? Center(child: Text('Aucun article trouvé', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))))
                         : ListView.separated(
                             itemCount: products.length,
-                            separatorBuilder: (_, _) => Divider(height: 1, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
+                            separatorBuilder: (_, __) => Divider(height: 1, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
                             itemBuilder: (context, idx) {
                               final p = products[idx];
                               final available = p.stockForStore(_sourceStore);
@@ -454,7 +454,7 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _selectedQuantities.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, idx) {
                     final pId = _selectedQuantities.keys.elementAt(idx);
                     final qty = _selectedQuantities[pId]!;

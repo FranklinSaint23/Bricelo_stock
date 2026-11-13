@@ -251,10 +251,18 @@ void main() {
       );
 
       // Simuler un compte invité assigné à Boutique A avec droit de gestion de stock
+      final member = TeamMember(
+        id: 'tm_magasinier_test',
+        name: 'Magasinier Test',
+        phone: '677777777',
+        role: 'Magasinier',
+        storeName: 'Boutique A',
+        assignedCashDesk: 'Caisse Boutique A',
+      );
+      appState.teamMembers = [member];
       appState.userRole = 'Magasinier';
-      appState.activeWorkspaceOwnerPhone = '699999999';
-      appState.userPhone = '677777777'; // Différent du workspace owner = compte invité
-      appState.userAssignedStore = 'Boutique A';
+      appState.userPhone = '677777777';
+      appState.userName = 'Magasinier Test';
 
       expect(appState.isOwnerAccount, false);
       expect(appState.hasPermission('Gestion du stock & Prix'), true);
@@ -265,10 +273,10 @@ void main() {
       expect(sellableStock, 10);
 
       // Rétablissement Propriétaire
+      appState.teamMembers.clear();
       appState.userRole = 'Propriétaire';
-      appState.activeWorkspaceOwnerPhone = '';
       appState.userPhone = '';
-      appState.userAssignedStore = '';
+      appState.userName = '';
     });
   });
 }

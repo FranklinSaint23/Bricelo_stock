@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/screens/pos/shift_dialog_helper.dart';
 import 'package:stock_prime/screens/screens.dart';
+import 'package:stock_prime/screens/inventory/new_transfer_screen.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/theme/app_theme.dart';
@@ -85,6 +86,7 @@ class _PosScreenState extends State<PosScreen> {
           _selectedStore = stores.isNotEmpty ? stores.first : (assignedStore.isNotEmpty ? assignedStore : appState.currentStore);
         }
 
+        final isViewingOtherStore = !isOwner && _selectedStore != assignedStore;
         final effectiveStore = (!isOwner && !canManageStock) ? assignedStore : _selectedStore;
 
         final products = appState.products.where((p) {
@@ -111,12 +113,7 @@ class _PosScreenState extends State<PosScreen> {
   // ==========================================
   Widget _buildDesktopLayout(BuildContext context, List<Product> products, List<String> stores) {
     final isDark = appState.isDarkMode;
-    final isOwner = appState.isOwnerAccount;
-    final canManageStock = isOwner || appState.hasPermission('Gestion du stock & Prix');
-    final assignedStore = appState.assignedStoreForCurrentUser;
-    final isViewingOtherStore = !isOwner && _selectedStore != assignedStore;
-    final effectiveStore = (!isOwner && !canManageStock) ? assignedStore : _selectedStore;
-    final canAddProduct = isOwner || appState.hasPermission('Création de produits');
+    final canAddProduct = appState.isOwnerAccount || appState.hasPermission('Création de produits');
     final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
     final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
     final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -707,12 +704,7 @@ class _PosScreenState extends State<PosScreen> {
   // ==========================================
   Widget _buildMobileLayout(BuildContext context, List<Product> products, List<String> stores) {
     final isDark = appState.isDarkMode;
-    final isOwner = appState.isOwnerAccount;
-    final canManageStock = isOwner || appState.hasPermission('Gestion du stock & Prix');
-    final assignedStore = appState.assignedStoreForCurrentUser;
-    final isViewingOtherStore = !isOwner && _selectedStore != assignedStore;
-    final effectiveStore = (!isOwner && !canManageStock) ? assignedStore : _selectedStore;
-    final canAddProduct = isOwner || appState.hasPermission('Création de produits');
+    final canAddProduct = appState.isOwnerAccount || appState.hasPermission('Création de produits');
     final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
     final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
     final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -1071,64 +1063,64 @@ class _PosScreenState extends State<PosScreen> {
                       return Opacity(
                         opacity: isOutOfStock ? 0.45 : 1.0,
                         child: InkWell(
-                          onTap: () {
-                            if (isViewingOtherStore) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => NewTransferScreen(
-                                    initialSourceStore: _selectedStore,
-                                    initialDestinationStore: assignedStore,
-                                    initialProduct: p,
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            if (isOutOfStock) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: const Color(0xFFDC2626),
-                                  content: Text('Stock épuisé pour "${p.name}". Approvisionnement requis.'),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                              return;
-                            }
-                            if (p.productType != 'Service' && inCartQty >= availStock) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: const Color(0xFFDC2626),
-                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                              return;
-                            }
-                            if (inCart) {
-                              final ok = appState.updateCartQuantity(cartItem!, 1);
-                              if (!ok) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: const Color(0xFFDC2626),
-                                    content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            } else {
-                              final ok = appState.addToCart(p);
-                              if (!ok) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: const Color(0xFFDC2626),
-                                    content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            }
-                          },
+                          onTap: isViewingOtherStore
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => NewTransferScreen(
+                                        initialSourceStore: _selectedStore,
+                                        initialDestinationStore: assignedStore,
+                                        initialProduct: p,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              : (isOutOfStock
+                                  ? () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: const Color(0xFFDC2626),
+                                      content: Text('Stock épuisé pour "${p.name}". Approvisionnement requis.'),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              : () {
+                                  if (p.productType != 'Service' && inCartQty >= availStock) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: const Color(0xFFDC2626),
+                                        content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  if (inCart) {
+                                    final ok = appState.updateCartQuantity(cartItem!, 1);
+                                    if (!ok) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          backgroundColor: const Color(0xFFDC2626),
+                                          content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  final ok = appState.addToCart(p);
+                                  if (!ok) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: const Color(0xFFDC2626),
+                                        content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
                           borderRadius: BorderRadius.circular(14),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -1461,6 +1453,17 @@ class _PosScreenState extends State<PosScreen> {
                             Icon(
                               Icons.arrow_forward_ios_rounded,
                               size: 11,
+                              color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+                              Icons.arrow_forward_ios,
+                              size: 12,
                               color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
                             ),
                           ],
