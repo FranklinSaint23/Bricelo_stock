@@ -24,7 +24,7 @@ class _PosScreenState extends State<PosScreen> {
   @override
   void initState() {
     super.initState();
-    if (appState.isCashierAccount) {
+    if (!appState.isOwnerAccount) {
       _selectedStore = appState.assignedStoreForCurrentUser;
       appState.setCurrentStore(appState.assignedStoreForCurrentUser);
     }
@@ -44,10 +44,28 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   List<String> get _storeOptions {
-    if (appState.isCashierAccount) {
-      return [appState.assignedStoreForCurrentUser];
+    final isOwner = appState.isOwnerAccount;
+    final canManageStock = isOwner || appState.hasPermission('Gestion du stock & Prix');
+    final assigned = appState.assignedStoreForCurrentUser;
+
+    if (!isOwner && !canManageStock) {
+      // Sans droit de gestion de stock : strictement sa boutique rattachée
+      return [assigned];
     }
-    return ['Toutes', ...appState.availableStores];
+    final all = <String>{};
+    if (assigned.isNotEmpty && assigned != 'Toutes' && assigned != 'Toutes les boutiques') {
+      all.add(assigned);
+    }
+    for (final s in appState.availableStores) {
+      if (s.trim().isNotEmpty && s != 'Toutes' && s != 'Toutes les boutiques') all.add(s.trim());
+    }
+    for (final o in appState.outlets) {
+      if (o.name.trim().isNotEmpty && o.name != 'Toutes' && o.name != 'Toutes les boutiques') all.add(o.name.trim());
+    }
+    if (all.isEmpty) {
+      all.add(appState.currentStore.isNotEmpty ? appState.currentStore : 'Boutique Principale');
+    }
+    return all.toList();
   }
 
   @override
@@ -56,24 +74,26 @@ class _PosScreenState extends State<PosScreen> {
       animation: appState,
       builder: (context, _) {
         final isDesktop = MediaQuery.of(context).size.width >= 800;
-        final isCashier = appState.isCashierAccount;
+        final isOwner = appState.isOwnerAccount;
+        final canManageStock = isOwner || appState.hasPermission('Gestion du stock & Prix');
+        final assignedStore = appState.assignedStoreForCurrentUser;
         final stores = _storeOptions;
-        if (isCashier) {
-          _selectedStore = appState.assignedStoreForCurrentUser;
+
+        if (!isOwner && !canManageStock) {
+          _selectedStore = assignedStore;
         } else if (!stores.contains(_selectedStore)) {
-          _selectedStore = 'Toutes';
+          _selectedStore = stores.isNotEmpty ? stores.first : (assignedStore.isNotEmpty ? assignedStore : appState.currentStore);
         }
 
-        final effectiveStore = isCashier ? appState.assignedStoreForCurrentUser : _selectedStore;
+        final effectiveStore = (!isOwner && !canManageStock) ? assignedStore : _selectedStore;
 
         final products = appState.products.where((p) {
           final matchesSearch = p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
               p.barcode.contains(_searchQuery);
-          final matchesStore = effectiveStore == 'Toutes'
-              ? true
-              : (p.stockForStore(effectiveStore) > 0 ||
-                  p.stockByStore.containsKey(effectiveStore) ||
-                  (p.stockByStore.isEmpty && p.stock > 0));
+          final matchesStore = p.storeName.isEmpty ||
+              p.storeName.trim().toLowerCase() == effectiveStore.trim().toLowerCase() ||
+              p.stockByStore.containsKey(effectiveStore) ||
+              p.stockForStore(effectiveStore) > 0;
           return matchesSearch && matchesStore;
         }).toList();
 
@@ -91,6 +111,12 @@ class _PosScreenState extends State<PosScreen> {
   // ==========================================
   Widget _buildDesktopLayout(BuildContext context, List<Product> products, List<String> stores) {
     final isDark = appState.isDarkMode;
+    final isOwner = appState.isOwnerAccount;
+    final canManageStock = isOwner || appState.hasPermission('Gestion du stock & Prix');
+    final assignedStore = appState.assignedStoreForCurrentUser;
+    final isViewingOtherStore = !isOwner && _selectedStore != assignedStore;
+    final effectiveStore = (!isOwner && !canManageStock) ? assignedStore : _selectedStore;
+    final canAddProduct = isOwner || appState.hasPermission('Création de produits');
     final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
     final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
     final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -134,26 +160,28 @@ class _PosScreenState extends State<PosScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryNavy,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      if (canAddProduct) ...[
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryNavy,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.add_box_outlined, color: AppTheme.accentGold, size: 20),
+                          label: Text('Nouveau Produit'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
+                          },
                         ),
-                        icon: const Icon(Icons.add_box_outlined, color: AppTheme.accentGold, size: 20),
-                        label: Text('Nouveau Produit'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
-                        },
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 14),
 
-                  if (appState.isCashierAccount)
+                  if (!isOwner && !canManageStock)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
@@ -167,7 +195,7 @@ class _PosScreenState extends State<PosScreen> {
                           Icon(Icons.storefront_rounded, size: 16, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                           const SizedBox(width: 8),
                           Text(
-                            appState.assignedStoreForCurrentUser,
+                            assignedStore,
                             style: TextStyle(color: textPrimary, fontWeight: FontWeight.bold, fontSize: 12.5),
                           ),
                           const SizedBox(width: 8),
@@ -192,7 +220,7 @@ class _PosScreenState extends State<PosScreen> {
                         ],
                       ),
                     )
-                  else
+                  else ...[
                     SizedBox(
                       height: 38,
                       child: ListView.separated(
@@ -202,8 +230,32 @@ class _PosScreenState extends State<PosScreen> {
                         itemBuilder: (context, idx) {
                           final store = stores[idx];
                           final isSelected = _selectedStore == store;
+                          final isOther = !isOwner && store != assignedStore;
                           return ChoiceChip(
-                            label: Text(store == 'Toutes' ? 'Toutes les boutiques'.tr : store),
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(store == 'Toutes' ? 'Toutes les boutiques'.tr : store),
+                                if (isOther) ...[
+                                  const SizedBox(width: 5),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? Colors.white24 : const Color(0xFFD97706).withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'Transfert'.tr,
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected ? AppTheme.accentGold : const Color(0xFFD97706),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                             selected: isSelected,
                             selectedColor: AppTheme.primaryNavy,
                             backgroundColor: cardBg,
@@ -220,7 +272,7 @@ class _PosScreenState extends State<PosScreen> {
                             ),
                             onSelected: (_) => setState(() {
                               _selectedStore = store;
-                              if (store != 'Toutes') {
+                              if (isOwner && store != 'Toutes') {
                                 appState.setCurrentStore(store);
                               }
                             }),
@@ -228,6 +280,56 @@ class _PosScreenState extends State<PosScreen> {
                         },
                       ),
                     ),
+                    if (isViewingOtherStore) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.35) : const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: isDark ? const Color(0xFFB45309) : const Color(0xFFF59E0B)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.swap_horiz_rounded, size: 18, color: Color(0xFFD97706)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Consultation du stock de "$_selectedStore". La vente est réservée à votre boutique rattachée ($assignedStore). Cliquez sur un article pour demander un transfert.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                                ),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryNavy,
+                                foregroundColor: AppTheme.accentGold,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              icon: const Icon(Icons.swap_horiz_rounded, size: 14),
+                              label: const Text('Nouveau transfert', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => NewTransferScreen(
+                                      initialSourceStore: _selectedStore,
+                                      initialDestinationStore: assignedStore,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                   const SizedBox(height: 16),
 
                   Expanded(
@@ -253,23 +355,27 @@ class _PosScreenState extends State<PosScreen> {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  'Ajoutez un produit et son stock pour démarrer vos ventes.'.tr,
+                                  canAddProduct
+                                      ? 'Ajoutez un produit et son stock pour démarrer vos ventes.'.tr
+                                      : 'Aucun produit disponible dans cette boutique pour l\'instant.'.tr,
                                   style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                                 ),
-                                const SizedBox(height: 20),
-                                ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.primaryNavy,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                if (canAddProduct) ...[
+                                  const SizedBox(height: 20),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.primaryNavy,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                    ),
+                                    icon: const Icon(Icons.add, color: AppTheme.accentGold),
+                                    label: Text('Ajouter mon premier produit'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    onPressed: () {
+                                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
+                                    },
                                   ),
-                                  icon: const Icon(Icons.add, color: AppTheme.accentGold),
-                                  label: Text('Ajouter mon premier produit'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  onPressed: () {
-                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
-                                  },
-                                ),
+                                ],
                               ],
                             ),
                           )
@@ -283,14 +389,29 @@ class _PosScreenState extends State<PosScreen> {
                             itemCount: products.length,
                             itemBuilder: (context, idx) {
                               final p = products[idx];
+                              final storeStock = isViewingOtherStore ? p.stockForStore(_selectedStore) : p.stockForStore(assignedStore);
+                              final displayStock = isOwner ? (effectiveStore == 'Toutes' ? p.stock : p.stockForStore(effectiveStore)) : storeStock;
                               return InkWell(
                                 onTap: () {
+                                  if (isViewingOtherStore) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => NewTransferScreen(
+                                          initialSourceStore: _selectedStore,
+                                          initialDestinationStore: assignedStore,
+                                          initialProduct: p,
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
                                   final ok = appState.addToCart(p);
                                   if (!ok) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         backgroundColor: const Color(0xFFDC2626),
-                                        content: Text('${'Stock insuffisant ! Le stock disponible pour'.tr} "${p.name}" ${'est de'.tr} ${p.stockForStore(appState.isCashierAccount ? appState.assignedStoreForCurrentUser : appState.currentStore)}.'),
+                                        content: Text('${'Stock insuffisant ! Le stock disponible pour'.tr} "${p.name}" ${'est de'.tr} ${p.stockForStore(assignedStore)}.'),
                                         duration: const Duration(seconds: 2),
                                       ),
                                     );
@@ -322,13 +443,13 @@ class _PosScreenState extends State<PosScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                             decoration: BoxDecoration(
-                                              color: p.stock <= 5 ? (isDark ? const Color(0xFF78350F) : const Color(0xFFFEF3C7)) : (isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5)),
+                                              color: displayStock <= 5 ? (isDark ? const Color(0xFF78350F) : const Color(0xFFFEF3C7)) : (isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5)),
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                             child: Text(
-                                              '${p.stock} ${p.unit}',
+                                              '$displayStock ${p.unit}',
                                               style: TextStyle(
-                                                color: p.stock <= 5 ? const Color(0xFFFBBF24) : const Color(0xFF34D399),
+                                                color: displayStock <= 5 ? const Color(0xFFFBBF24) : const Color(0xFF34D399),
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -359,15 +480,39 @@ class _PosScreenState extends State<PosScreen> {
                                               color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                                             ),
                                           ),
-                                          Container(
-                                            width: 28,
-                                            height: 28,
-                                            decoration: BoxDecoration(
-                                              color: AppTheme.primaryNavy,
-                                              borderRadius: BorderRadius.circular(8),
+                                          if (isViewingOtherStore)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.swap_horiz_rounded, size: 13, color: isDark ? AppTheme.primaryNavy : AppTheme.accentGold),
+                                                  const SizedBox(width: 3),
+                                                  Text(
+                                                    'Transférer'.tr,
+                                                    style: TextStyle(
+                                                      fontSize: 10.5,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: isDark ? AppTheme.primaryNavy : Colors.white,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          else
+                                            Container(
+                                              width: 28,
+                                              height: 28,
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primaryNavy,
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: const Icon(Icons.add, color: AppTheme.accentGold, size: 16),
                                             ),
-                                            child: const Icon(Icons.add, color: AppTheme.accentGold, size: 16),
-                                          ),
                                         ],
                                       ),
                                     ],
@@ -562,6 +707,12 @@ class _PosScreenState extends State<PosScreen> {
   // ==========================================
   Widget _buildMobileLayout(BuildContext context, List<Product> products, List<String> stores) {
     final isDark = appState.isDarkMode;
+    final isOwner = appState.isOwnerAccount;
+    final canManageStock = isOwner || appState.hasPermission('Gestion du stock & Prix');
+    final assignedStore = appState.assignedStoreForCurrentUser;
+    final isViewingOtherStore = !isOwner && _selectedStore != assignedStore;
+    final effectiveStore = (!isOwner && !canManageStock) ? assignedStore : _selectedStore;
+    final canAddProduct = isOwner || appState.hasPermission('Création de produits');
     final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
     final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
     final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -642,24 +793,26 @@ class _PosScreenState extends State<PosScreen> {
                   hintText: 'Rechercher un produit ou scanner...'.tr,
                   hintStyle: TextStyle(color: textSecondary, fontSize: 13),
                   prefixIcon: Icon(Icons.search_rounded, color: isDark ? AppTheme.accentGold : const Color(0xFF64748B), size: 20),
-                  suffixIcon: Padding(
-                    padding: const EdgeInsets.all(6.0),
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
-                      },
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryNavy,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.add_rounded, color: AppTheme.accentGold, size: 20),
-                      ),
-                    ),
-                  ),
+                  suffixIcon: canAddProduct
+                      ? Padding(
+                          padding: const EdgeInsets.all(6.0),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryNavy,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.add_rounded, color: AppTheme.accentGold, size: 20),
+                            ),
+                          ),
+                        )
+                      : null,
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 ),
@@ -668,11 +821,14 @@ class _PosScreenState extends State<PosScreen> {
             ),
           ),
 
-          // 2. SÉLECTION DES BOUTIQUES (VERROUILLÉE POUR CAISSIER, DROPDOWN POUR AUTRES)
+          // 2. SÉLECTION DES BOUTIQUES (VERROUILLÉE SI PAS LE DROIT GESTION DU STOCK)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: appState.isCashierAccount
-                ? Container(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!isOwner && !canManageStock)
+                  Container(
                     height: 44,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
@@ -693,7 +849,7 @@ class _PosScreenState extends State<PosScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            appState.assignedStoreForCurrentUser,
+                            assignedStore,
                             style: TextStyle(
                               color: textPrimary,
                               fontWeight: FontWeight.w700,
@@ -728,7 +884,8 @@ class _PosScreenState extends State<PosScreen> {
                       ],
                     ),
                   )
-                : Container(
+                else
+                  Container(
                     height: 44,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
@@ -742,10 +899,11 @@ class _PosScreenState extends State<PosScreen> {
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         dropdownColor: cardBg,
-                        value: stores.contains(_selectedStore) ? _selectedStore : 'Toutes',
+                        value: stores.contains(_selectedStore) ? _selectedStore : stores.first,
                         isExpanded: true,
                         icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.accentGold),
                         items: stores.map((store) {
+                          final isOther = !isOwner && store != assignedStore;
                           return DropdownMenuItem<String>(
                             value: store,
                             child: Row(
@@ -756,14 +914,29 @@ class _PosScreenState extends State<PosScreen> {
                                   color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                                 ),
                                 const SizedBox(width: 8),
-                                Text(
-                                  store == 'Toutes' ? 'Toutes les boutiques'.tr : store,
-                                  style: TextStyle(
-                                    color: textPrimary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13.5,
+                                Expanded(
+                                  child: Text(
+                                    store == 'Toutes' ? 'Toutes les boutiques'.tr : store,
+                                    style: TextStyle(
+                                      color: textPrimary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13.5,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                                if (isOther)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD97706).withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'Transfert'.tr,
+                                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFD97706)),
+                                    ),
+                                  ),
                               ],
                             ),
                           );
@@ -772,7 +945,7 @@ class _PosScreenState extends State<PosScreen> {
                           if (newStore != null) {
                             setState(() {
                               _selectedStore = newStore;
-                              if (newStore != 'Toutes') {
+                              if (isOwner && newStore != 'Toutes') {
                                 appState.setCurrentStore(newStore);
                               }
                             });
@@ -781,6 +954,35 @@ class _PosScreenState extends State<PosScreen> {
                       ),
                     ),
                   ),
+                if (isViewingOtherStore) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.35) : const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: isDark ? const Color(0xFFB45309) : const Color(0xFFF59E0B)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.swap_horiz_rounded, size: 16, color: Color(0xFFD97706)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Stock de "$_selectedStore" en consultation seule. Vente interdite : demandez un transfert vers votre boutique ($assignedStore).',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
           const SizedBox(height: 8),
 
@@ -813,28 +1015,32 @@ class _PosScreenState extends State<PosScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Ajoutez un produit et son stock pour démarrer vos ventes.'.tr,
+                            canAddProduct
+                                ? 'Ajoutez un produit et son stock pour démarrer vos ventes.'.tr
+                                : 'Aucun produit disponible dans cette boutique.'.tr,
                             textAlign: TextAlign.center,
                             style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                           ),
-                          const SizedBox(height: 22),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryNavy,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+                          if (canAddProduct) ...[
+                            const SizedBox(height: 22),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryNavy,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+                              ),
+                              icon: const Icon(Icons.add_rounded, size: 18, color: AppTheme.accentGold),
+                              label: Text(
+                                'Ajouter mon premier produit'.tr,
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                              ),
+                              onPressed: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
+                              },
                             ),
-                            icon: const Icon(Icons.add_rounded, size: 18, color: AppTheme.accentGold),
-                            label: Text(
-                              'Ajouter mon premier produit'.tr,
-                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
-                            ),
-                            onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
-                            },
-                          ),
+                          ],
                         ],
                       ),
                     ),
@@ -845,12 +1051,12 @@ class _PosScreenState extends State<PosScreen> {
                       crossAxisCount: 2,
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 1.40,
+                      childAspectRatio: 1.08,
                     ),
                     itemCount: products.length,
                     itemBuilder: (context, idx) {
                       final p = products[idx];
-                      final availStock = _selectedStore == 'Toutes' ? p.stock : p.stockForStore(_selectedStore);
+                      final availStock = p.stockForStore(effectiveStore);
                       final isOutOfStock = p.productType != 'Service' && availStock <= 0;
                       final isLow = availStock <= 5 && !isOutOfStock;
                       final inCartQty = appState.cart
@@ -865,51 +1071,64 @@ class _PosScreenState extends State<PosScreen> {
                       return Opacity(
                         opacity: isOutOfStock ? 0.45 : 1.0,
                         child: InkWell(
-                          onTap: isOutOfStock
-                              ? () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      backgroundColor: const Color(0xFFDC2626),
-                                      content: Text('Stock épuisé pour "${p.name}". Approvisionnement requis.'),
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              : () {
-                                  if (p.productType != 'Service' && inCartQty >= availStock) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        backgroundColor: const Color(0xFFDC2626),
-                                        content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                    return;
-                                  }
-                                  if (inCart) {
-                                    final ok = appState.updateCartQuantity(cartItem!, 1);
-                                    if (!ok) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          backgroundColor: const Color(0xFFDC2626),
-                                          content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                } else {
-                                  final ok = appState.addToCart(p);
-                                  if (!ok) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        backgroundColor: const Color(0xFFDC2626),
-                                        content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
+                          onTap: () {
+                            if (isViewingOtherStore) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => NewTransferScreen(
+                                    initialSourceStore: _selectedStore,
+                                    initialDestinationStore: assignedStore,
+                                    initialProduct: p,
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            if (isOutOfStock) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: const Color(0xFFDC2626),
+                                  content: Text('Stock épuisé pour "${p.name}". Approvisionnement requis.'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
+                            if (p.productType != 'Service' && inCartQty >= availStock) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: const Color(0xFFDC2626),
+                                  content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
+                            if (inCart) {
+                              final ok = appState.updateCartQuantity(cartItem!, 1);
+                              if (!ok) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: const Color(0xFFDC2626),
+                                    content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            } else {
+                              final ok = appState.addToCart(p);
+                              if (!ok) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: const Color(0xFFDC2626),
+                                    content: Text('Stock insuffisant ! Le stock disponible pour "${p.name}" est de $availStock $unitLabel.'),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            }
+                          },
                           borderRadius: BorderRadius.circular(14),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -938,7 +1157,7 @@ class _PosScreenState extends State<PosScreen> {
                                   children: [
                                     ProductImageWidget(
                                       imageUrl: p.imageUrl,
-                                      size: 60,
+                                      size: 48,
                                       borderRadius: 10,
                                     ),
                                     Container(
@@ -986,7 +1205,36 @@ class _PosScreenState extends State<PosScreen> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    if (inCart)
+                                    if (isViewingOtherStore)
+                                      ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                                          foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                                          elevation: 0,
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          minimumSize: const Size(0, 28),
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        ),
+                                        icon: const Icon(Icons.swap_horiz_rounded, size: 13),
+                                        label: Text(
+                                          'Transfert'.tr,
+                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                        ),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => NewTransferScreen(
+                                                initialSourceStore: _selectedStore,
+                                                initialDestinationStore: assignedStore,
+                                                initialProduct: p,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    else if (inCart)
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
@@ -1103,7 +1351,7 @@ class _PosScreenState extends State<PosScreen> {
               if (appState.isShiftsTrackingEnabled)
                 _buildShiftBottomBar(context),
               Container(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 decoration: BoxDecoration(
                   color: cardBg,
                   border: Border(top: BorderSide(color: cardBorder)),
@@ -1136,7 +1384,7 @@ class _PosScreenState extends State<PosScreen> {
                                   ),
                                 ),
                                 if (appState.cart.isNotEmpty) ...[
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 4),
                                   Icon(Icons.keyboard_arrow_up_rounded, size: 16, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                                 ],
                               ],
@@ -1145,10 +1393,11 @@ class _PosScreenState extends State<PosScreen> {
                             Text(
                               AppTheme.formatFCFA(appState.cartTotal),
                               style: TextStyle(
-                                fontSize: 20,
+                                fontSize: 18,
                                 fontWeight: FontWeight.w900,
                                 color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -1156,8 +1405,11 @@ class _PosScreenState extends State<PosScreen> {
                     ),
                     if (appState.cart.isNotEmpty) ...[
                       IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.all(4),
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                         tooltip: 'Mettre en attente'.tr,
-                        icon: Icon(Icons.pause_circle_outline_rounded, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                        icon: Icon(Icons.pause_circle_outline_rounded, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 22),
                         onPressed: () {
                           appState.holdCurrentCart();
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -1166,13 +1418,17 @@ class _PosScreenState extends State<PosScreen> {
                         },
                       ),
                       IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.all(4),
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                         tooltip: 'Vider le panier'.tr,
-                        icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger),
+                        icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 22),
                         onPressed: () => appState.clearCart(),
                       ),
                     ],
+                    const SizedBox(width: 4),
                     SizedBox(
-                      height: 48,
+                      height: 44,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: appState.cart.isEmpty
@@ -1182,8 +1438,8 @@ class _PosScreenState extends State<PosScreen> {
                               ? const Color(0xFF94A3B8)
                               : AppTheme.primaryNavy,
                           elevation: appState.cart.isEmpty ? 0 : 2,
-                          padding: const EdgeInsets.symmetric(horizontal: 18),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: appState.cart.isEmpty
                             ? null
@@ -1192,17 +1448,19 @@ class _PosScreenState extends State<PosScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Payer • ${AppTheme.formatFCFA(appState.cartTotal)}',
+                              appState.cart.isEmpty
+                                  ? 'Payer'.tr
+                                  : 'Payer • ${AppTheme.formatFCFA(appState.cartTotal)}',
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
-                                fontSize: 13.5,
+                                fontSize: 12,
                                 color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             Icon(
-                              Icons.arrow_forward_ios,
-                              size: 12,
+                              Icons.arrow_forward_ios_rounded,
+                              size: 11,
                               color: appState.cart.isEmpty ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
                             ),
                           ],

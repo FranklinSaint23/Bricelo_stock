@@ -49,6 +49,7 @@ class Product {
   String? imageUrl;
   DateTime? expiryDate;
   String? lotNumber;
+  String storeName;
 
   Map<String, int> stockByStore;
 
@@ -69,24 +70,40 @@ class Product {
     this.imageUrl,
     this.expiryDate,
     this.lotNumber,
+    this.storeName = '',
     Map<String, int>? stockByStore,
   })  : wholesalePrice = wholesalePrice ?? (sellPrice * 0.9),
         stockByStore = stockByStore ?? {};
 
-  int stockForStore(String storeName) {
-    if (storeName == 'Tous' || storeName == 'Toutes' || storeName.trim().isEmpty) return stock;
-    final normalized = storeName.trim().toLowerCase();
+  int stockForStore(String targetStore) {
+    if (targetStore == 'Tous' || targetStore == 'Toutes' || targetStore.trim().isEmpty) {
+      if (stockByStore.isNotEmpty) {
+        return stockByStore.values.fold(0, (sum, v) => sum + v);
+      }
+      return stock;
+    }
+    final normalized = targetStore.trim().toLowerCase();
     for (final entry in stockByStore.entries) {
       if (entry.key.trim().toLowerCase() == normalized) {
         return entry.value;
       }
     }
     if (stockByStore.isNotEmpty) return 0;
+    if (storeName.isNotEmpty) {
+      if (storeName.trim().toLowerCase() == normalized) {
+        return stock;
+      }
+      return 0;
+    }
     return stock;
   }
 
   void setStockForStore(String storeName, int qty) {
-    stockByStore[storeName.trim()] = qty;
+    final cleanStore = storeName.trim();
+    stockByStore[cleanStore] = qty;
+    if (this.storeName.isEmpty) {
+      this.storeName = cleanStore;
+    }
     if (stockByStore.length > 1) {
       stock = stockByStore.values.fold(0, (sum, v) => sum + v);
     } else {
@@ -133,6 +150,7 @@ class Product {
         'imageUrl': imageUrl,
         'expiryDate': expiryDate?.toIso8601String(),
         'lotNumber': lotNumber,
+        'storeName': storeName,
         'stockByStore': stockByStore,
       };
 
@@ -146,6 +164,11 @@ class Product {
         sMap[k.toString()] = (v as num?)?.toInt() ?? 0;
       });
     }
+    final parsedStock = (j['stock'] as num?)?.toInt() ?? 0;
+    final sName = (j['storeName'] ?? j['store_name'] ?? '').toString().trim();
+    if (sMap.isEmpty && sName.isNotEmpty) {
+      sMap[sName] = parsedStock;
+    }
 
     return Product(
       id: (j['id'] ?? '').toString(),
@@ -155,7 +178,7 @@ class Product {
       buyPrice: buy,
       sellPrice: sell,
       wholesalePrice: (j['wholesalePrice'] as num?)?.toDouble() ?? (sell * 0.9),
-      stock: (j['stock'] as num?)?.toInt() ?? 0,
+      stock: parsedStock,
       minStockAlert: (j['minStockAlert'] as num?)?.toInt() ?? (j['min_stock'] as num?)?.toInt() ?? 5,
       unit: (j['unit'] ?? 'Pièce').toString(),
       productType: (j['productType'] ?? j['product_type'] ?? 'Produit').toString(),
@@ -166,6 +189,7 @@ class Product {
           ? DateTime.tryParse(j['expiryDate'].toString())
           : (j['expiry_date'] != null ? DateTime.tryParse(j['expiry_date'].toString()) : null),
       lotNumber: j['lotNumber']?.toString() ?? j['lot_number']?.toString(),
+      storeName: sName,
       stockByStore: sMap,
     );
   }

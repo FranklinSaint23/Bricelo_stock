@@ -234,6 +234,42 @@ void main() {
       // Dans une autre boutique où le produit n'a pas été alloué, le stock est 0 (pas de fuite de stock)
       expect(p.stockForStore('Autre Boutique'), 0);
     });
+
+    test('Guest account with stock management permission: sales locked to assigned store', () {
+      final p = Product(
+        id: 'p_multistore',
+        name: 'Produit Multi Boutique',
+        category: 'Général',
+        barcode: '778899',
+        buyPrice: 500,
+        sellPrice: 1000,
+        stock: 50,
+        stockByStore: {
+          'Boutique A': 10,
+          'Boutique B': 40,
+        },
+      );
+
+      // Simuler un compte invité assigné à Boutique A avec droit de gestion de stock
+      appState.userRole = 'Magasinier';
+      appState.activeWorkspaceOwnerPhone = '699999999';
+      appState.userPhone = '677777777'; // Différent du workspace owner = compte invité
+      appState.userAssignedStore = 'Boutique A';
+
+      expect(appState.isOwnerAccount, false);
+      expect(appState.hasPermission('Gestion du stock & Prix'), true);
+      expect(appState.assignedStoreForCurrentUser, 'Boutique A');
+
+      // Pour la vente, le stock disponible est restreint à sa propre boutique assignée (10 et NON 50 ni 40)
+      final sellableStock = appState.getAvailableStockForProduct(p);
+      expect(sellableStock, 10);
+
+      // Rétablissement Propriétaire
+      appState.userRole = 'Propriétaire';
+      appState.activeWorkspaceOwnerPhone = '';
+      appState.userPhone = '';
+      appState.userAssignedStore = '';
+    });
   });
 }
 

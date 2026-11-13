@@ -5,7 +5,16 @@ import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/widgets/widgets.dart';
 
 class NewTransferScreen extends StatefulWidget {
-  const NewTransferScreen({super.key});
+  final String? initialSourceStore;
+  final String? initialDestinationStore;
+  final Product? initialProduct;
+
+  const NewTransferScreen({
+    super.key,
+    this.initialSourceStore,
+    this.initialDestinationStore,
+    this.initialProduct,
+  });
 
   @override
   State<NewTransferScreen> createState() => _NewTransferScreenState();
@@ -23,19 +32,34 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
   @override
   void initState() {
     super.initState();
-    final stores = appState.outlets.map((o) => o.name).toList();
-    if (stores.isEmpty) stores.add(appState.currentStore);
+    final storesSet = <String>{};
+    for (final s in appState.availableStores) {
+      if (s.trim().isNotEmpty) storesSet.add(s.trim());
+    }
+    for (final o in appState.outlets) {
+      if (o.name.trim().isNotEmpty) storesSet.add(o.name.trim());
+    }
+    if (appState.currentStore.trim().isNotEmpty) storesSet.add(appState.currentStore.trim());
+    if (appState.assignedStoreForCurrentUser.trim().isNotEmpty) storesSet.add(appState.assignedStoreForCurrentUser.trim());
+    if (storesSet.isEmpty) storesSet.add('Entrepôt Central');
+    final stores = storesSet.toList();
 
     if (!appState.isOwnerAccount) {
       // Un compte invité demande un transfert depuis une autre boutique vers sa boutique rattachée
-      _destinationStore = appState.assignedStoreForCurrentUser;
-      _sourceStore = stores.firstWhere(
-        (s) => s != _destinationStore,
-        orElse: () => 'Entrepôt Central',
-      );
+      _destinationStore = widget.initialDestinationStore ?? appState.assignedStoreForCurrentUser;
+      _sourceStore = widget.initialSourceStore ??
+          stores.firstWhere(
+            (s) => s != _destinationStore,
+            orElse: () => stores.first,
+          );
     } else {
-      _sourceStore = appState.currentStore;
-      _destinationStore = stores.firstWhere((s) => s != _sourceStore, orElse: () => 'Entrepôt Central');
+      _sourceStore = widget.initialSourceStore ?? appState.currentStore;
+      _destinationStore = widget.initialDestinationStore ??
+          stores.firstWhere((s) => s != _sourceStore, orElse: () => stores.firstWhere((s) => s != _sourceStore, orElse: () => 'Entrepôt Central'));
+    }
+
+    if (widget.initialProduct != null) {
+      _selectedQuantities[widget.initialProduct!.id] = 1;
     }
   }
 
@@ -108,7 +132,7 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                         ? Center(child: Text('Aucun article trouvé', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))))
                         : ListView.separated(
                             itemCount: products.length,
-                            separatorBuilder: (_, __) => Divider(height: 1, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
+                            separatorBuilder: (_, _) => Divider(height: 1, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
                             itemBuilder: (context, idx) {
                               final p = products[idx];
                               final available = p.stockForStore(_sourceStore);
@@ -282,9 +306,19 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = appState.isDarkMode;
-    final stores = appState.outlets.map((o) => o.name).toList();
-    if (stores.isEmpty) stores.add(appState.currentStore);
-    if (!stores.contains('Entrepôt Central')) stores.add('Entrepôt Central');
+    final storesSet = <String>{};
+    for (final s in appState.availableStores) {
+      if (s.trim().isNotEmpty) storesSet.add(s.trim());
+    }
+    for (final o in appState.outlets) {
+      if (o.name.trim().isNotEmpty) storesSet.add(o.name.trim());
+    }
+    if (appState.currentStore.trim().isNotEmpty) storesSet.add(appState.currentStore.trim());
+    if (appState.assignedStoreForCurrentUser.trim().isNotEmpty) storesSet.add(appState.assignedStoreForCurrentUser.trim());
+    if (!storesSet.contains('Entrepôt Central')) storesSet.add('Entrepôt Central');
+    if (_sourceStore.isNotEmpty) storesSet.add(_sourceStore);
+    if (_destinationStore.isNotEmpty) storesSet.add(_destinationStore);
+    final stores = storesSet.toList();
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF09121E) : const Color(0xFFF8FAFC),
@@ -420,7 +454,7 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _selectedQuantities.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
                   itemBuilder: (context, idx) {
                     final pId = _selectedQuantities.keys.elementAt(idx);
                     final qty = _selectedQuantities[pId]!;

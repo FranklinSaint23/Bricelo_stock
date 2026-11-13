@@ -65,6 +65,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   // ==========================================
   Widget _buildDesktopProducts(BuildContext context, List<Product> products) {
     final isDark = appState.isDarkMode;
+    final canAddProduct = appState.isOwnerAccount || appState.hasPermission('Création de produits');
     final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
     final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
     final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -149,27 +150,29 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const ImportProductsScreen()));
                   },
                 ),
-                const SizedBox(width: 10),
+                if (canAddProduct) ...[
+                  const SizedBox(width: 10),
 
-                // Bouton Nouveau Produit
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryNavy,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  // Bouton Nouveau Produit
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryNavy,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    icon: const Icon(Icons.add, color: AppTheme.accentGold, size: 18),
+                    label: Text('Ajouter un produit'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    onPressed: () {
+                      if (appState.isDiscoveredPlan && appState.isProductQuotaReached) {
+                        _showProductQuotaDialog(context);
+                        return;
+                      }
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
+                    },
                   ),
-                  icon: const Icon(Icons.add, color: AppTheme.accentGold, size: 18),
-                  label: Text('Ajouter un produit'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  onPressed: () {
-                    if (appState.isDiscoveredPlan && appState.isProductQuotaReached) {
-                      _showProductQuotaDialog(context);
-                      return;
-                    }
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const NewProductScreen()));
-                  },
-                ),
+                ],
               ],
             ),
             const SizedBox(height: 16),
@@ -362,6 +365,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   // ==========================================
   Widget _buildMobileProducts(BuildContext context, List<Product> products) {
     final isDark = appState.isDarkMode;
+    final canAddProduct = appState.isOwnerAccount || appState.hasPermission('Création de produits');
     final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
     final cardBorder = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
     final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -807,15 +811,17 @@ class _ProductsScreenState extends State<ProductsScreen> {
         ],
       ),
 
-      // FAB EN BAS À DROITE
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
-        foregroundColor: AppTheme.accentGold,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: cardBorder)),
-        onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
-        child: Icon(_isFabExpanded ? Icons.close : Icons.add, size: 28),
-      ),
+      // FAB EN BAS À DROITE (Uniquement pour ceux autorisés à créer des produits)
+      floatingActionButton: canAddProduct
+          ? FloatingActionButton(
+              backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
+              foregroundColor: AppTheme.accentGold,
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: cardBorder)),
+              onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
+              child: Icon(_isFabExpanded ? Icons.close : Icons.add, size: 28),
+            )
+          : null,
     );
   }
 

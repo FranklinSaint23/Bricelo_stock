@@ -5,6 +5,7 @@ import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/models/models.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/widgets/product_image_widget.dart';
+import 'package:stock_prime/screens/inventory/new_transfer_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -577,7 +578,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         final pillText = isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
 
         final p = _currentProduct;
-        final stores = appState.availableStores.isNotEmpty ? appState.availableStores : [appState.currentStore];
+        final isOwner = appState.isOwnerAccount;
+        final canManageStock = isOwner || appState.hasPermission('Gestion du stock & Prix');
+        final assignedStore = appState.assignedStoreForCurrentUser;
+
+        final storesSet = <String>{};
+        if (assignedStore.isNotEmpty) storesSet.add(assignedStore);
+        if (isOwner || canManageStock) {
+          for (final s in appState.availableStores) {
+            if (s.trim().isNotEmpty) storesSet.add(s.trim());
+          }
+          for (final o in appState.outlets) {
+            if (o.name.trim().isNotEmpty) storesSet.add(o.name.trim());
+          }
+        }
+        final stores = storesSet.isNotEmpty ? storesSet.toList() : [appState.currentStore];
         final totalStockValuation = p.sellPrice * p.stock;
         final totalCostValuation = p.buyPrice * p.stock;
         final potentialMargin = totalStockValuation - totalCostValuation;
@@ -871,13 +886,74 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(st, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: textPrimary)),
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(st, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: textPrimary), overflow: TextOverflow.ellipsis),
+                                      ),
+                                      if (!isOwner && st == assignedStore) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            'Ma boutique'.tr,
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
                                 Row(
                                   children: [
                                     Text(
                                       '${'Quantité'.tr}: ${p.stockForStore(st)}',
                                       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.accentGold),
                                     ),
+                                    if (!isOwner && st != assignedStore && p.stockForStore(st) > 0) ...[
+                                      const SizedBox(width: 8),
+                                      InkWell(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => NewTransferScreen(
+                                                initialSourceStore: st,
+                                                initialDestinationStore: assignedStore,
+                                                initialProduct: p,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.swap_horiz_rounded, size: 13, color: isDark ? AppTheme.primaryNavy : AppTheme.accentGold),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Transférer'.tr,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDark ? AppTheme.primaryNavy : Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                     const SizedBox(width: 8),
                                     Icon(Icons.arrow_forward_ios, size: 12, color: textSecondary),
                                   ],
@@ -1163,10 +1239,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
 
           // BARRE FIXE EN BAS : MODIFIER & ÉTIQUETTES
-          bottomSheet: SafeArea(
+          bottomNavigationBar: SafeArea(
             top: false,
+            bottom: true,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
               decoration: BoxDecoration(
                 color: isDark ? AppTheme.darkSurface : Colors.white,
                 border: Border(top: BorderSide(color: cardBorder)),

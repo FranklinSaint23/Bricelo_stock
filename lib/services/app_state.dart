@@ -1152,17 +1152,44 @@ class AppState extends ChangeNotifier {
 
       // 6. Produits
       try {
-        final rows = await sb.from('products').select().order('created_at', ascending: false);
+        final allowedStores = availableStores.where((s) => s.trim().isNotEmpty && s != 'Tous' && s != 'Toutes').toList();
+        if (allowedStores.isEmpty && currentStore.trim().isNotEmpty) {
+          allowedStores.add(currentStore.trim());
+        }
+
+        List<dynamic> rows = [];
+        if (allowedStores.isNotEmpty) {
+          rows = await sb.from('products').select().inFilter('store_name', allowedStores).order('created_at', ascending: false);
+        } else {
+          rows = await sb.from('products').select().order('created_at', ascending: false);
+        }
+
         if (rows.isNotEmpty) {
-          final remoteProds = (rows as List).map((r) => Product.fromJson(Map<String, dynamic>.from(r))).toList();
+          final remoteProds = rows.map((r) => Product.fromJson(Map<String, dynamic>.from(r))).toList();
           for (final rp in remoteProds) {
             final idx = products.indexWhere((p) => p.id == rp.id);
             if (idx == -1) {
               products.add(rp);
             } else {
               products[idx].stock = rp.stock;
+              if (rp.storeName.isNotEmpty) products[idx].storeName = rp.storeName;
+              if (rp.stockByStore.isNotEmpty) {
+                products[idx].stockByStore = Map.from(rp.stockByStore);
+              }
             }
           }
+        }
+
+        // Purge de sécurité : retirer les produits qui n'appartiennent à aucune boutique autorisée du compte connecté
+        if (allowedStores.isNotEmpty) {
+          final allowedLower = allowedStores.map((s) => s.toLowerCase().trim()).toSet();
+          products.removeWhere((p) {
+            final pStore = p.storeName.toLowerCase().trim();
+            if (pStore.isNotEmpty && !allowedLower.contains(pStore)) {
+              return true;
+            }
+            return false;
+          });
         }
       } catch (_) {}
 
@@ -1232,6 +1259,7 @@ class AppState extends ChangeNotifier {
     required String email,
     required String password,
   }) async {
+    clearWorkspaceData();
     userName = fullName.trim();
     companyName = shopName.trim().isNotEmpty ? shopName.trim() : 'Boutique ${userName.split(' ').first}';
     userPhone = phone.trim();
@@ -1367,6 +1395,7 @@ class AppState extends ChangeNotifier {
       }
 
       // Authentification réussie : restauration des informations du propriétaire depuis Supabase
+      clearWorkspaceData();
       userName = (matchedRemoteProfile['full_name'] ?? userName).toString().trim();
       companyName = (matchedRemoteProfile['company_name'] ?? companyName).toString().trim();
       userPhone = (matchedRemoteProfile['phone'] ?? cleanPhone).toString().trim();
@@ -1542,6 +1571,7 @@ class AppState extends ChangeNotifier {
     }
 
     // Mise à jour de la session pour l'équipier invité
+    clearWorkspaceData();
     if (matchedCompanyName != null && matchedCompanyName.isNotEmpty) {
       companyName = matchedCompanyName;
     }
@@ -1842,8 +1872,44 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
+  void clearWorkspaceData() {
+    products.clear();
+    categories.clear();
+    customers.clear();
+    suppliers.clear();
+    sales.clear();
+    cart.clear();
+    stockMovements.clear();
+    stockTransfers.clear();
+    cashShiftsHistory.clear();
+    activeCashShift = null;
+    approvalRequests.clear();
+    teamMembers.clear();
+    stockDepreciations.clear();
+    quotes.clear();
+    debts.clear();
+    supplierDebts.clear();
+    purchaseOrders.clear();
+    expenses.clear();
+    inventorySessions.clear();
+    outlets.clear();
+  }
+
   Future<void> logout() async {
     isLoggedIn = false;
+    clearWorkspaceData();
+    userName = '';
+    userPhone = '';
+    userEmail = '';
+    companyName = '';
+    userRole = 'Propriétaire';
+    userAssignedCashDesk = null;
+    ownerPasswordHash = '';
+    currentStore = '';
+    availableStores = [];
+    accessGroups = [];
+    cashDesks = [];
+    isShiftsTrackingEnabled = false;
     await _saveToPrefs();
     try {
       await _supabase?.auth.signOut();
@@ -2795,7 +2861,7 @@ class AppState extends ChangeNotifier {
 
   int getAvailableStockForProduct(Product product) {
     if (product.productType == 'Service') return 999999;
-    final effectiveStore = isCashierAccount ? assignedStoreForCurrentUser : currentStore;
+    final effectiveStore = !isOwnerAccount ? assignedStoreForCurrentUser : currentStore;
     if (effectiveStore == 'Toutes' || effectiveStore == 'Tous') {
       return product.stock;
     }
@@ -3355,6 +3421,12 @@ class AppState extends ChangeNotifier {
 
   // --- ACTIONS GESTION DE PRODUITS & STOCK ---
   void addProduct(Product product) {
+    if (product.storeName.isEmpty) {
+      product.storeName = currentStore;
+    }
+    if (product.stockByStore.isEmpty && product.storeName.isNotEmpty) {
+      product.stockByStore[product.storeName] = product.stock;
+    }
     products.insert(0, product);
     if (product.category.trim().isNotEmpty &&
         product.category != 'Non catégorisé' &&
@@ -3393,12 +3465,18 @@ class AppState extends ChangeNotifier {
         'barcode': product.barcode,
         'unit': product.unit,
         'product_type': product.productType,
-        'store_name': currentStore,
+        'store_name': product.storeName.isNotEmpty ? product.storeName : currentStore,
       },
     );
   }
 
   void updateProduct(Product updated) {
+    if (updated.storeName.isEmpty) {
+      updated.storeName = currentStore;
+    }
+    if (updated.stockByStore.isEmpty && updated.storeName.isNotEmpty) {
+      updated.stockByStore[updated.storeName] = updated.stock;
+    }
     final idx = products.indexWhere((p) => p.id == updated.id);
     if (idx != -1) {
       products[idx] = updated;
@@ -3419,7 +3497,7 @@ class AppState extends ChangeNotifier {
           'barcode': updated.barcode,
           'unit': updated.unit,
           'product_type': updated.productType,
-          'store_name': currentStore,
+          'store_name': updated.storeName.isNotEmpty ? updated.storeName : currentStore,
         },
       );
     }

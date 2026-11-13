@@ -642,7 +642,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                   children: [
                     // 1. TEXTE INTRODUCTIF
                     Text(
-                      'Une seule étape pour enregistrer la commande et sa réception.',
+                      'Une seule étape pour enregistrer la commande fournisseur et sa réception.'.tr,
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563),
@@ -650,103 +650,7 @@ class _SupplyScreenState extends State<SupplyScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // 2. SEGMENTED TABS: Achat fournisseur | Stock existant (Total background sur le segment actif)
-                    Container(
-                      height: 44,
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        color: isDark ? AppTheme.darkSurface : Colors.white,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => setState(() => _selectedMode = 'Achat fournisseur'),
-                              child: Container(
-                                height: double.infinity,
-                                color: _selectedMode == 'Achat fournisseur'
-                                    ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFED7AA))
-                                    : Colors.transparent,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.local_shipping_outlined,
-                                      size: 16,
-                                      color: _selectedMode == 'Achat fournisseur'
-                                          ? (isDark ? AppTheme.accentGold : const Color(0xFF111827))
-                                          : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Achat fournisseur',
-                                      style: TextStyle(
-                                        fontWeight: _selectedMode == 'Achat fournisseur'
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                        fontSize: 13,
-                                        color: _selectedMode == 'Achat fournisseur'
-                                            ? (isDark ? AppTheme.accentGold : const Color(0xFF111827))
-                                            : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: 1.0,
-                            height: double.infinity,
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => setState(() => _selectedMode = 'Stock existant'),
-                              child: Container(
-                                height: double.infinity,
-                                color: _selectedMode == 'Stock existant'
-                                    ? (isDark ? AppTheme.primaryNavy : const Color(0xFFFED7AA))
-                                    : Colors.transparent,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.inventory_2_outlined,
-                                      size: 16,
-                                      color: _selectedMode == 'Stock existant'
-                                          ? (isDark ? AppTheme.accentGold : const Color(0xFF111827))
-                                          : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Stock existant',
-                                      style: TextStyle(
-                                        fontWeight: _selectedMode == 'Stock existant'
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                        fontSize: 13,
-                                        color: _selectedMode == 'Stock existant'
-                                            ? (isDark ? AppTheme.accentGold : const Color(0xFF111827))
-                                            : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // 2.5 SÉLECTION DE LA BOUTIQUE DE DESTINATION
+                    // 2. SÉLECTION DE LA BOUTIQUE DE DESTINATION
                     Row(
                       children: [
                         const Icon(Icons.storefront, size: 16, color: AppTheme.primaryNavy),

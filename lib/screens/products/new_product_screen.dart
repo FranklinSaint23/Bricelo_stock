@@ -37,6 +37,31 @@ class _NewProductScreenState extends State<NewProductScreen> {
 
   final List<String> _units = ['Pièce', 'Kg', 'Litre', 'Carton', 'Paquet', 'Sac', 'Mètre'];
 
+  @override
+  void initState() {
+    super.initState();
+    final appState = AppState.instance;
+    final canAddProduct = appState.isOwnerAccount || appState.hasPermission('Création de produits');
+    if (!canAddProduct) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFFDC2626),
+              content: Text('Accès restreint : votre rôle ne vous autorise pas à créer des produits.'),
+            ),
+          );
+        }
+      });
+    }
+    if (appState.categories.isNotEmpty) {
+      _selectedCategory = appState.categories.first.name;
+    } else {
+      _selectedCategory = 'Non catégorisé';
+    }
+  }
+
   Future<void> _generateAiDescription() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
@@ -66,16 +91,6 @@ class _NewProductScreenState extends State<NewProductScreen> {
           const SnackBar(content: Text('Impossible de générer la description actuellement.')),
         );
       }
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    if (appState.categories.isNotEmpty) {
-      _selectedCategory = appState.categories.first.name;
-    } else {
-      _selectedCategory = 'Non catégorisé';
     }
   }
 
@@ -698,6 +713,8 @@ class _NewProductScreenState extends State<NewProductScreen> {
                         unit: _selectedUnit,
                         productType: _selectedType,
                         imageUrl: _pickedImagePath,
+                        storeName: appState.currentStore,
+                        stockByStore: {appState.currentStore: stock},
                       );
 
                       appState.addProduct(created);
