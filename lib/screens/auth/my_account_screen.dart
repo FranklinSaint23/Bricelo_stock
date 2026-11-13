@@ -249,174 +249,235 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     final oldCtrl = TextEditingController();
     final newCtrl = TextEditingController();
     final confirmCtrl = TextEditingController();
+    bool isBusy = false;
+    String? errorMsg;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Changer le mot de passe'.tr,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: isDark ? Colors.white : AppTheme.primaryNavy,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Changer le mot de passe'.tr,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: isDark ? Colors.white : AppTheme.primaryNavy,
+            ),
           ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: oldCtrl,
-              obscureText: true,
-              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-              decoration: InputDecoration(
-                labelText: 'Ancien mot de passe'.tr,
-                labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
-                border: const OutlineInputBorder(),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (errorMsg != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFEF4444)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          errorMsg!,
+                          style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              TextField(
+                controller: oldCtrl,
+                obscureText: true,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Ancien mot de passe'.tr,
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: newCtrl,
+                obscureText: true,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Nouveau mot de passe (min. 6 caract.)'.tr,
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: confirmCtrl,
+                obscureText: true,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Confirmer le mot de passe'.tr,
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isBusy ? null : () => Navigator.pop(ctx),
+              child: Text(
+                'Annuler'.tr,
+                style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
               ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: newCtrl,
-              obscureText: true,
-              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-              decoration: InputDecoration(
-                labelText: 'Nouveau mot de passe (min. 6 caract.)'.tr,
-                labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
-                border: const OutlineInputBorder(),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: confirmCtrl,
-              obscureText: true,
-              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-              decoration: InputDecoration(
-                labelText: 'Confirmer le mot de passe'.tr,
-                labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
-                border: const OutlineInputBorder(),
-              ),
+              onPressed: isBusy
+                  ? null
+                  : () async {
+                      if (newCtrl.text.length < 6) {
+                        setDlgState(() => errorMsg = 'Le mot de passe doit comporter au moins 6 caractères.'.tr);
+                        return;
+                      }
+                      if (newCtrl.text != confirmCtrl.text) {
+                        setDlgState(() => errorMsg = 'Les mots de passe ne correspondent pas.'.tr);
+                        return;
+                      }
+                      setDlgState(() {
+                        isBusy = true;
+                        errorMsg = null;
+                      });
+                      final err = await appState.changeOwnerPassword(
+                        oldPassword: oldCtrl.text,
+                        newPassword: newCtrl.text,
+                      );
+                      if (err != null) {
+                        setDlgState(() {
+                          isBusy = false;
+                          errorMsg = err.tr;
+                        });
+                        return;
+                      }
+                      if (!ctx.mounted) return;
+                      Navigator.pop(ctx);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xFF059669),
+                          content: Text('Mot de passe mis à jour avec succès ! Notification envoyée.'.tr),
+                        ),
+                      );
+                    },
+              child: isBusy
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text('Enregistrer'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Annuler'.tr,
-              style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
-              foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-            ),
-            onPressed: () {
-              if (newCtrl.text.length < 6) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Le mot de passe doit comporter au moins 6 caractères.'.tr)),
-                );
-                return;
-              }
-              if (newCtrl.text != confirmCtrl.text) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Les mots de passe ne correspondent pas.'.tr)),
-                );
-                return;
-              }
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  backgroundColor: const Color(0xFF059669),
-                  content: Text('Mot de passe mis à jour avec succès !'.tr),
-                ),
-              );
-            },
-            child: Text('Enregistrer'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
       ),
     );
   }
 
   void _showRecoveryEmailDialog(BuildContext context) {
     final isDark = appState.isDarkMode;
-    final emailCtrl = TextEditingController(text: appState.userEmail);
+    final emailCtrl = TextEditingController(
+      text: appState.recoveryEmail.isNotEmpty ? appState.recoveryEmail : appState.userEmail,
+    );
+    bool isBusy = false;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Email de récupération'.tr,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: isDark ? Colors.white : AppTheme.primaryNavy,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Email de récupération'.tr,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: isDark ? Colors.white : AppTheme.primaryNavy,
+            ),
           ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Cet email sera utilisé pour récupérer l\'accès à votre compte en cas d\'oubli.'.tr,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Cet email sera utilisé pour recevoir les codes de réinitialisation et alertes de sécurité.'.tr,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Email de récupération'.tr,
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isBusy ? null : () => Navigator.pop(ctx),
+              child: Text(
+                'Annuler'.tr,
+                style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
               ),
             ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-              decoration: InputDecoration(
-                labelText: 'Email de récupération'.tr,
-                labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
-                border: const OutlineInputBorder(),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
               ),
+              onPressed: isBusy
+                  ? null
+                  : () async {
+                      final val = emailCtrl.text.trim();
+                      if (val.isNotEmpty && !val.contains('@')) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Veuillez entrer une adresse email valide.'.tr)),
+                        );
+                        return;
+                      }
+                      setDlgState(() => isBusy = true);
+                      await appState.updateRecoveryEmail(val);
+                      if (!ctx.mounted) return;
+                      Navigator.pop(ctx);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xFF059669),
+                          content: Text('Email de récupération enregistré !'.tr),
+                        ),
+                      );
+                    },
+              child: isBusy
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text('Enregistrer'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Annuler'.tr,
-              style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
-              foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-            ),
-            onPressed: () {
-              final val = emailCtrl.text.trim();
-              if (val.isNotEmpty) {
-                appState.updateUserProfile(email: val);
-              }
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  backgroundColor: const Color(0xFF059669),
-                  content: Text('Email de récupération enregistré !'.tr),
-                ),
-              );
-            },
-            child: Text('Enregistrer'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
       ),
     );
   }
