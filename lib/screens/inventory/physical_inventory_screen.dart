@@ -231,12 +231,14 @@ class _PhysicalInventoryScreenState extends State<PhysicalInventoryScreen> {
   }
 
   void _showSessionDetailModal(BuildContext context, InventorySession session) {
+    final isDark = appState.isDarkMode;
     final startStr = '${session.startedAt.day.toString().padLeft(2, "0")}/${session.startedAt.month.toString().padLeft(2, "0")}/${session.startedAt.year} à ${session.startedAt.hour.toString().padLeft(2, "0")}:${session.startedAt.minute.toString().padLeft(2, "0")}';
     final endStr = '${session.completedAt.day.toString().padLeft(2, "0")}/${session.completedAt.month.toString().padLeft(2, "0")}/${session.completedAt.year} à ${session.completedAt.hour.toString().padLeft(2, "0")}:${session.completedAt.minute.toString().padLeft(2, "0")}';
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
         return Container(
@@ -250,7 +252,7 @@ class _PhysicalInventoryScreenState extends State<PhysicalInventoryScreen> {
                   width: 40,
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                 ),
               ),
 
@@ -260,8 +262,18 @@ class _PhysicalInventoryScreenState extends State<PhysicalInventoryScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(session.reference, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.primaryNavy)),
-                      Text('Boutique : ${session.storeName} • Par ${session.conductedBy}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      Text(
+                        session.reference,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 17,
+                          color: isDark ? Colors.white : AppTheme.primaryNavy,
+                        ),
+                      ),
+                      Text(
+                        'Boutique : ${session.storeName} • Par ${session.conductedBy}',
+                        style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      ),
                     ],
                   ),
                   ElevatedButton.icon(
@@ -302,13 +314,13 @@ class _PhysicalInventoryScreenState extends State<PhysicalInventoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
                         children: [
-                          const Text('Articles', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-                          Text('${session.totalArticlesCounted}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text('Articles', style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                          Text('${session.totalArticlesCounted}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
                         ],
                       ),
                     ),
@@ -318,18 +330,20 @@ class _PhysicalInventoryScreenState extends State<PhysicalInventoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: session.articlesWithDiscrepancy > 0 ? const Color(0xFFFEF2F2) : const Color(0xFFECFDF5),
+                        color: session.articlesWithDiscrepancy > 0
+                            ? (isDark ? const Color(0xFF3B1219) : const Color(0xFFFEF2F2))
+                            : (isDark ? const Color(0xFF062E22) : const Color(0xFFECFDF5)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
                         children: [
-                          const Text('Écarts', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                          Text('Écarts', style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                           Text(
                             '${session.articlesWithDiscrepancy}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
-                              color: session.articlesWithDiscrepancy > 0 ? const Color(0xFFDC2626) : const Color(0xFF059669),
+                              color: session.articlesWithDiscrepancy > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981),
                             ),
                           ),
                         ],
@@ -341,18 +355,20 @@ class _PhysicalInventoryScreenState extends State<PhysicalInventoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
                         children: [
-                          const Text('Valeur écart', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                          Text('Valeur écart', style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                           Text(
                             '${session.totalDiscrepancyValue.toInt()} F',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: session.totalDiscrepancyValue < 0 ? const Color(0xFFDC2626) : AppTheme.primaryNavy,
+                              color: session.totalDiscrepancyValue < 0
+                                  ? const Color(0xFFEF4444)
+                                  : (isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                             ),
                           ),
                         ],
@@ -361,9 +377,16 @@ class _PhysicalInventoryScreenState extends State<PhysicalInventoryScreen> {
                   ),
                 ],
               ),
-              const Divider(height: 20),
+              Divider(height: 20, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
 
-              const Text('Détails complets par produit :', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(
+                'Détails complets par produit :',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
               const SizedBox(height: 6),
 
               Expanded(

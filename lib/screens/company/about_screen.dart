@@ -1,3 +1,4 @@
+import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/widgets/widgets.dart';
@@ -8,8 +9,10 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppState.instance.isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
       appBar: StockAppBar.forestGreen(
         title: 'À propos',
         onBack: () => Navigator.pop(context),
@@ -23,10 +26,10 @@ class AboutScreen extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+                boxShadow: [
+                  BoxShadow(color: isDark ? Colors.black26 : Colors.black12, blurRadius: 8, offset: const Offset(0, 2)),
                 ],
               ),
               padding: const EdgeInsets.all(8),
@@ -47,28 +50,28 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           // 2. NOM ET VERSION
-          const Center(
+          Center(
             child: Text(
               'Bricelo Stock',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF111827)),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: isDark ? Colors.white : const Color(0xFF111827)),
             ),
           ),
           const SizedBox(height: 4),
-          const Center(
+          Center(
             child: Text(
               'Version 2.5.1',
-              style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13),
             ),
           ),
           const SizedBox(height: 12),
 
           // 3. DESCRIPTION COURTE
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               'Gestion de stock, point de vente et comptabilité pour les petits commerces.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF4B5563), fontSize: 13, height: 1.4),
+              style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4B5563), fontSize: 13, height: 1.4),
             ),
           ),
           const SizedBox(height: 24),
@@ -77,20 +80,20 @@ class AboutScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? AppTheme.darkSurface : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  children: const [
-                    Icon(Icons.check_circle, color: AppTheme.accentGold, size: 20),
-                    SizedBox(width: 8),
+                  children: [
+                    const Icon(Icons.check_circle, color: AppTheme.accentGold, size: 20),
+                    const SizedBox(width: 8),
                     Text(
                       'Votre application est à jour',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF1F2937)),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.white : const Color(0xFF1F2937)),
                     ),
                   ],
                 ),
@@ -101,9 +104,9 @@ class AboutScreen extends StatelessWidget {
                       const SnackBar(content: Text('Recherche des dernières mises à jour...')),
                     );
                   },
-                  child: const Text(
+                  child: Text(
                     'Rechercher les mises à jour',
-                    style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 14),
+                    style: TextStyle(color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
               ],
@@ -113,16 +116,18 @@ class AboutScreen extends StatelessWidget {
 
           // 5. LIENS ET RESSOURCES
           _buildRow(
+            isDark: isDark,
             icon: Icons.history,
             title: 'Mises à jour',
             subtitle: 'Historique des versions et annonces',
-            trailing: const Icon(Icons.chevron_right, size: 20, color: Color(0xFF4B5563)),
+            trailing: Icon(Icons.chevron_right, size: 20, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => AnnouncementsScreen()));
             },
           ),
           const SizedBox(height: 14),
           _buildRow(
+            isDark: isDark,
             icon: Icons.store_rounded,
             title: 'Disponibilité',
             subtitle: 'Application mobile & Web Bricelo',
@@ -135,6 +140,7 @@ class AboutScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _buildRow(
+            isDark: isDark,
             iconWidget: Container(
               width: 24,
               height: 24,
@@ -146,7 +152,7 @@ class AboutScreen extends StatelessWidget {
             ),
             title: 'Tutoriels Vidéo',
             subtitle: '@bricelo_stock',
-            trailing: const Icon(Icons.open_in_new, size: 18, color: Color(0xFF4B5563)),
+            trailing: Icon(Icons.open_in_new, size: 18, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Accès aux tutoriels Bricelo Stock')),
@@ -156,10 +162,10 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 36),
 
           // 6. COPYRIGHT PIED DE PAGE
-          const Center(
+          Center(
             child: Text(
               '© 2026 Bricelo Stock · Tous droits réservés',
-              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
+              style: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF), fontSize: 12),
             ),
           ),
         ],
@@ -172,6 +178,7 @@ class AboutScreen extends StatelessWidget {
   }
 
   Widget _buildRow({
+    required bool isDark,
     IconData? icon,
     Widget? iconWidget,
     required String title,
@@ -188,7 +195,7 @@ class AboutScreen extends StatelessWidget {
             if (iconWidget != null)
               iconWidget
             else if (icon != null)
-              Icon(icon, size: 24, color: const Color(0xFF374151)),
+              Icon(icon, size: 24, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151)),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -196,12 +203,12 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF111827)),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF111827)),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                   ),
                 ],
               ),

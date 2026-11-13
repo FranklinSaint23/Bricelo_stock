@@ -292,14 +292,33 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   void _confirmDeleteExpense(BuildContext context, Expense exp) {
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       builder: (dlgCtx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Confirmer la suppression', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Voulez-vous supprimer cette dépense de ${AppTheme.formatFCFA(exp.amount)} ? Le solde de la caisse (${exp.paidFromCaisse}) sera réajusté.'),
+        title: Text(
+          'Confirmer la suppression',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
+        ),
+        content: Text(
+          'Voulez-vous supprimer cette dépense de ${AppTheme.formatFCFA(exp.amount)} ? Le solde de la caisse (${exp.paidFromCaisse}) sera réajusté.',
+          style: TextStyle(
+            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dlgCtx), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx),
+            child: Text(
+              'Annuler',
+              style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+            ),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
             onPressed: () {
@@ -379,10 +398,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     // 1. Description *
                     TextFormField(
                       controller: descCtrl,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                       decoration: InputDecoration(
                         labelText: 'Description *',
                         hintText: 'Ex: Loyer boutique mois en cours',
-                        labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+                        labelStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.bold),
+                        filled: isDark,
+                        fillColor: isDark ? const Color(0xFF162540) : null,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
@@ -393,10 +415,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     TextFormField(
                       controller: amountCtrl,
                       keyboardType: TextInputType.number,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                       decoration: InputDecoration(
                         labelText: 'Montant *',
                         suffixText: 'F CFA',
-                        labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+                        labelStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.bold),
+                        filled: isDark,
+                        fillColor: isDark ? const Color(0xFF162540) : null,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
@@ -404,9 +429,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     const SizedBox(height: 14),
 
                     // 3. Catégorie * (Chips horizontaux)
-                    const Text(
+                    Text(
                       'Catégorie *',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
                     ),
                     const SizedBox(height: 8),
                     SizedBox(
@@ -433,10 +458,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: isSelected ? const Color(0xFFFEF3C7) : const Color(0xFFF8FAFC),
+                                color: isSelected
+                                    ? (isDark ? const Color(0xFF382305) : const Color(0xFFFEF3C7))
+                                    : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: isSelected ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+                                  color: isSelected ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                                   width: isSelected ? 1.5 : 1,
                                 ),
                               ),
@@ -446,7 +473,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                   Icon(
                                     cat.icon,
                                     size: 16,
-                                    color: isSelected ? const Color(0xFFB45309) : const Color(0xFF64748B),
+                                    color: isSelected ? (isDark ? AppTheme.accentGold : const Color(0xFFB45309)) : const Color(0xFF64748B),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -454,7 +481,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                      color: isSelected ? const Color(0xFFB45309) : const Color(0xFF334155),
+                                      color: isSelected
+                                          ? (isDark ? AppTheme.accentGold : const Color(0xFFB45309))
+                                          : (isDark ? Colors.white70 : const Color(0xFF334155)),
                                     ),
                                   ),
                                 ],
@@ -469,9 +498,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     // 4. Payé depuis *
                     DropdownButtonFormField<String>(
                       initialValue: availableCaisses.contains(selectedCaisse) ? selectedCaisse : availableCaisses.first,
+                      dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                       decoration: InputDecoration(
                         labelText: 'Payé depuis *',
-                        labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+                        labelStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.bold),
+                        filled: isDark,
+                        fillColor: isDark ? const Color(0xFF162540) : null,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       ),
@@ -503,7 +536,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                         decoration: BoxDecoration(
-                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                          color: isDark ? const Color(0xFF162540) : null,
+                          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -511,7 +545,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           children: [
                             Text(
                               'Date : ${selectedDate.day.toString().padLeft(2, "0")}/${selectedDate.month.toString().padLeft(2, "0")}/${selectedDate.year}',
-                              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87),
                             ),
                             const Icon(Icons.calendar_month_rounded, size: 20, color: Color(0xFF64748B)),
                           ],
@@ -523,10 +557,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     // 6. Référence (optionnel)
                     TextFormField(
                       controller: refCtrl,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                       decoration: InputDecoration(
                         labelText: 'Référence (optionnel)',
                         hintText: 'Ex: FACT-2026-004',
-                        labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                        labelStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                        filled: isDark,
+                        fillColor: isDark ? const Color(0xFF162540) : null,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),

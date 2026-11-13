@@ -53,6 +53,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     final isDesktop = MediaQuery.of(context).size.width >= 800;
 
     Widget buildPaymentFormContent(BuildContext ctx, StateSetter setModalState) {
+      final isDark = appState.isDarkMode;
       return SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -64,7 +65,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -80,22 +81,22 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     children: [
                       Text(
                         'Activer la $planName',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryNavy,
+                          color: isDark ? Colors.white : AppTheme.primaryNavy,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Facturation $periodText • Synchronisation automatique sur Mobile',
-                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded),
+                  icon: Icon(Icons.close_rounded, color: isDark ? Colors.white : Colors.black87),
                   onPressed: () => Navigator.pop(ctx),
                 ),
               ],
@@ -106,23 +107,23 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Total à payer :',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF334155)),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155)),
                   ),
                   Text(
                     '${_formatCfa(priceToPay)} F CFA',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
-                      color: AppTheme.primaryNavy,
+                      color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
                     ),
                   ),
                 ],
@@ -130,9 +131,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             ),
             const SizedBox(height: 20),
 
-            const Text(
+            Text(
               'Moyen de paiement sécurisé',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF1E293B)),
             ),
             const SizedBox(height: 10),
 
@@ -154,27 +155,45 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
+                style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                 decoration: InputDecoration(
                   labelText: 'Numéro de compte $selectedMethod *',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                   hintText: 'Ex: +237 689 39 88 07',
-                  prefixIcon: const Icon(Icons.dialpad_rounded, size: 20, color: AppTheme.primaryNavy),
+                  hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                  prefixIcon: Icon(Icons.dialpad_rounded, size: 20, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Vous recevrez un prompt USSD sur votre téléphone pour valider avec votre code secret.',
-                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
               ),
             ] else ...[
               TextField(
                 keyboardType: TextInputType.number,
+                style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                 decoration: InputDecoration(
                   labelText: 'Numéro de carte (16 chiffres) *',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                   hintText: '4000 1234 5678 9010',
-                  prefixIcon: const Icon(Icons.credit_card_rounded, size: 20, color: AppTheme.primaryNavy),
+                  hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                  prefixIcon: Icon(Icons.credit_card_rounded, size: 20, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 ),
               ),
@@ -188,8 +207,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryNavy,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.accentGold,
+                  foregroundColor: AppTheme.primaryNavy,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 onPressed: isProcessing
@@ -216,11 +235,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     ? const SizedBox(
                         width: 22,
                         height: 22,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                        child: CircularProgressIndicator(color: AppTheme.primaryNavy, strokeWidth: 2.2),
                       )
                     : Text(
                         'Payer ${_formatCfa(priceToPay)} F CFA',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.primaryNavy),
                       ),
               ),
             ),
@@ -233,7 +252,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       showDialog(
         context: context,
         builder: (ctx) => Dialog(
-          backgroundColor: Colors.white,
+          backgroundColor: appState.isDarkMode ? AppTheme.darkSurface : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 500),
@@ -250,7 +269,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: appState.isDarkMode ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -275,6 +294,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     String selectedMethod,
     ValueChanged<String> onSelect,
   ) {
+    final isDark = appState.isDarkMode;
     final isSelected = selectedMethod == name;
     return InkWell(
       onTap: () => onSelect(name),
@@ -283,24 +303,28 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryNavy : const Color(0xFFF1F5F9),
+          color: isSelected
+              ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy)
+              : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryNavy : const Color(0xFFCBD5E1),
+            color: isSelected ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: isSelected ? AppTheme.accentGold : brandColor),
+            Icon(icon, size: 16, color: isSelected ? (isDark ? AppTheme.primaryNavy : AppTheme.accentGold) : brandColor),
             const SizedBox(width: 6),
             Text(
               name,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                color: isSelected
+                    ? (isDark ? AppTheme.primaryNavy : Colors.white)
+                    : (isDark ? Colors.white : const Color(0xFF1E293B)),
               ),
             ),
           ],
@@ -310,9 +334,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   void _showSuccessDialog(String plan, String period) {
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         contentPadding: const EdgeInsets.all(24),
         content: Column(
@@ -320,22 +346,22 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Color(0xFFD1FAE5),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF064E3B) : const Color(0xFFD1FAE5),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFF059669), size: 44),
+              child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFF10B981), size: 44),
             ),
             const SizedBox(height: 18),
             Text(
               'Félicitations !',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppTheme.primaryNavy),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: isDark ? Colors.white : AppTheme.primaryNavy),
             ),
             const SizedBox(height: 8),
             Text(
               'Votre boutique est maintenant passée sur la $plan ($period). Toutes les fonctionnalités avancées sont activées et synchronisées automatiquement sur votre application mobile via la base de données.',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13.5, color: Color(0xFF4B5563), height: 1.4),
+              style: TextStyle(fontSize: 13.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563), height: 1.4),
             ),
             const SizedBox(height: 22),
             SizedBox(
@@ -343,12 +369,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               height: 46,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryNavy,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.accentGold,
+                  foregroundColor: AppTheme.primaryNavy,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Continuer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                child: const Text('Continuer', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.primaryNavy)),
               ),
             ),
           ],

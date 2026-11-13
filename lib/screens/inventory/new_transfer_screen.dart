@@ -46,11 +46,13 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
   }
 
   void _showAddProductsModal() {
+    final isDark = appState.isDarkMode;
     final searchCtrl = TextEditingController();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
         return StatefulBuilder(
@@ -74,28 +76,39 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                       width: 40,
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                      decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                     ),
                   ),
-                  const Text('Sélectionner des articles à transférer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(
+                    'Sélectionner des articles à transférer',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: searchCtrl,
                     onChanged: (_) => setModalState(() {}),
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
                       hintText: 'Rechercher un article...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
+                      hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
+                      prefixIcon: Icon(Icons.search, size: 20, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      filled: isDark,
+                      fillColor: isDark ? const Color(0xFF162540) : null,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                   const SizedBox(height: 12),
                   Expanded(
                     child: products.isEmpty
-                        ? const Center(child: Text('Aucun article trouvé'))
+                        ? Center(child: Text('Aucun article trouvé', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))))
                         : ListView.separated(
                             itemCount: products.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            separatorBuilder: (_, __) => Divider(height: 1, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
                             itemBuilder: (context, idx) {
                               final p = products[idx];
                               final available = p.stockForStore(_sourceStore);
@@ -107,8 +120,8 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                                   size: 38,
                                   borderRadius: 8,
                                 ),
-                                title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                subtitle: Text('Dispo dans $_sourceStore : $available ${p.unit}(s)', style: const TextStyle(fontSize: 12)),
+                                title: Text(p.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                                subtitle: Text('Dispo dans $_sourceStore : $available ${p.unit}(s)', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                                 trailing: currentSel > 0
                                     ? Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -126,9 +139,9 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                                               setState(() {});
                                             },
                                           ),
-                                          Text('$currentSel', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                          Text('$currentSel', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
                                           IconButton(
-                                            icon: const Icon(Icons.add_circle_outline, color: AppTheme.primaryNavy),
+                                            icon: Icon(Icons.add_circle_outline, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                                             onPressed: currentSel < available
                                                 ? () {
                                                     setModalState(() {
@@ -142,8 +155,10 @@ class _NewTransferScreenState extends State<NewTransferScreen> {
                                       )
                                     : ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: available > 0 ? AppTheme.primaryNavy : Colors.grey,
-                                          foregroundColor: Colors.white,
+                                          backgroundColor: available > 0
+                                              ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy)
+                                              : Colors.grey,
+                                          foregroundColor: available > 0 && isDark ? AppTheme.primaryNavy : Colors.white,
                                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                         ),
                                         onPressed: available > 0

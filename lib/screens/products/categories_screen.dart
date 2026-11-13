@@ -61,7 +61,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     width: 44,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: isDark ? const Color(0xFF334155) : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -72,18 +72,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   children: [
                     Text(
                       existing == null ? 'Nouvelle catégorie'.tr : 'Modifier la catégorie'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827),
+                        color: isDark ? Colors.white : const Color(0xFF111827),
                       ),
                     ),
                     InkWell(
                       onTap: () => Navigator.pop(ctx),
                       borderRadius: BorderRadius.circular(16),
-                      child: const Padding(
-                        padding: EdgeInsets.all(4.0),
-                        child: Icon(Icons.close, size: 22, color: Color(0xFF374151)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Icon(Icons.close, size: 22, color: isDark ? Colors.white70 : const Color(0xFF374151)),
                       ),
                     ),
                   ],
@@ -92,20 +92,25 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 TextField(
                   controller: nameController,
                   autofocus: true,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Nom *',
-                    labelStyle: const TextStyle(color: Color(0xFF4B5563)),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF9CA3AF)),
+                      borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFF9CA3AF)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFF9CA3AF)),
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                   ),
                 ),
                 const SizedBox(height: 18),
-                const Text(
+                Text(
                   'Catégorie parente (optionnel)',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF374151), fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151), fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -119,15 +124,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSel ? const Color(0xFFFEF3C7) : const Color(0xFFF3F4F6),
+                          color: isSel
+                              ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7))
+                              : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF3F4F6)),
                           borderRadius: BorderRadius.circular(8),
-                          border: isSel ? Border.all(color: const Color(0xFFD97706), width: 1.2) : null,
+                          border: isSel ? Border.all(color: isDark ? AppTheme.accentGold : const Color(0xFFD97706), width: 1.2) : null,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (isSel) ...[
-                              const Icon(Icons.check, size: 15, color: Color(0xFF92400E)),
+                              Icon(Icons.check, size: 15, color: isDark ? AppTheme.accentGold : const Color(0xFF92400E)),
                               const SizedBox(width: 5),
                             ],
                             Text(
@@ -135,7 +142,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               style: TextStyle(
                                 fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
                                 fontSize: 12.5,
-                                color: isSel ? const Color(0xFF92400E) : const Color(0xFF374151),
+                                color: isSel
+                                    ? (isDark ? AppTheme.accentGold : const Color(0xFF92400E))
+                                    : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151)),
                               ),
                             ),
                           ],
@@ -145,9 +154,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   }).toList(),
                 ),
                 const SizedBox(height: 18),
-                const Text(
+                Text(
                   'TVA',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF374151), fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151), fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 Column(
@@ -162,23 +171,27 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
+                            color: isSelected
+                                ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7))
+                                : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF3F4F6)),
                             borderRadius: BorderRadius.circular(8),
-                            border: isSelected ? Border.all(color: const Color(0xFFD97706), width: 1.2) : null,
+                            border: isSelected ? Border.all(color: isDark ? AppTheme.accentGold : const Color(0xFFD97706), width: 1.2) : null,
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (isSelected) ...[
-                                const Icon(Icons.check, size: 16, color: Color(0xFF92400E)),
+                                Icon(Icons.check, size: 16, color: isDark ? AppTheme.accentGold : const Color(0xFF92400E)),
                                 const SizedBox(width: 6),
                               ],
                               Text(
                                 opt,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,
-                                  color: Color(0xFF92400E),
+                                  color: isSelected
+                                      ? (isDark ? AppTheme.accentGold : const Color(0xFF92400E))
+                                      : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151)),
                                 ),
                               ),
                             ],
@@ -194,15 +207,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text(
+                      child: Text(
                         'Annuler',
-                        style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
                     const SizedBox(width: 14),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryNavy,
+                        backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                        foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

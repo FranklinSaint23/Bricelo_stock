@@ -151,10 +151,11 @@ class _BrandScreenState extends State<BrandScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppState.instance.isDarkMode;
     final missingFields = _getMissingFields();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
@@ -186,21 +187,21 @@ class _BrandScreenState extends State<BrandScreen> {
             // ENTETE ENTREPRISE
             Text(
               AppState.instance.displayCompanyName,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Dites qui vous êtes : vos communications reprennent vos mots, vos couleurs et votre boutique. Tout est facultatif.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF4B5563), height: 1.4),
+              style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563), height: 1.4),
             ),
             if (missingFields.isNotEmpty) ...[
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7).withValues(alpha: 0.5),
+                  color: isDark ? const Color(0xFF451A03) : const Color(0xFFFEF3C7).withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
+                  border: Border.all(color: isDark ? const Color(0xFF78350F) : const Color(0xFFFDE68A)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,7 +211,7 @@ class _BrandScreenState extends State<BrandScreen> {
                     Expanded(
                       child: Text(
                         'Il manque : ${missingFields.join(", ")}.',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF92400E), height: 1.35),
+                        style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E), height: 1.35),
                       ),
                     ),
                   ],
@@ -260,9 +261,9 @@ class _BrandScreenState extends State<BrandScreen> {
             const SizedBox(height: 24),
 
             // 8. LE TON DE VOTRE BOUTIQUE
-            const Text(
+            Text(
               'Le ton de votre boutique',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1F2937)),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -311,16 +312,16 @@ class _BrandScreenState extends State<BrandScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.primaryNavy : Colors.white,
+                        color: isSelected ? AppTheme.accentGold : (isDark ? const Color(0xFF1E293B) : Colors.white),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: isSelected ? AppTheme.primaryNavy : const Color(0xFFD1D5DB)),
+                        border: Border.all(color: isSelected ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB))),
                       ),
                       child: Text(
                         opt,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                          color: isSelected ? Colors.white : const Color(0xFF374151),
+                          color: isSelected ? AppTheme.primaryNavy : (isDark ? Colors.white : const Color(0xFF374151)),
                         ),
                       ),
                     ),
@@ -337,9 +338,9 @@ class _BrandScreenState extends State<BrandScreen> {
             const SizedBox(height: 24),
 
             // 11. VOS COULEURS
-            const Text(
+            Text(
               'Vos couleurs',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1F2937)),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -395,7 +396,7 @@ class _BrandScreenState extends State<BrandScreen> {
             // 12. PHOTOS DE VOTRE BOUTIQUE (X/4)
             Text(
               'Photos de votre boutique (${_photos.length}/4)',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1F2937)),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -415,7 +416,7 @@ class _BrandScreenState extends State<BrandScreen> {
                           errorBuilder: (_, __, ___) => Container(
                             width: 72,
                             height: 72,
-                            color: Colors.grey.shade200,
+                            color: isDark ? const Color(0xFF162540) : Colors.grey.shade200,
                             child: const Icon(Icons.broken_image, color: Colors.grey),
                           ),
                         ),
@@ -449,12 +450,12 @@ class _BrandScreenState extends State<BrandScreen> {
                       width: 72,
                       height: 72,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
+                        color: isDark ? const Color(0xFF162540) : const Color(0xFFF9FAFB),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFD1D5DB)),
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
                       ),
-                      child: const Center(
-                        child: Icon(Icons.add_photo_alternate_outlined, color: Color(0xFF6B7280), size: 28),
+                      child: Center(
+                        child: Icon(Icons.add_photo_alternate_outlined, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), size: 28),
                       ),
                     ),
                   ),
@@ -468,7 +469,8 @@ class _BrandScreenState extends State<BrandScreen> {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryNavy,
+                  backgroundColor: AppTheme.accentGold,
+                  foregroundColor: AppTheme.primaryNavy,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   elevation: 0,
                 ),
@@ -477,11 +479,11 @@ class _BrandScreenState extends State<BrandScreen> {
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(color: AppTheme.primaryNavy, strokeWidth: 2),
                       )
                     : const Text(
                         'Enregistrer',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
                       ),
               ),
             ),
@@ -498,28 +500,32 @@ class _BrandScreenState extends State<BrandScreen> {
     String? subtext,
     int maxLines = 1,
   }) {
+    final isDark = AppState.instance.isDarkMode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
           controller: controller,
           maxLines: maxLines,
+          style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14),
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             hintText: label,
-            hintStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+            hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF6B7280), fontSize: 14),
+            filled: isDark,
+            fillColor: isDark ? const Color(0xFF162540) : null,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.primaryNavy, width: 1.5),
+              borderSide: BorderSide(color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, width: 1.5),
             ),
           ),
         ),
@@ -527,7 +533,7 @@ class _BrandScreenState extends State<BrandScreen> {
           const SizedBox(height: 4),
           Text(
             subtext,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280), height: 1.3),
+            style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), height: 1.3),
           ),
         ],
       ],

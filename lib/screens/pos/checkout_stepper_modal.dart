@@ -161,13 +161,14 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = appState.isDarkMode;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.92,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.darkSurface : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -287,6 +288,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   // ÉTAPE 1 : RÉCAPITULATIF (Remise inline par produit max 50% + Offrir + Remise globale inline + Date stricte)
   // ==========================================
   Widget _buildStep1Recap(BuildContext context) {
+    final isDark = appState.isDarkMode;
     final total = _calculatedTotal;
     final rawSubtotal = appState.cart.fold(0.0, (sum, i) => sum + i.subtotal);
     final itemsDiscountTotal = appState.cart.fold(0.0, (sum, i) => sum + i.discount);
@@ -301,10 +303,10 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: item.isGift ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+                color: item.isGift ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                 width: item.isGift ? 1.5 : 1,
               ),
             ),
@@ -322,7 +324,11 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                               Flexible(
                                 child: Text(
                                   item.product.name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
                                 ),
                               ),
                               if (item.isGift) ...[
@@ -345,7 +351,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                                 : '${item.quantity} x ${AppTheme.formatFCFA(item.unitPrice)} = ${AppTheme.formatFCFA(item.subtotal)}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: item.isGift ? AppTheme.accentGold : const Color(0xFF64748B),
+                              color: item.isGift ? AppTheme.accentGold : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                               fontWeight: item.isGift ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
@@ -353,7 +359,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF64748B), size: 22),
+                      icon: Icon(Icons.remove_circle_outline, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), size: 22),
                       onPressed: () {
                         setState(() {
                           appState.updateCartQuantity(item, -1);
@@ -361,9 +367,9 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                         });
                       },
                     ),
-                    Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                    Text('${item.quantity}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
                     IconButton(
-                      icon: const Icon(Icons.add_circle, color: AppTheme.primaryNavy, size: 22),
+                      icon: Icon(Icons.add_circle, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 22),
                       onPressed: () {
                         final ok = appState.updateCartQuantity(item, 1);
                         if (!ok) {
@@ -403,10 +409,10 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: item.isGift ? AppTheme.accentGold : const Color(0xFFF1F5F9),
+                          color: item.isGift ? AppTheme.accentGold : (isDark ? const Color(0xFF162540) : const Color(0xFFF1F5F9)),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: item.isGift ? AppTheme.accentGold : const Color(0xFFCBD5E1),
+                            color: item.isGift ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                           ),
                         ),
                         child: Row(
@@ -415,7 +421,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                             Icon(
                               item.isGift ? Icons.card_giftcard_rounded : Icons.card_giftcard_outlined,
                               size: 15,
-                              color: item.isGift ? AppTheme.primaryNavy : const Color(0xFF475569),
+                              color: item.isGift ? AppTheme.primaryNavy : (isDark ? Colors.white70 : const Color(0xFF475569)),
                             ),
                             const SizedBox(width: 5),
                             Text(
@@ -423,7 +429,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                               style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.bold,
-                                color: item.isGift ? AppTheme.primaryNavy : const Color(0xFF334155),
+                                color: item.isGift ? AppTheme.primaryNavy : (isDark ? Colors.white70 : const Color(0xFF334155)),
                               ),
                             ),
                           ],
@@ -435,7 +441,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('Remise :', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+                          Text('Remise :', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                           const SizedBox(width: 6),
                           SizedBox(
                             width: 95,
@@ -443,15 +449,17 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                             child: TextFormField(
                               initialValue: item.discount > 0 ? item.discount.toInt().toString() : '',
                               keyboardType: TextInputType.number,
-                              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.primaryNavy),
                               decoration: InputDecoration(
                                 hintText: 'Max 50%',
                                 hintStyle: const TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
+                                filled: isDark,
+                                fillColor: isDark ? const Color(0xFF162540) : null,
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.accentGold, width: 1.5)),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1))),
+                                focusedBorder: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide(color: AppTheme.accentGold, width: 1.5)),
                                 suffixText: 'F',
-                                suffixStyle: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                                suffixStyle: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                               ),
                               onChanged: (val) {
                                 double entered = double.tryParse(val.trim()) ?? 0.0;
@@ -481,7 +489,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
-                        color: item.isGift ? AppTheme.accentGold : AppTheme.primaryNavy,
+                        color: item.isGift ? AppTheme.accentGold : (isDark ? Colors.white : AppTheme.primaryNavy),
                       ),
                     ),
                   ],
@@ -500,25 +508,26 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                  border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.discount_outlined, size: 16, color: AppTheme.accentGold),
                     const SizedBox(width: 6),
-                    const Text('Remise globale :', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                    Text('Remise globale :', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.primaryNavy)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: TextFormField(
                         initialValue: _globalDiscount > 0 ? _globalDiscount.toInt().toString() : '',
                         keyboardType: TextInputType.number,
-                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy),
-                        decoration: const InputDecoration(
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.primaryNavy),
+                        decoration: InputDecoration(
                           hintText: '0',
+                          hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                           suffixText: 'F CFA',
-                          suffixStyle: TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                          suffixStyle: TextStyle(fontSize: 10.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding: EdgeInsets.zero,
@@ -541,13 +550,14 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                  color: isDark ? const Color(0xFF1E293B) : Colors.transparent,
+                  border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Arrondir', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
+                    Text('Arrondir', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
                     Switch(
                       value: _roundTotal,
                       activeThumbColor: AppTheme.accentGold,
@@ -570,17 +580,17 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
+            color: isDark ? const Color(0xFF162540) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
           ),
           child: Row(
             children: [
-              const Icon(Icons.calendar_today_rounded, size: 16, color: Color(0xFF64748B)),
+              Icon(Icons.calendar_today_rounded, size: 16, color: isDark ? AppTheme.accentGold : const Color(0xFF64748B)),
               const SizedBox(width: 8),
               Text(
                 'Date : ${DateTime.now().day.toString().padLeft(2, "0")}/${DateTime.now().month.toString().padLeft(2, "0")}/${DateTime.now().year} (Aujourd\'hui)',
-                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155)),
               ),
             ],
           ),
@@ -591,17 +601,17 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
+            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
           ),
           child: Column(
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Sous-total brut', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-                  Text(AppTheme.formatFCFA(rawSubtotal), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Sous-total brut', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 13)),
+                  Text(AppTheme.formatFCFA(rawSubtotal), style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
                 ],
               ),
               if (itemsDiscountTotal > 0) ...[
@@ -624,11 +634,11 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                   ],
                 ),
               ],
-              const Divider(height: 18),
+              Divider(height: 18, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('TOTAL', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.primaryNavy)),
+                  Text('TOTAL', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: isDark ? Colors.white : AppTheme.primaryNavy)),
                   Text(AppTheme.formatFCFA(total), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 19, color: AppTheme.accentGold)),
                 ],
               ),
@@ -640,9 +650,12 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         // Notes
         TextField(
           controller: _noteCtrl,
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
           decoration: InputDecoration(
             hintText: 'Note pour la commande (optionnel)...',
-            hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+            hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+            filled: isDark,
+            fillColor: isDark ? const Color(0xFF162540) : null,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
@@ -681,6 +694,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   // ÉTAPE 2 : CLIENT
   // ==========================================
   Widget _buildStep2Client(BuildContext context) {
+    final isDark = appState.isDarkMode;
     final search = _clientSearchCtrl.text.trim().toLowerCase();
     final filteredClients = appState.customers.where((c) {
       if (search.isEmpty) return true;
@@ -690,9 +704,13 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Associer un client (optionnel)',
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A)),
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
         ),
         const SizedBox(height: 14),
 
@@ -702,8 +720,8 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
           height: 46,
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFED7AA),
-              foregroundColor: const Color(0xFF9A3412),
+              backgroundColor: isDark ? const Color(0xFF431407) : const Color(0xFFFED7AA),
+              foregroundColor: isDark ? AppTheme.accentGold : const Color(0xFF9A3412),
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             ),
@@ -728,8 +746,8 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
           height: 46,
           child: OutlinedButton(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.primaryNavy,
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              foregroundColor: isDark ? Colors.white : AppTheme.primaryNavy,
+              side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             ),
             onPressed: () {
@@ -747,10 +765,13 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         TextField(
           controller: _clientSearchCtrl,
           onChanged: (_) => setState(() {}),
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
           decoration: InputDecoration(
             hintText: 'Rechercher un client',
-            hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
-            prefixIcon: const Icon(Icons.search, color: Color(0xFF64748B)),
+            hintStyle: TextStyle(fontSize: 14, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+            prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+            filled: isDark,
+            fillColor: isDark ? const Color(0xFF162540) : null,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
@@ -759,10 +780,10 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
 
         // Liste des clients
         if (filteredClients.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
             child: Center(
-              child: Text('Aucun client trouvé', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: Text('Aucun client trouvé', style: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8))),
             ),
           )
         else
@@ -771,20 +792,26 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: isSel ? const Color(0xFFFFFBEB) : Colors.white,
+                color: isSel
+                    ? (isDark ? const Color(0xFF382305) : const Color(0xFFFFFBEB))
+                    : (isDark ? const Color(0xFF1E293B) : Colors.white),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: isSel ? AppTheme.accentGold : const Color(0xFFE2E8F0)),
+                border: Border.all(color: isSel ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
               ),
               child: ListTile(
                 dense: true,
                 onTap: () => setState(() => _selectedCustomer = c),
                 leading: CircleAvatar(
-                  backgroundColor: isSel ? AppTheme.accentGold : const Color(0xFFF1F5F9),
-                  foregroundColor: isSel ? AppTheme.primaryNavy : const Color(0xFF0F172A),
+                  backgroundColor: isSel
+                      ? AppTheme.accentGold
+                      : (isDark ? const Color(0xFF162540) : const Color(0xFFF1F5F9)),
+                  foregroundColor: isSel
+                      ? AppTheme.primaryNavy
+                      : (isDark ? Colors.white : const Color(0xFF0F172A)),
                   child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : 'C', style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
-                title: Text(c.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(c.phone.isNotEmpty ? c.phone : 'Sans téléphone'),
+                title: Text(c.name, style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                subtitle: Text(c.phone.isNotEmpty ? c.phone : 'Sans téléphone', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                 trailing: isSel ? const Icon(Icons.check_circle, color: AppTheme.accentGold) : null,
               ),
             );
@@ -797,8 +824,8 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
             Expanded(
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primaryNavy,
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  foregroundColor: isDark ? Colors.white70 : AppTheme.primaryNavy,
+                  side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -836,6 +863,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   // ÉTAPE 3 : PAIEMENT
   // ==========================================
   Widget _buildStep3Payment(BuildContext context) {
+    final isDark = appState.isDarkMode;
     final total = _calculatedTotal;
 
     return Column(
@@ -843,14 +871,14 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         // Total à payer
         Text(
           'Total à payer : ${AppTheme.formatFCFA(total)}',
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w600),
+          style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 4),
 
         // Montant affiché
         Text(
           '${_amountBuffer.isEmpty ? "0" : _amountBuffer} F CFA',
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: AppTheme.primaryNavy),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: isDark ? Colors.white : AppTheme.primaryNavy),
         ),
         const SizedBox(height: 10),
 
@@ -858,13 +886,15 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: _isCredit ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9),
+            color: _isCredit
+                ? (isDark ? const Color(0xFF382305) : const Color(0xFFFEF3C7))
+                : (isDark ? const Color(0xFF162540) : const Color(0xFFF1F5F9)),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Régler plus tard (Vente à crédit)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              Text('Régler plus tard (Vente à crédit)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
               Switch(
                 value: _isCredit,
                 activeThumbColor: const Color(0xFFD97706),
@@ -899,10 +929,10 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text('+500', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                child: Text('+500', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: isDark ? Colors.white : Colors.black87)),
               ),
             ),
             const SizedBox(width: 8),
@@ -911,10 +941,10 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text('+1000', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                child: Text('+1000', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: isDark ? Colors.white : Colors.black87)),
               ),
             ),
           ],
@@ -928,7 +958,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         // Mode de paiement
         Align(
           alignment: Alignment.centerLeft,
-          child: Text('Mode de paiement', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[700])),
+          child: Text('Mode de paiement', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF94A3B8) : Colors.grey[700])),
         ),
         const SizedBox(height: 8),
         Row(
@@ -990,6 +1020,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   }
 
   Widget _buildNumericKeypad() {
+    final isDark = appState.isDarkMode;
     final keys = [
       ['1', '2', '3'],
       ['4', '5', '6'],
@@ -1012,17 +1043,23 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
                     child: Container(
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1))],
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark ? Colors.black26 : Colors.black12,
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
                       child: Center(
                         child: k == '⌫'
-                            ? const Icon(Icons.backspace_outlined, size: 18, color: Color(0xFF0F172A))
+                            ? Icon(Icons.backspace_outlined, size: 18, color: isDark ? Colors.white : const Color(0xFF0F172A))
                             : Text(
                                 k,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                               ),
                       ),
                     ),
@@ -1043,29 +1080,37 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final isDark = appState.isDarkMode;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFFFFBEB) : Colors.white,
+          color: selected
+              ? (isDark ? const Color(0xFF382305) : const Color(0xFFFFFBEB))
+              : (isDark ? const Color(0xFF1E293B) : Colors.white),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: selected ? AppTheme.accentGold : const Color(0xFFE2E8F0), width: selected ? 1.5 : 1),
+          border: Border.all(
+            color: selected ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            width: selected ? 1.5 : 1,
+          ),
         ),
         child: Column(
           children: [
-            Icon(icon, color: selected ? AppTheme.accentGold : const Color(0xFF64748B), size: 20),
+            Icon(icon, color: selected ? AppTheme.accentGold : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)), size: 20),
             const SizedBox(height: 4),
             Text(
               title,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 11,
-                color: selected ? const Color(0xFFB45309) : const Color(0xFF0F172A),
+                color: selected
+                    ? (isDark ? AppTheme.accentGold : const Color(0xFFB45309))
+                    : (isDark ? Colors.white : const Color(0xFF0F172A)),
               ),
             ),
-            Text(balance, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+            Text(balance, style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
           ],
         ),
       ),
@@ -1076,6 +1121,7 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
   // ÉTAPE 4 : SUCCÈS (Gold Theme)
   // ==========================================
   Widget _buildStep4Success(BuildContext context) {
+    final isDark = appState.isDarkMode;
     final sale = _completedSale;
     if (sale == null) return const SizedBox.shrink();
 
@@ -1085,8 +1131,8 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
         Container(
           width: 76,
           height: 76,
-          decoration: const BoxDecoration(
-            color: Color(0xFFFEF3C7),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF382305) : const Color(0xFFFEF3C7),
             shape: BoxShape.circle,
           ),
           child: const Center(
@@ -1094,19 +1140,19 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'Vente réussie !',
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: Color(0xFF0F172A)),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: isDark ? Colors.white : const Color(0xFF0F172A)),
         ),
         const SizedBox(height: 4),
         Text(
           'Réf : ${sale.historyReference}',
-          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
           '${AppTheme.formatFCFA(sale.total)} • ${sale.paymentMethod}',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.primaryNavy),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.primaryNavy),
         ),
         const SizedBox(height: 28),
 
@@ -1156,8 +1202,8 @@ class _CheckoutStepperModalState extends State<CheckoutStepperModal> {
           height: 48,
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.primaryNavy,
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              foregroundColor: isDark ? Colors.white : AppTheme.primaryNavy,
+              side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             icon: const Icon(Icons.visibility_outlined, size: 18),

@@ -592,9 +592,12 @@ class _MainShellState extends State<MainShell> {
                                       decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
                                     ),
                                     const SizedBox(width: 6),
-                                    Text(
-                                      '${activeShift.cashDeskName} ${'ouvert'.tr} • ',
-                                      style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                    Flexible(
+                                      child: Text(
+                                        '${activeShift.cashDeskName} ${'ouvert'.tr} • ',
+                                        style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                     ShiftDurationBadge(
                                       shift: activeShift,

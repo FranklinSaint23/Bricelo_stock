@@ -221,6 +221,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
 
   // --- MODAL NOUVEAU DEVIS ---
   void _showNewQuoteModal() {
+    final isDark = appState.isDarkMode;
     final clientCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     DateTime validUntil = DateTime.now().add(const Duration(days: 15));
@@ -260,9 +261,9 @@ class _QuotesScreenState extends State<QuotesScreen> {
           }
 
           return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.darkSurface : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 24),
             child: SingleChildScrollView(
@@ -274,19 +275,26 @@ class _QuotesScreenState extends State<QuotesScreen> {
                     child: Container(
                       width: 40,
                       height: 4,
-                      decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Nouveau devis pro-forma',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryNavy),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: isDark ? Colors.white : AppTheme.primaryNavy,
+                        ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.grey),
+                        icon: Icon(Icons.close, color: isDark ? Colors.white70 : Colors.grey),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -297,10 +305,13 @@ class _QuotesScreenState extends State<QuotesScreen> {
                   TextField(
                     controller: clientCtrl,
                     textCapitalization: TextCapitalization.words,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
                       labelText: 'Nom du client ou entreprise *',
-                      labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF475569)),
-                      prefixIcon: const Icon(Icons.person_outline, size: 20),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
+                      prefixIcon: Icon(Icons.person_outline, size: 20, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      filled: isDark,
+                      fillColor: isDark ? const Color(0xFF162540) : null,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
@@ -311,10 +322,13 @@ class _QuotesScreenState extends State<QuotesScreen> {
                   TextField(
                     controller: phoneCtrl,
                     keyboardType: TextInputType.phone,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
                       labelText: 'Téléphone du client *',
-                      labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF475569)),
-                      prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
+                      prefixIcon: Icon(Icons.phone_outlined, size: 20, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      filled: isDark,
+                      fillColor: isDark ? const Color(0xFF162540) : null,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
@@ -338,16 +352,17 @@ class _QuotesScreenState extends State<QuotesScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade400),
+                        color: isDark ? const Color(0xFF162540) : null,
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : Colors.grey.shade400),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.event_outlined, color: AppTheme.primaryNavy, size: 20),
+                          Icon(Icons.event_outlined, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 20),
                           const SizedBox(width: 10),
                           Text(
                             'Valable jusqu\'au : ${DateFormat('dd/MM/yyyy').format(validUntil)}',
-                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500),
+                            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: isDark ? Colors.white : Colors.black87),
                           ),
                           const Spacer(),
                           const Icon(Icons.calendar_month, color: AppTheme.accentGold, size: 18),
@@ -357,16 +372,23 @@ class _QuotesScreenState extends State<QuotesScreen> {
                   ),
 
                   const SizedBox(height: 16),
-                  const Text('Articles du devis *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryNavy)),
+                  Text(
+                    'Articles du devis *',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: isDark ? Colors.white : AppTheme.primaryNavy,
+                    ),
+                  ),
                   const SizedBox(height: 8),
 
                   // AJOUT D'UN ARTICLE
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,8 +397,12 @@ class _QuotesScreenState extends State<QuotesScreen> {
                           DropdownButtonFormField<Product>(
                             isExpanded: true,
                             value: selectedProduct,
-                            hint: const Text('Sélectionner un produit du catalogue', style: TextStyle(fontSize: 13)),
+                            dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
+                            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                            hint: Text('Sélectionner un produit du catalogue', style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                             decoration: InputDecoration(
+                              filled: isDark,
+                              fillColor: isDark ? const Color(0xFF162540) : null,
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             ),
@@ -401,9 +427,12 @@ class _QuotesScreenState extends State<QuotesScreen> {
 
                         TextField(
                           controller: customNameCtrl,
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                           decoration: InputDecoration(
                             labelText: 'Désignation de l\'article',
-                            labelStyle: const TextStyle(fontSize: 12),
+                            labelStyle: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                            filled: isDark,
+                            fillColor: isDark ? const Color(0xFF162540) : null,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           ),
@@ -417,9 +446,12 @@ class _QuotesScreenState extends State<QuotesScreen> {
                               child: TextField(
                                 controller: qtyCtrl,
                                 keyboardType: TextInputType.number,
+                                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                                 decoration: InputDecoration(
                                   labelText: 'Quantité',
-                                  labelStyle: const TextStyle(fontSize: 12),
+                                  labelStyle: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                                  filled: isDark,
+                                  fillColor: isDark ? const Color(0xFF162540) : null,
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                 ),
@@ -431,9 +463,12 @@ class _QuotesScreenState extends State<QuotesScreen> {
                               child: TextField(
                                 controller: priceCtrl,
                                 keyboardType: TextInputType.number,
+                                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                                 decoration: InputDecoration(
                                   labelText: 'Prix unitaire (FCFA)',
-                                  labelStyle: const TextStyle(fontSize: 12),
+                                  labelStyle: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                                  filled: isDark,
+                                  fillColor: isDark ? const Color(0xFF162540) : null,
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                 ),
@@ -442,8 +477,8 @@ class _QuotesScreenState extends State<QuotesScreen> {
                             const SizedBox(width: 8),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryNavy,
-                                foregroundColor: Colors.white,
+                                backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                                foregroundColor: isDark ? AppTheme.primaryNavy : Colors.white,
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                               ),
@@ -491,7 +526,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
                         margin: const EdgeInsets.only(bottom: 6),
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -500,12 +535,12 @@ class _QuotesScreenState extends State<QuotesScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(it.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                  Text('${it.quantity} x ${it.price.toInt()} F CFA', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                  Text(it.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : Colors.black87)),
+                                  Text('${it.quantity} x ${it.price.toInt()} F CFA', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                                 ],
                               ),
                             ),
-                            Text('${it.total.toInt()} F CFA', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy, fontSize: 13)),
+                            Text('${it.total.toInt()} F CFA', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, fontSize: 13)),
                             const SizedBox(width: 4),
                             IconButton(
                               icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
@@ -515,13 +550,13 @@ class _QuotesScreenState extends State<QuotesScreen> {
                         ),
                       );
                     }),
-                    const Divider(height: 12),
+                    Divider(height: 12, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('MONTANT TOTAL DU DEVIS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primaryNavy)),
+                          Text('MONTANT TOTAL DU DEVIS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : AppTheme.primaryNavy)),
                           Text('${totalDevis.toInt()} F CFA', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFFD97706))),
                         ],
                       ),
@@ -536,8 +571,8 @@ class _QuotesScreenState extends State<QuotesScreen> {
                     height: 48,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryNavy,
-                        foregroundColor: Colors.white,
+                        backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                        foregroundColor: isDark ? AppTheme.primaryNavy : Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 1,
                       ),
@@ -619,14 +654,15 @@ class _QuotesScreenState extends State<QuotesScreen> {
 
   // --- MODAL DÉTAILS DU DEVIS ---
   void _showQuoteDetails(Quote q) {
+    final isDark = appState.isDarkMode;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.darkSurface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
@@ -634,7 +670,14 @@ class _QuotesScreenState extends State<QuotesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
             const SizedBox(height: 14),
             Row(
@@ -644,47 +687,101 @@ class _QuotesScreenState extends State<QuotesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(q.id, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.accentGold)),
-                    Text(q.client, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.primaryNavy)),
+                    Text(
+                      q.client,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 17,
+                        color: isDark ? Colors.white : AppTheme.primaryNavy,
+                      ),
+                    ),
                   ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Text(
                     'Jusqu\'au ${DateFormat('dd/MM/yyyy').format(q.validUntil)}',
-                    style: const TextStyle(color: Color(0xFF1D4ED8), fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
             ),
             if (q.phone.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text('Tél : ${q.phone}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              Text(
+                'Tél : ${q.phone}',
+                style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+              ),
             ],
             const SizedBox(height: 16),
-            const Divider(height: 1),
+            Divider(height: 1, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
             const SizedBox(height: 12),
-            const Text('Articles inclus :', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569))),
+            Text(
+              'Articles inclus :',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+              ),
+            ),
             const SizedBox(height: 8),
             ...q.items.map((it) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   children: [
-                    Expanded(child: Text('${it.name} (×${it.quantity})', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
-                    Text('${it.total.toInt()} F CFA', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                    Expanded(
+                      child: Text(
+                        '${it.name} (×${it.quantity})',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${it.total.toInt()} F CFA',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                      ),
+                    ),
                   ],
                 ),
               );
             }),
             const SizedBox(height: 12),
-            const Divider(height: 1),
+            Divider(height: 1, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('TOTAL DU DEVIS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppTheme.primaryNavy)),
-                Text('${q.total.toInt()} F CFA', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.primaryNavy)),
+                Text(
+                  'TOTAL DU DEVIS',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    color: isDark ? Colors.white : AppTheme.primaryNavy,
+                  ),
+                ),
+                Text(
+                  '${q.total.toInt()} F CFA',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 20),

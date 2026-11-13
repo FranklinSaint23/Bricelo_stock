@@ -98,10 +98,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     final emailCtrl = TextEditingController(text: appState.userEmail);
     final addressCtrl = TextEditingController(text: appState.companyAddress);
 
+    final isDark = appState.isDarkMode;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -120,12 +122,16 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Modifier mon profil',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryNavy),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: isDark ? Colors.white : AppTheme.primaryNavy,
+                    ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: isDark ? Colors.white70 : const Color(0xFF6B7280)),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
@@ -133,30 +139,65 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
               const SizedBox(height: 14),
               TextField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom complet *', border: OutlineInputBorder()),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Nom complet *',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: companyCtrl,
-                decoration: const InputDecoration(labelText: 'Nom de la boutique / entreprise *', border: OutlineInputBorder()),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Nom de la boutique / entreprise *',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Téléphone', border: OutlineInputBorder()),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Téléphone',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: addressCtrl,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Adresse de la boutique', border: OutlineInputBorder()),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Adresse de la boutique',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 18),
               SizedBox(
@@ -164,8 +205,8 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryNavy,
-                    foregroundColor: Colors.white,
+                    backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                    foregroundColor: isDark ? AppTheme.primaryNavy : Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () async {

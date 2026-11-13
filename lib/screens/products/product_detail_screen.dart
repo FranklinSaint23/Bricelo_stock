@@ -57,8 +57,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _showPhotoOptions(BuildContext context) {
+    final isDark = appState.isDarkMode;
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -73,32 +75,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: isDark ? Colors.white24 : Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const Text(
+              Text(
                 'Modifier la photo du produit',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
               ),
               const SizedBox(height: 12),
               ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFE2E8F0),
-                  child: Icon(Icons.camera_alt, color: AppTheme.primaryNavy),
+                leading: CircleAvatar(
+                  backgroundColor: isDark ? const Color(0xFF162540) : const Color(0xFFE2E8F0),
+                  child: Icon(Icons.camera_alt, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                 ),
-                title: const Text('Prendre une photo'),
+                title: Text('Prendre une photo', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickAndChangeProductPhoto(ImageSource.camera);
                 },
               ),
               ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFE2E8F0),
-                  child: Icon(Icons.photo_library, color: AppTheme.primaryNavy),
+                leading: CircleAvatar(
+                  backgroundColor: isDark ? const Color(0xFF162540) : const Color(0xFFE2E8F0),
+                  child: Icon(Icons.photo_library, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                 ),
-                title: const Text('Choisir dans la galerie'),
+                title: Text('Choisir dans la galerie', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickAndChangeProductPhoto(ImageSource.gallery);
@@ -112,6 +118,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _showAddVariantDialog(BuildContext context) {
+    final isDark = appState.isDarkMode;
     final nameCtrl = TextEditingController();
     final skuCtrl = TextEditingController();
     final barcodeCtrl = TextEditingController();
@@ -120,10 +127,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           'Ajouter une variante',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF0F172A)),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
         ),
         content: SingleChildScrollView(
           child: Column(
@@ -131,38 +143,54 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               TextField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
                   labelText: 'Nom *',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: skuCtrl,
-                decoration: const InputDecoration(
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
                   labelText: 'SKU',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: barcodeCtrl,
-                decoration: const InputDecoration(
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
                   labelText: 'Code-barres',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: priceCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
                   labelText: 'Prix de vente',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
               ),
             ],
@@ -171,8 +199,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         actions: [
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.primaryNavy,
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              foregroundColor: isDark ? Colors.white70 : AppTheme.primaryNavy,
+              side: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFCBD5E1)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () => Navigator.pop(ctx),
@@ -209,13 +237,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _showLabelsDialog(BuildContext context, Product p) {
+    final isDark = appState.isDarkMode;
     int copies = 1;
     String format = '50x30 mm';
     bool showPrice = true;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -230,15 +259,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Générer des étiquettes',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.primaryNavy),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        color: isDark ? Colors.white : AppTheme.primaryNavy,
+                      ),
                     ),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                    IconButton(
+                      icon: Icon(Icons.close, color: isDark ? Colors.white70 : Colors.grey),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text('Format d\'étiquette', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey[700])),
+                Text(
+                  'Format d\'étiquette',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey[700],
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -248,7 +291,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       label: Text(fmt),
                       selected: isSel,
                       selectedColor: AppTheme.accentGold,
-                      labelStyle: TextStyle(color: isSel ? AppTheme.primaryNavy : Colors.black87, fontWeight: FontWeight.bold),
+                      backgroundColor: isDark ? const Color(0xFF1E293B) : null,
+                      labelStyle: TextStyle(
+                        color: isSel
+                            ? AppTheme.primaryNavy
+                            : (isDark ? Colors.white70 : Colors.black87),
+                        fontWeight: FontWeight.bold,
+                      ),
                       onSelected: (_) => setMState(() => format = fmt),
                     );
                   }).toList(),
@@ -257,18 +306,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Nombre d\'exemplaires', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(
+                      'Nombre d\'exemplaires',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
+                          icon: Icon(Icons.remove_circle_outline, color: isDark ? Colors.white70 : Colors.black87),
                           onPressed: () {
                             if (copies > 1) setMState(() => copies--);
                           },
                         ),
-                        Text('$copies', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                        Text(
+                          '$copies',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
                         IconButton(
-                          icon: const Icon(Icons.add_circle_outline),
+                          icon: Icon(Icons.add_circle_outline, color: isDark ? Colors.white70 : Colors.black87),
                           onPressed: () => setMState(() => copies++),
                         ),
                       ],
@@ -277,7 +340,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Afficher le prix de vente', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  title: Text(
+                    'Afficher le prix de vente',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
                   value: showPrice,
                   onChanged: (v) => setMState(() => showPrice = v),
                 ),
@@ -310,6 +380,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _showEditProductSheet(Product p) {
+    final isDark = appState.isDarkMode;
     final nameCtrl = TextEditingController(text: p.name);
     final sellCtrl = TextEditingController(text: p.sellPrice.toStringAsFixed(0));
     final buyCtrl = TextEditingController(text: p.buyPrice.toStringAsFixed(0));
@@ -320,7 +391,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -339,12 +410,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Modifier le produit',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryNavy),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: isDark ? Colors.white : AppTheme.primaryNavy,
+                    ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: isDark ? Colors.white70 : Colors.grey),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
@@ -352,7 +427,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom du produit *', border: OutlineInputBorder()),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Nom du produit *',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 12),
               Row(
@@ -361,7 +443,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: TextField(
                       controller: sellCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Prix de vente (FCFA)', border: OutlineInputBorder()),
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      decoration: InputDecoration(
+                        labelText: 'Prix de vente (FCFA)',
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                        filled: isDark,
+                        fillColor: isDark ? const Color(0xFF162540) : null,
+                        border: const OutlineInputBorder(),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -369,7 +458,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: TextField(
                       controller: buyCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Coût d\'achat (FCFA)', border: OutlineInputBorder()),
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      decoration: InputDecoration(
+                        labelText: 'Coût d\'achat (FCFA)',
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                        filled: isDark,
+                        fillColor: isDark ? const Color(0xFF162540) : null,
+                        border: const OutlineInputBorder(),
+                      ),
                     ),
                   ),
                 ],
@@ -381,7 +477,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: TextField(
                       controller: stockCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Stock actuel', border: OutlineInputBorder()),
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      decoration: InputDecoration(
+                        labelText: 'Stock actuel',
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                        filled: isDark,
+                        fillColor: isDark ? const Color(0xFF162540) : null,
+                        border: const OutlineInputBorder(),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -389,7 +492,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: TextField(
                       controller: minStockCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Seuil alerte', border: OutlineInputBorder()),
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      decoration: InputDecoration(
+                        labelText: 'Seuil alerte',
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                        filled: isDark,
+                        fillColor: isDark ? const Color(0xFF162540) : null,
+                        border: const OutlineInputBorder(),
+                      ),
                     ),
                   ),
                 ],
@@ -397,7 +507,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: barcodeCtrl,
-                decoration: const InputDecoration(labelText: 'Code-barres / Réf', border: OutlineInputBorder()),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Code-barres / Réf',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 18),
               SizedBox(
@@ -497,22 +614,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             showDialog(
                               context: context,
                               builder: (dialogCtx) => AlertDialog(
+                                backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                title: const Row(
+                                title: Row(
                                   children: [
-                                    Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
-                                    SizedBox(width: 8),
-                                    Text('Confirmer la suppression', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                    const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Confirmer la suppression',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 content: Text(
                                   'Êtes-vous sûr de vouloir supprimer définitivement « ${p.name} » ?\nCette action retirera le produit du catalogue.',
-                                  style: const TextStyle(fontSize: 14, height: 1.4),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    height: 1.4,
+                                    color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                                  ),
                                 ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(dialogCtx),
-                                    child: const Text('Annuler', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                                    child: Text(
+                                      'Annuler',
+                                      style: TextStyle(
+                                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                   ElevatedButton(
                                     style: ElevatedButton.styleFrom(

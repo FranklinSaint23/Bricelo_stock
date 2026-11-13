@@ -1072,6 +1072,7 @@ class _FixedAssetsScreenState extends State<FixedAssetsScreen> {
   final List<Map<String, dynamic>> _assets = [];
 
   void _showAddAssetDialog() {
+    final isDark = appState.isDarkMode;
     final nameCtrl = TextEditingController();
     final valueCtrl = TextEditingController();
     final dureeCtrl = TextEditingController(text: '3 ans');
@@ -1079,21 +1080,62 @@ class _FixedAssetsScreenState extends State<FixedAssetsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Nouvelle immobilisation', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+        title: Text(
+          'Nouvelle immobilisation',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Désignation de l\'actif *', hintText: 'Ex: Climatiseur magasin')),
+            TextField(
+              controller: nameCtrl,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: InputDecoration(
+                labelText: 'Désignation de l\'actif *',
+                labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                hintText: 'Ex: Climatiseur magasin',
+                border: const OutlineInputBorder(),
+              ),
+            ),
             const SizedBox(height: 8),
-            TextField(controller: valueCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Valeur d\'achat (FCFA) *')),
+            TextField(
+              controller: valueCtrl,
+              keyboardType: TextInputType.number,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: InputDecoration(
+                labelText: 'Valeur d\'achat (FCFA) *',
+                labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                border: const OutlineInputBorder(),
+              ),
+            ),
             const SizedBox(height: 8),
-            TextField(controller: dureeCtrl, decoration: const InputDecoration(labelText: 'Durée d\'amortissement', hintText: 'Ex: 5 ans')),
+            TextField(
+              controller: dureeCtrl,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: InputDecoration(
+                labelText: 'Durée d\'amortissement',
+                labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                hintText: 'Ex: 5 ans',
+                border: const OutlineInputBorder(),
+              ),
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Annuler', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+              foregroundColor: isDark ? AppTheme.primaryNavy : Colors.white,
+            ),
             onPressed: () {
               final n = nameCtrl.text.trim();
               final v = double.tryParse(valueCtrl.text.trim()) ?? 0.0;
@@ -1110,7 +1152,7 @@ class _FixedAssetsScreenState extends State<FixedAssetsScreen> {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Enregistrer', style: TextStyle(color: Colors.white)),
+            child: const Text('Enregistrer'),
           ),
         ],
       ),

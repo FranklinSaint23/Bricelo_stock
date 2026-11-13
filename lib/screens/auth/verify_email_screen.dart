@@ -150,6 +150,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     try {
       final sb = Supabase.instance.client;
 
+      // Si l'utilisateur est déjà connecté et change d'adresse email, appeler updateUser
+      if (sb.auth.currentUser != null && email != appState.userEmail) {
+        try {
+          await sb.auth.updateUser(UserAttributes(email: email));
+        } catch (_) {}
+      }
+
       // 1. Tenter le renvoi de confirmation d'inscription (type: signup)
       try {
         await sb.auth.resend(
@@ -157,18 +164,26 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           email: email,
         );
       } catch (eSignup) {
-        // 2. Si le compte existe déjà ou nécessite un OTP par email (type: email)
+        // 2. Tenter le renvoi pour changement d'email (type: emailChange)
         try {
-          await sb.auth.signInWithOtp(
+          await sb.auth.resend(
+            type: OtpType.emailChange,
             email: email,
-            shouldCreateUser: false,
           );
         } catch (_) {
-          // 3. Si aucun compte auth n'existe encore pour cet email, en créer un
-          await sb.auth.signInWithOtp(
-            email: email,
-            shouldCreateUser: true,
-          );
+          // 3. Si le compte existe déjà ou nécessite un OTP par email (type: email)
+          try {
+            await sb.auth.signInWithOtp(
+              email: email,
+              shouldCreateUser: false,
+            );
+          } catch (_) {
+            // 4. Si aucun compte auth n'existe encore pour cet email, en créer un
+            await sb.auth.signInWithOtp(
+              email: email,
+              shouldCreateUser: true,
+            );
+          }
         }
       }
 
@@ -240,20 +255,29 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           type: OtpType.signup,
         );
       } catch (e1) {
-        // 2. Si non applicable, tenter avec OtpType.email
+        // 2. Tenter avec OtpType.emailChange (changement d'email sécurisé)
         try {
           response = await sb.auth.verifyOTP(
             email: verifiedEmail,
             token: enteredCode,
-            type: OtpType.email,
+            type: OtpType.emailChange,
           );
-        } catch (e2) {
-          // 3. Tenter avec OtpType.magiclink
-          response = await sb.auth.verifyOTP(
-            email: verifiedEmail,
-            token: enteredCode,
-            type: OtpType.magiclink,
-          );
+        } catch (eChange) {
+          // 3. Tenter avec OtpType.email
+          try {
+            response = await sb.auth.verifyOTP(
+              email: verifiedEmail,
+              token: enteredCode,
+              type: OtpType.email,
+            );
+          } catch (e2) {
+            // 4. Tenter avec OtpType.magiclink
+            response = await sb.auth.verifyOTP(
+              email: verifiedEmail,
+              token: enteredCode,
+              type: OtpType.magiclink,
+            );
+          }
         }
       }
 
@@ -263,6 +287,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
         if (verifiedEmail != appState.userEmail) {
           await appState.updateUserProfile(email: verifiedEmail);
+          await appState.updateRecoveryEmail(verifiedEmail);
         }
 
         // Synchronisation du statut dans la table user_profiles

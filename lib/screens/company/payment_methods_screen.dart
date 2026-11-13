@@ -24,25 +24,27 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   }
 
   void _showHelpDialog() {
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.help_outline, color: AppTheme.primaryNavy),
-            SizedBox(width: 8),
-            Text('Comptes de paiement', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Icon(Icons.help_outline, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+            const SizedBox(width: 8),
+            Text('Comptes de paiement', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF0F172A))),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Les comptes de paiement vous permettent de suivre précisément les encaissements par canal (Espèces, Mobile Money, Carte, Virement). Chaque vente alimente le compte sélectionné lors du passage en caisse.',
-          style: TextStyle(fontSize: 14, height: 1.4),
+          style: TextStyle(fontSize: 14, height: 1.4, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Fermer'),
+            child: Text('Fermer', style: TextStyle(color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -104,12 +106,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       context: context,
       barrierDismissible: true,
       builder: (dialogCtx) {
+        final isDark = appState.isDarkMode;
         return StatefulBuilder(
           builder: (modalCtx, setDlgState) {
             final isInitial = activeTab == 'Solde initial';
 
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
               insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
               child: SingleChildScrollView(
@@ -121,10 +124,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     children: [
                       Text(
                         desk.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF111827),
+                          color: isDark ? Colors.white : const Color(0xFF111827),
                         ),
                       ),
                       const SizedBox(height: 18),
@@ -133,7 +136,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         height: 44,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(22),
-                          border: Border.all(color: const Color(0xFF6B7280), width: 0.9),
+                          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280), width: 0.9),
                         ),
                         child: Row(
                           children: [
@@ -143,7 +146,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                 borderRadius: const BorderRadius.horizontal(left: Radius.circular(22)),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: isInitial ? const Color(0xFFFED7AA) : Colors.transparent,
+                                    color: isInitial
+                                        ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFED7AA))
+                                        : Colors.transparent,
                                     borderRadius: const BorderRadius.horizontal(left: Radius.circular(22)),
                                   ),
                                   child: Center(
@@ -152,21 +157,25 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                       style: TextStyle(
                                         fontWeight: isInitial ? FontWeight.bold : FontWeight.w500,
                                         fontSize: 13.5,
-                                        color: const Color(0xFF111827),
+                                        color: isInitial
+                                            ? (isDark ? AppTheme.accentGold : const Color(0xFF111827))
+                                            : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                            Container(width: 0.9, color: const Color(0xFF6B7280)),
+                            Container(width: 0.9, color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280)),
                             Expanded(
                               child: InkWell(
                                 onTap: () => setDlgState(() => activeTab = 'Ajuster'),
                                 borderRadius: const BorderRadius.horizontal(right: Radius.circular(22)),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: !isInitial ? const Color(0xFFFED7AA) : Colors.transparent,
+                                    color: !isInitial
+                                        ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFED7AA))
+                                        : Colors.transparent,
                                     borderRadius: const BorderRadius.horizontal(right: Radius.circular(22)),
                                   ),
                                   child: Center(
@@ -175,7 +184,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                       style: TextStyle(
                                         fontWeight: !isInitial ? FontWeight.bold : FontWeight.w500,
                                         fontSize: 13.5,
-                                        color: const Color(0xFF111827),
+                                        color: !isInitial
+                                            ? (isDark ? AppTheme.accentGold : const Color(0xFF111827))
+                                            : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                                       ),
                                     ),
                                   ),
@@ -191,16 +202,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         isInitial
                             ? 'À définir une seule fois — le solde de départ du compte.'
                             : 'Saisissez le solde réel compté ; l\'écart est enregistré.',
-                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280), height: 1.35),
+                        style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), height: 1.35),
                       ),
                       const SizedBox(height: 12),
 
                       Text(
                         'Solde actuel: ${AppTheme.formatFCFA(desk.balance)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF374151),
+                          color: isDark ? AppTheme.accentGold : const Color(0xFF374151),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -209,8 +220,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         TextField(
                           controller: initialBalanceCtrl,
                           keyboardType: TextInputType.number,
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                           decoration: InputDecoration(
                             labelText: 'Solde initial',
+                            labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                             hintText: '0',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -220,8 +233,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         const SizedBox(height: 12),
                         TextField(
                           controller: initialReasonCtrl,
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                           decoration: InputDecoration(
                             labelText: 'Motif (optionnel)',
+                            labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                           ),
@@ -230,8 +245,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         TextField(
                           controller: adjustCountedCtrl,
                           keyboardType: TextInputType.number,
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                           decoration: InputDecoration(
                             labelText: 'Solde réel compté',
+                            labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                             hintText: '0',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -241,8 +258,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         const SizedBox(height: 12),
                         TextField(
                           controller: adjustReasonCtrl,
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                           decoration: InputDecoration(
                             labelText: 'Motif (obligatoire)',
+                            labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                             hintText: 'Ex: Contrôle fond de caisse fin de journée',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -257,8 +276,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           Expanded(
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.primaryNavy,
-                                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                foregroundColor: isDark ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
+                                side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                               ),
@@ -271,9 +290,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _canConfirm(isInitial, initialBalanceCtrl.text, adjustCountedCtrl.text, adjustReasonCtrl.text)
-                                    ? AppTheme.primaryNavy
-                                    : const Color(0xFFD1D5DB),
-                                foregroundColor: Colors.white,
+                                    ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy)
+                                    : (isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
+                                foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -324,15 +343,17 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   // MODALE COMPTE DE PAIEMENT PERSONNALISÉ
   void _showPaymentAccountModal(BuildContext context, PaymentAccount acc) {
+    final isDark = appState.isDarkMode;
     final balanceCtrl = TextEditingController(text: acc.balance.toInt().toString());
 
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text(
           acc.title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : const Color(0xFF0F172A)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -340,19 +361,21 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           children: [
             Text(
               'Type: ${acc.type}',
-              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+              style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
             ),
             const SizedBox(height: 6),
             Text(
               'Solde actuel: ${AppTheme.formatFCFA(acc.balance)}',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? AppTheme.accentGold : const Color(0xFF111827)),
             ),
             const SizedBox(height: 14),
             TextField(
               controller: balanceCtrl,
               keyboardType: TextInputType.number,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
               decoration: InputDecoration(
                 labelText: 'Nouveau solde (FCFA)',
+                labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               ),
@@ -362,12 +385,12 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Annuler', style: TextStyle(color: Color(0xFF6B7280))),
+            child: Text('Annuler', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryNavy,
-              foregroundColor: Colors.white,
+              backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+              foregroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () async {
@@ -597,16 +620,18 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         icon: const Icon(Icons.archive_outlined, size: 18, color: Color(0xFF6B7280)),
                         tooltip: 'Archiver le compte',
                         onPressed: () {
+                          final isDark = appState.isDarkMode;
                           showDialog(
                             context: context,
                             builder: (ctx) => AlertDialog(
+                              backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              title: const Text('Archiver le compte ?'),
-                              content: Text('Voulez-vous archiver le compte de paiement "${acc.title}" ?'),
+                              title: Text('Archiver le compte ?', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                              content: Text('Voulez-vous archiver le compte de paiement "${acc.title}" ?', style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569))),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(ctx),
-                                  child: const Text('Annuler'),
+                                  child: Text('Annuler', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
                                 ),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
@@ -614,7 +639,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                     appState.removePaymentAccount(acc.id);
                                     Navigator.pop(ctx);
                                   },
-                                  child: const Text('Archiver', style: TextStyle(color: Colors.white)),
+                                  child: const Text('Archiver', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                 ),
                               ],
                             ),

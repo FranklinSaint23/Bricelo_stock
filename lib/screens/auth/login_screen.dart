@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/screens/screens.dart';
@@ -222,6 +223,423 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     }
+  }
+
+  void _showForgotPasswordModal() {
+    final state = AppState.instance;
+    final isEn = state.currentLanguage == 'en';
+    final isDark = state.isDarkMode;
+
+    final idCtrl = TextEditingController(
+      text: _emailCtrl.text.isNotEmpty
+          ? _emailCtrl.text
+          : (_phoneCtrl.text.isNotEmpty ? _phoneCtrl.text : ''),
+    );
+    final otpCtrl = TextEditingController();
+    final newPwdCtrl = TextEditingController();
+    final confirmPwdCtrl = TextEditingController();
+
+    int step = 1; // 1: Email/Identifiant, 2: Code OTP, 3: Nouveau mot de passe
+    String resolvedEmail = '';
+    bool isBusy = false;
+    String? stepError;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final cardBg = isDark ? AppTheme.darkSurface : Colors.white;
+          final borderCol = isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0);
+          final textCol = isDark ? Colors.white : AppTheme.primaryNavy;
+          final subtextCol = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+          return Container(
+            padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(modalCtx).viewInsets.bottom + 24),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border.all(color: borderCol),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isEn ? 'Reset Password' : 'Réinitialiser le mot de passe',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: textCol,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: subtextCol, size: 20),
+                        onPressed: () => Navigator.pop(modalCtx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    step == 1
+                        ? (isEn
+                            ? 'Enter your phone number or recovery email to receive a 6-digit reset code.'
+                            : 'Entrez votre numéro de téléphone ou votre email de récupération pour recevoir un code à 6 chiffres.')
+                        : step == 2
+                            ? (isEn
+                                ? 'A 6-digit code has been sent to $resolvedEmail. Please enter it below.'
+                                : 'Un code à 6 chiffres a été envoyé à $resolvedEmail. Saisissez-le ci-dessous.')
+                            : (isEn
+                                ? 'Choose a new password (min. 6 characters) for your account.'
+                                : 'Choisissez votre nouveau mot de passe (min. 6 caractères).'),
+                    style: TextStyle(fontSize: 13, color: subtextCol, height: 1.4),
+                  ),
+                  const SizedBox(height: 18),
+
+                  if (stepError != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              stepError!,
+                              style: const TextStyle(color: Color(0xFFDC2626), fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // STEP 1: Saisie Email ou Téléphone
+                  if (step == 1) ...[
+                    TextField(
+                      controller: idCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      decoration: InputDecoration(
+                        labelText: isEn ? 'Phone number or Email' : 'Numéro de téléphone ou Email',
+                        labelStyle: TextStyle(color: subtextCol, fontSize: 13),
+                        prefixIcon: Icon(Icons.account_circle_outlined, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                          foregroundColor: isDark ? const Color(0xFF0D1B2E) : Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: isBusy
+                            ? null
+                            : () async {
+                                final input = idCtrl.text.trim();
+                                if (input.isEmpty) {
+                                  setModalState(() => stepError = isEn ? 'Please enter your email or phone.' : 'Veuillez saisir votre email ou téléphone.');
+                                  return;
+                                }
+
+                                setModalState(() {
+                                  isBusy = true;
+                                  stepError = null;
+                                });
+
+                                String target = '';
+                                if (input.contains('@')) {
+                                  target = input.toLowerCase();
+                                } else {
+                                  final found = await state.findRecoveryEmailForIdentifier(input);
+                                  if (found != null && found.isNotEmpty) {
+                                    target = found;
+                                  } else {
+                                    setModalState(() {
+                                      isBusy = false;
+                                      stepError = isEn
+                                          ? 'No recovery email found for this phone number. Please enter your email address directly.'
+                                          : 'Aucun email de récupération trouvé pour ce numéro. Veuillez entrer directement votre adresse email.';
+                                    });
+                                    return;
+                                  }
+                                }
+
+                                final err = await state.sendPasswordResetCode(target);
+                                setModalState(() {
+                                  isBusy = false;
+                                  if (err != null) {
+                                    stepError = err;
+                                  } else {
+                                    resolvedEmail = target;
+                                    step = 2;
+                                  }
+                                });
+                              },
+                        child: isBusy
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Text(isEn ? 'Send 6-digit Code' : 'Envoyer le code à 6 chiffres', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      ),
+                    ),
+                  ],
+
+                  // STEP 2: Saisie du Code OTP
+                  if (step == 2) ...[
+                    TextField(
+                      controller: otpCtrl,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        letterSpacing: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: '••••••',
+                        hintStyle: const TextStyle(letterSpacing: 8, color: Color(0xFFCBD5E1)),
+                        counterText: '',
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                          foregroundColor: isDark ? const Color(0xFF0D1B2E) : Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: isBusy
+                            ? null
+                            : () async {
+                                final code = otpCtrl.text.trim();
+                                if (code.length != 6) {
+                                  setModalState(() => stepError = isEn ? 'Please enter the 6-digit code.' : 'Veuillez saisir les 6 chiffres du code.');
+                                  return;
+                                }
+
+                                setModalState(() {
+                                  isBusy = true;
+                                  stepError = null;
+                                });
+
+                                try {
+                                  final sb = Supabase.instance.client;
+                                  final authResp = await sb.auth.verifyOTP(
+                                    email: resolvedEmail,
+                                    token: code,
+                                    type: OtpType.recovery,
+                                  );
+
+                                  if (authResp.session != null || authResp.user != null) {
+                                    setModalState(() {
+                                      isBusy = false;
+                                      step = 3;
+                                    });
+                                  } else {
+                                    setModalState(() {
+                                      isBusy = false;
+                                      stepError = isEn ? 'Invalid or expired code.' : 'Code invalide ou expiré.';
+                                    });
+                                  }
+                                } catch (e) {
+                                  setModalState(() {
+                                    isBusy = false;
+                                    stepError = isEn ? 'Invalid code. Please retry.' : 'Code incorrect ou expiré. Veuillez réessayer.';
+                                  });
+                                }
+                              },
+                        child: isBusy
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Text(isEn ? 'Verify Code' : 'Valider le code', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Center(
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.refresh_rounded, size: 16),
+                        label: Text(isEn ? 'Resend code' : 'Renvoyer un nouveau code', style: TextStyle(color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, fontSize: 12.5)),
+                        onPressed: isBusy
+                            ? null
+                            : () async {
+                                setModalState(() => isBusy = true);
+                                await state.sendPasswordResetCode(resolvedEmail);
+                                setModalState(() {
+                                  isBusy = false;
+                                  stepError = null;
+                                });
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: const Color(0xFF059669),
+                                    content: Text(isEn ? 'New code sent to $resolvedEmail.' : 'Nouveau code envoyé à $resolvedEmail.'),
+                                  ),
+                                );
+                              },
+                      ),
+                    ),
+                  ],
+
+                  // STEP 3: Saisie du Nouveau Mot de Passe
+                  if (step == 3) ...[
+                    TextField(
+                      controller: newPwdCtrl,
+                      obscureText: obscureNew,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      decoration: InputDecoration(
+                        labelText: isEn ? 'New password (min. 6 chars) *' : 'Nouveau mot de passe (min. 6 caract.) *',
+                        labelStyle: TextStyle(color: subtextCol, fontSize: 13),
+                        prefixIcon: Icon(Icons.lock_outline, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                        suffixIcon: IconButton(
+                          icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility, color: subtextCol, size: 20),
+                          onPressed: () => setModalState(() => obscureNew = !obscureNew),
+                        ),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: confirmPwdCtrl,
+                      obscureText: obscureConfirm,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      decoration: InputDecoration(
+                        labelText: isEn ? 'Confirm password *' : 'Confirmer le mot de passe *',
+                        labelStyle: TextStyle(color: subtextCol, fontSize: 13),
+                        prefixIcon: Icon(Icons.lock_reset_outlined, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
+                        suffixIcon: IconButton(
+                          icon: Icon(obscureConfirm ? Icons.visibility_off : Icons.visibility, color: subtextCol, size: 20),
+                          onPressed: () => setModalState(() => obscureConfirm = !obscureConfirm),
+                        ),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                          foregroundColor: isDark ? const Color(0xFF0D1B2E) : Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: isBusy
+                            ? null
+                            : () async {
+                                final newPwd = newPwdCtrl.text.trim();
+                                final confirmPwd = confirmPwdCtrl.text.trim();
+
+                                if (newPwd.length < 6) {
+                                  setModalState(() => stepError = isEn ? 'Password must be at least 6 characters.' : 'Le mot de passe doit comporter au moins 6 caractères.');
+                                  return;
+                                }
+                                if (newPwd != confirmPwd) {
+                                  setModalState(() => stepError = isEn ? 'Passwords do not match.' : 'Les mots de passe ne correspondent pas.');
+                                  return;
+                                }
+
+                                setModalState(() {
+                                  isBusy = true;
+                                  stepError = null;
+                                });
+
+                                try {
+                                  final sb = Supabase.instance.client;
+                                  // 1. Mise à jour dans Supabase Auth (déclenche notification 'Password changed')
+                                  await sb.auth.updateUser(UserAttributes(password: newPwd));
+
+                                  // 2. Mise à jour hash local et sync table user_profiles
+                                  final newHash = AppState.hashPassword(newPwd);
+                                  state.ownerPasswordHash = newHash;
+                                  await state.saveSettings();
+
+                                  if (resolvedEmail.isNotEmpty) {
+                                    await state.enqueueOrSendSupabase(
+                                      table: 'user_profiles',
+                                      action: 'update',
+                                      matchCol: 'email',
+                                      matchVal: resolvedEmail,
+                                      payload: {
+                                        'password_hash': newHash,
+                                        'updated_at': DateTime.now().toIso8601String(),
+                                      },
+                                    );
+                                  }
+
+                                  Navigator.pop(modalCtx);
+                                  _passwordCtrl.text = newPwd;
+
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: const Color(0xFF059669),
+                                      content: Text(
+                                        isEn
+                                            ? 'Password reset successfully! Security confirmation email sent.'
+                                            : 'Mot de passe réinitialisé avec succès ! Un email de sécurité vous a été envoyé.',
+                                      ),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  setModalState(() {
+                                    isBusy = false;
+                                    stepError = 'Erreur: $e';
+                                  });
+                                }
+                              },
+                        child: isBusy
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Text(isEn ? 'Save New Password' : 'Enregistrer le nouveau mot de passe', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -570,6 +988,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                     ),
+
+                    if (_authMode == 0) ...[
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _showForgotPasswordModal,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            isEn ? 'Forgot password?' : 'Mot de passe oublié ?',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
 
                     if (_authMode == 2) ...[
                       const SizedBox(height: 12),

@@ -152,6 +152,7 @@ class SaleReceiptDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = AppState.instance;
+    final isDark = appState.isDarkMode;
     final formatter = NumberFormat('#,###', 'fr_FR');
     const inkBlue = Color(0xFF1E3A8A);
     const accentRed = Color(0xFFDC2626);
@@ -697,9 +698,9 @@ class SaleReceiptDialog extends StatelessWidget {
                     height: 44,
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppTheme.primaryNavy,
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+                        foregroundColor: isDark ? Colors.white : AppTheme.primaryNavy,
+                        side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () {

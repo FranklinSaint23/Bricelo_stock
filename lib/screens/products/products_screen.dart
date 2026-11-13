@@ -856,25 +856,31 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   void _showProductQuotaDialog(BuildContext context) {
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: isDark ? const Color(0xFF382305) : const Color(0xFFFEF3C7),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.lock_rounded, color: Color(0xFFD97706), size: 22),
+              child: const Icon(Icons.lock_rounded, color: AppTheme.accentGold, size: 22),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Plafond Découverte atteint',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
               ),
             ),
           ],
@@ -882,12 +888,22 @@ class _ProductsScreenState extends State<ProductsScreen> {
         content: Text(
           'Votre catalogue en formule Découverte est limité à 25 articles (${appState.products.length}/25).\n\n'
           'Pour enregistrer un nombre illimité de produits, ajouter des variantes et gérer des dépôts multiples, passez à la Formule Pro sur le portail web.',
-          style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF475569)),
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.4,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Compris', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+            child: Text(
+              'Compris',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+              ),
+            ),
           ),
         ],
       ),

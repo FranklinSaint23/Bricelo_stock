@@ -23,6 +23,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
   }
 
   void _showRecordPaymentModal(CustomerDebt debt) {
+    final isDark = appState.isDarkMode;
     final amountCtrl = TextEditingController(text: debt.remainingDebt.toInt().toString());
     final noteCtrl = TextEditingController(text: 'Versement');
     String paymentMethod = 'Espèces';
@@ -33,9 +34,9 @@ class _DebtsScreenState extends State<DebtsScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 24),
           child: Column(
@@ -43,25 +44,27 @@ class _DebtsScreenState extends State<DebtsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
-                child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+                child: Container(width: 40, height: 4, decoration: BoxDecoration(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
               ),
               const SizedBox(height: 14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Encaisser un recouvrement', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: AppTheme.primaryNavy)),
-                  IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
+                  Text('Encaisser un recouvrement', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: isDark ? Colors.white : AppTheme.primaryNavy)),
+                  IconButton(icon: Icon(Icons.close, color: isDark ? Colors.white70 : Colors.grey), onPressed: () => Navigator.pop(ctx)),
                 ],
               ),
               const SizedBox(height: 6),
-              Text('Client : ${debt.customerName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF334155))),
+              Text('Client : ${debt.customerName}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155))),
               Text('Reste à payer : ${AppTheme.formatFCFA(debt.remainingDebt)}', style: const TextStyle(fontSize: 13, color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               TextField(
                 controller: amountCtrl,
                 keyboardType: TextInputType.number,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Montant versé (FCFA) *',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
@@ -69,8 +72,11 @@ class _DebtsScreenState extends State<DebtsScreen> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: paymentMethod,
+                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Mode d\'encaissement',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
@@ -87,8 +93,10 @@ class _DebtsScreenState extends State<DebtsScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: noteCtrl,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Observation / Référence',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
@@ -136,6 +144,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
   }
 
   void _showAddManualDebtModal() {
+    final isDark = appState.isDarkMode;
     final clientCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     final amountCtrl = TextEditingController();
@@ -147,37 +156,56 @@ class _DebtsScreenState extends State<DebtsScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
           padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Ajouter une dette client', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: AppTheme.primaryNavy)),
-                  IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(ctx)),
+                  Text('Ajouter une dette client', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: isDark ? Colors.white : AppTheme.primaryNavy)),
+                  IconButton(icon: Icon(Icons.close, color: isDark ? Colors.white70 : Colors.grey), onPressed: () => Navigator.pop(ctx)),
                 ],
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: clientCtrl,
-                decoration: InputDecoration(labelText: 'Nom du client *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Nom du client *',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: InputDecoration(labelText: 'Téléphone client', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Téléphone client',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: amountCtrl,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: 'Montant dû (FCFA) *', suffixText: 'FCFA', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Montant dû (FCFA) *',
+                  suffixText: 'FCFA',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               ),
               const SizedBox(height: 10),
               InkWell(
@@ -192,12 +220,19 @@ class _DebtsScreenState extends State<DebtsScreen> {
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                    border: Border.all(color: isDark ? const Color(0xFF334155) : Colors.grey.shade400),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.event, color: AppTheme.primaryNavy, size: 20),
+                      Icon(Icons.event, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 20),
                       const SizedBox(width: 8),
-                      Text('Échéance : ${DateFormat('dd/MM/yyyy').format(dueDate)}'),
+                      Text(
+                        'Échéance : ${DateFormat('dd/MM/yyyy').format(dueDate)}',
+                        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      ),
                       const Spacer(),
                       const Icon(Icons.calendar_month, color: AppTheme.accentGold, size: 18),
                     ],
@@ -209,7 +244,11 @@ class _DebtsScreenState extends State<DebtsScreen> {
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentGold, foregroundColor: AppTheme.primaryNavy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.accentGold,
+                    foregroundColor: const Color(0xFF0F172A),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   onPressed: () {
                     final name = clientCtrl.text.trim();
                     final amt = double.tryParse(amountCtrl.text.replaceAll(' ', '')) ?? 0.0;

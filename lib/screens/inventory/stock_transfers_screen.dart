@@ -22,10 +22,12 @@ class _StockTransfersScreenState extends State<StockTransfersScreen> {
   ];
 
   void _showTransferDetail(BuildContext context, StockTransfer trf) {
+    final isDark = appState.isDarkMode;
     final dtStr = '${trf.date.day.toString().padLeft(2, "0")}/${trf.date.month.toString().padLeft(2, "0")}/${trf.date.year} à ${trf.date.hour.toString().padLeft(2, "0")}:${trf.date.minute.toString().padLeft(2, "0")}';
 
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
         return Container(
@@ -39,26 +41,43 @@ class _StockTransfersScreenState extends State<StockTransfersScreen> {
                   width: 40,
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(trf.reference, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.primaryNavy)),
+                  Text(
+                    trf.reference,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: isDark ? Colors.white : AppTheme.primaryNavy,
+                    ),
+                  ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD1FAE5),
+                      color: isDark ? const Color(0xFF062E22) : const Color(0xFFD1FAE5),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(trf.status, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF065F46))),
+                    child: Text(
+                      trf.status,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: isDark ? const Color(0xFF34D399) : const Color(0xFF065F46),
+                      ),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
-              Text('Date : $dtStr • Par ${trf.author}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-              const Divider(height: 20),
+              Text(
+                'Date : $dtStr • Par ${trf.author}',
+                style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+              ),
+              Divider(height: 20, color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
 
               Row(
                 children: [
@@ -66,8 +85,8 @@ class _StockTransfersScreenState extends State<StockTransfersScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Source', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                        Text(trf.sourceStore, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text('Source', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                        Text(trf.sourceStore, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
                       ],
                     ),
                   ),
@@ -76,8 +95,8 @@ class _StockTransfersScreenState extends State<StockTransfersScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('Destination', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                        Text(trf.destinationStore, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text('Destination', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                        Text(trf.destinationStore, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
                       ],
                     ),
                   ),
@@ -85,21 +104,31 @@ class _StockTransfersScreenState extends State<StockTransfersScreen> {
               ),
               const SizedBox(height: 14),
 
-              const Text('Articles transférés :', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(
+                'Articles transférés :',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+              ),
               const SizedBox(height: 6),
               ...trf.items.map((i) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 3),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('• ${i.productName}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                        Text('${i.quantity} ${i.unit}(s)', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primaryNavy)),
+                        Text('• ${i.productName}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.black87)),
+                        Text(
+                          '${i.quantity} ${i.unit}(s)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                          ),
+                        ),
                       ],
                     ),
                   )),
               if (trf.note.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                Text('Note : ${trf.note}', style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Color(0xFF64748B))),
+                Text('Note : ${trf.note}', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
               ],
               const SizedBox(height: 16),
             ],

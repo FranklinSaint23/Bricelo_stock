@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/screens/inventory/supply_screen.dart';
 import 'package:stock_prime/screens/finance/supplier_payment_flow.dart';
@@ -32,8 +33,9 @@ class SupplySuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppState.instance.isDarkMode;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
@@ -68,8 +70,8 @@ class SupplySuccessScreen extends StatelessWidget {
               Container(
                 width: 76,
                 height: 76,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFEF3C7), // Or doux
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF382305) : const Color(0xFFFEF3C7),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
@@ -79,13 +81,13 @@ class SupplySuccessScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // TITRE
-              const Text(
+              Text(
                 'Approvisionnement enregistré',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 22,
-                  color: Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
                   letterSpacing: -0.3,
                 ),
               ),
@@ -95,9 +97,9 @@ class SupplySuccessScreen extends StatelessWidget {
               Text(
                 '$orderRef · $receptionRef',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF64748B),
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -106,10 +108,10 @@ class SupplySuccessScreen extends StatelessWidget {
               // MONTANT TOTAL
               Text(
                 AppTheme.formatFCFA(totalAmount),
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 32,
-                  color: Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
                   letterSpacing: -0.5,
                 ),
               ),
@@ -121,9 +123,9 @@ class SupplySuccessScreen extends StatelessWidget {
                     ? 'Facture fournisseur réglée.'
                     : 'Facture fournisseur créée — reste à payer.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF64748B),
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -171,8 +173,8 @@ class SupplySuccessScreen extends StatelessWidget {
                 height: 48,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primaryNavy,
-                    side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
+                    foregroundColor: isDark ? Colors.white : AppTheme.primaryNavy,
+                    side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1), width: 1.5),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
                   icon: const Icon(Icons.open_in_new_rounded, size: 18),
@@ -256,8 +258,9 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppState.instance.isDarkMode;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryNavy,
         elevation: 0,
@@ -291,11 +294,11 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: isDark ? AppTheme.darkSurface : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1)),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(color: isDark ? Colors.black26 : Colors.black12, blurRadius: 4, offset: const Offset(0, 1)),
                 ],
               ),
               child: Column(
@@ -303,25 +306,26 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
                 children: [
                   Text(
                     supplierName,
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     invoiceRef,
-                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.w500),
                   ),
-                  const Divider(height: 24, color: Color(0xFFE2E8F0)),
-                  _buildLine('Montant HT', AppTheme.formatFCFA(totalAmount)),
+                  Divider(height: 24, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                  _buildLine('Montant HT', AppTheme.formatFCFA(totalAmount), isDark: isDark),
                   const SizedBox(height: 8),
-                  _buildLine('Total TTC', AppTheme.formatFCFA(totalAmount), isBold: true),
+                  _buildLine('Total TTC', AppTheme.formatFCFA(totalAmount), isBold: true, isDark: isDark),
                   const SizedBox(height: 8),
-                  _buildLine('Paiement enregistré.', AppTheme.formatFCFA(isAlreadyPaid ? totalAmount : 0)),
+                  _buildLine('Paiement enregistré.', AppTheme.formatFCFA(isAlreadyPaid ? totalAmount : 0), isDark: isDark),
                   const SizedBox(height: 8),
                   _buildLine(
                     'Reste à payer',
                     AppTheme.formatFCFA(isAlreadyPaid ? 0 : totalAmount),
                     isBold: true,
-                    valueColor: isAlreadyPaid ? AppTheme.primaryNavy : const Color(0xFFD97706),
+                    isDark: isDark,
+                    valueColor: isAlreadyPaid ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy) : const Color(0xFFD97706),
                   ),
                 ],
               ),
@@ -330,11 +334,11 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
 
             // DÉTAIL DES ARTICLES APPROVISIONNÉS (SI DISPONIBLES)
             if (items.isNotEmpty) ...[
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
                   'Articles approvisionnés',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF334155)),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF334155)),
                 ),
               ),
               const SizedBox(height: 8),
@@ -346,9 +350,9 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? AppTheme.darkSurface : Colors.white,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -358,18 +362,18 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
                         children: [
                           Text(
                             it['name'] ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF0F172A)),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             '$qty x ${AppTheme.formatFCFA(buy)}',
-                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                            style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                           ),
                         ],
                       ),
                       Text(
                         AppTheme.formatFCFA(tot),
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: AppTheme.primaryNavy),
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: AppTheme.accentGold),
                       ),
                     ],
                   ),
@@ -382,9 +386,9 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
       bottomNavigationBar: (!isAlreadyPaid && totalAmount > 0)
           ? Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.darkSurface : Colors.white,
+                border: Border(top: BorderSide(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0))),
               ),
               child: SafeArea(
                 top: false,
@@ -424,7 +428,7 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLine(String label, String value, {bool isBold = false, Color? valueColor}) {
+  Widget _buildLine(String label, String value, {bool isBold = false, Color? valueColor, bool isDark = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -432,7 +436,7 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 13,
-            color: const Color(0xFF475569),
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -441,7 +445,7 @@ class SupplierInvoiceDetailScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: isBold ? 14.5 : 13.5,
             fontWeight: isBold ? FontWeight.w900 : FontWeight.w600,
-            color: valueColor ?? const Color(0xFF0F172A),
+            color: valueColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),
           ),
         ),
       ],

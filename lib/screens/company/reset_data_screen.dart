@@ -16,13 +16,15 @@ class _ResetDataScreenState extends State<ResetDataScreen> {
     final confirmCtrl = TextEditingController();
     bool confirmed = false;
 
+    final isDark = appState.isDarkMode;
+
     showDialog(
       context: context,
       builder: (dialogCtx) {
         return StatefulBuilder(
           builder: (modalCtx, setModalState) {
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
               title: Row(
                 children: [
@@ -35,7 +37,11 @@ class _ResetDataScreenState extends State<ResetDataScreen> {
                   Expanded(
                     child: Text(
                       testDataOnly ? 'Purger les transactions' : 'Remise à zéro complète',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
                     ),
                   ),
                 ],
@@ -49,15 +55,19 @@ class _ResetDataScreenState extends State<ResetDataScreen> {
                       testDataOnly
                           ? 'Cette action effacera définitivement toutes les ventes, dépenses, créances, dettes et mouvements de stock de test.\n\nVotre catalogue de produits, catégories et clients seront PRÉSERVÉS.'
                           : 'ATTENTION : Cette action supprimera TOUTES vos données (produits, catégories, ventes, dépenses, clients, fournisseurs, stock).\n\nCette action est irréversible.',
-                      style: const TextStyle(fontSize: 13.5, color: Color(0xFF374151), height: 1.45),
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151),
+                        height: 1.45,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
+                        color: isDark ? const Color(0xFF3B1219) : const Color(0xFFFEF2F2),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFFECACA)),
+                        border: Border.all(color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA)),
                       ),
                       child: Row(
                         children: [
@@ -68,10 +78,14 @@ class _ResetDataScreenState extends State<ResetDataScreen> {
                               setModalState(() => confirmed = val ?? false);
                             },
                           ),
-                          const Expanded(
+                          Expanded(
                             child: Text(
                               'Je comprends le caractère irréversible de cette opération.',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF991B1B)),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
+                              ),
                             ),
                           ),
                         ],
@@ -79,18 +93,26 @@ class _ResetDataScreenState extends State<ResetDataScreen> {
                     ),
                     if (!testDataOnly) ...[
                       const SizedBox(height: 14),
-                      const Text(
+                      Text(
                         'Pour confirmer, tapez "EFFACER" :',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF374151)),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151),
+                        ),
                       ),
                       const SizedBox(height: 6),
                       TextField(
                         controller: confirmCtrl,
                         onChanged: (_) => setModalState(() {}),
+                        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                         decoration: InputDecoration(
                           hintText: 'EFFACER',
+                          hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          filled: isDark,
+                          fillColor: isDark ? const Color(0xFF162540) : null,
                         ),
                       ),
                     ],

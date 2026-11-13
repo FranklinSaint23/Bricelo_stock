@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:stock_prime/screens/screens.dart';
 
@@ -7,21 +8,23 @@ class AddProductsWizard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppState.instance.isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Étape 1/3',
-              style: TextStyle(color: Color(0xFF374151), fontSize: 13, fontWeight: FontWeight.bold),
+              style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151), fontSize: 13, fontWeight: FontWeight.bold),
             ),
             IconButton(
-              icon: const Icon(Icons.close, color: Color(0xFF111827)),
+              icon: Icon(Icons.close, color: isDark ? Colors.white : const Color(0xFF111827)),
               onPressed: () => Navigator.pop(context),
             ),
           ],
@@ -30,7 +33,7 @@ class AddProductsWizard extends StatelessWidget {
           preferredSize: const Size.fromHeight(4),
           child: LinearProgressIndicator(
             value: 0.33,
-            backgroundColor: const Color(0xFFE5E7EB),
+            backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB),
             valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentGold),
             minHeight: 4,
           ),
@@ -41,14 +44,14 @@ class AddProductsWizard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Ajoutez vos produits',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Le plus rapide : photographiez la liste que vous tenez déjà.',
-              style: TextStyle(color: Color(0xFF4B5563), fontSize: 13),
+              style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563), fontSize: 13),
             ),
             const SizedBox(height: 20),
 
@@ -57,8 +60,9 @@ class AddProductsWizard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.primaryNavy,
+                color: isDark ? const Color(0xFF162540) : AppTheme.primaryNavy,
                 borderRadius: BorderRadius.circular(16),
+                border: isDark ? Border.all(color: const Color(0xFF1E3A66)) : null,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,7 +71,7 @@ class AddProductsWizard extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.camera_alt_outlined, color: AppTheme.accentGold, size: 24),
@@ -88,7 +92,7 @@ class AddProductsWizard extends StatelessWidget {
                     height: 46,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                        backgroundColor: AppTheme.accentGold,
                         foregroundColor: AppTheme.primaryNavy,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -114,12 +118,12 @@ class AddProductsWizard extends StatelessWidget {
             // SÉPARATEUR "ou"
             Row(
               children: [
-                const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+                Expanded(child: Divider(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB))),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('ou', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                  child: Text('ou', style: TextStyle(color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500, fontSize: 12)),
                 ),
-                const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+                Expanded(child: Divider(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB))),
               ],
             ),
 
@@ -127,6 +131,7 @@ class AddProductsWizard extends StatelessWidget {
 
             // CARTE 2 : IMPORTER UN FICHIER EXCEL / CSV
             _buildActionCard(
+              isDark: isDark,
               icon: Icons.table_chart_outlined,
               title: 'Importer un fichier (Excel, CSV)',
               subtitle: 'Gratuit • jusqu\'à 2 000 produits',
@@ -141,6 +146,7 @@ class AddProductsWizard extends StatelessWidget {
 
             // CARTE 3 : AJOUTER UN SEUL PRODUIT
             _buildActionCard(
+              isDark: isDark,
               icon: Icons.inventory_2_outlined,
               title: 'Ajouter un seul produit',
               subtitle: 'Nom, prix et quantité en boutique',
@@ -158,9 +164,9 @@ class AddProductsWizard extends StatelessWidget {
             Center(
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
+                child: Text(
                   'Plus tard',
-                  style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
             ),
@@ -171,6 +177,7 @@ class AddProductsWizard extends StatelessWidget {
   }
 
   Widget _buildActionCard({
+    required bool isDark,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -182,19 +189,19 @@ class AddProductsWizard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppTheme.darkSurface : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
+                color: isDark ? const Color(0xFF162540) : const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: AppTheme.primaryNavy, size: 22),
+              child: const Icon(Icons.table_chart_outlined, color: AppTheme.accentGold, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -203,17 +210,17 @@ class AddProductsWizard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF111827)),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                    style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 12),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF9CA3AF)),
+            Icon(Icons.arrow_forward_ios, size: 14, color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
           ],
         ),
       ),

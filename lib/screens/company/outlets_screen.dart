@@ -388,16 +388,24 @@ class _OutletsScreenState extends State<OutletsScreen> {
       return;
     }
 
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('Supprimer la boutique ?'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Voulez-vous vraiment supprimer "${outlet.name}" et ses caisses associées ?'.tr),
+        title: Text(
+          'Supprimer la boutique ?'.tr,
+          style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+        ),
+        content: Text(
+          'Voulez-vous vraiment supprimer "${outlet.name}" et ses caisses associées ?'.tr,
+          style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Annuler'.tr, style: const TextStyle(color: Color(0xFF6B7280))),
+            child: Text('Annuler'.tr, style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(

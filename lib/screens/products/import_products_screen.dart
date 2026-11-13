@@ -241,10 +241,12 @@ class _ImportProductsScreenState extends State<ImportProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = appState.isDarkMode;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? AppTheme.darkScaffold : const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryNavy,
+        backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.primaryNavy,
         elevation: 0,
         centerTitle: true,
         leading: Padding(
@@ -275,9 +277,9 @@ class _ImportProductsScreenState extends State<ImportProductsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,23 +289,23 @@ class _ImportProductsScreenState extends State<ImportProductsScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
+                          color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(Icons.upload_file_rounded, color: AppTheme.accentGold, size: 24),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Importation multi-formats',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                             ),
                             Text(
                               'Excel (.xlsx, .xls), CSV, Word, PDF ou texte',
-                              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                             ),
                           ],
                         ),
@@ -311,9 +313,9 @@ class _ImportProductsScreenState extends State<ImportProductsScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Importez vos produits depuis un fichier ou copiez-collez simplement un tableau depuis Word / PDF. Les colonnes détectées sont : Nom du produit, Quantité, Prix unitaire, Coût, Catégorie.',
-                    style: TextStyle(fontSize: 12.5, color: Color(0xFF475569), height: 1.4),
+                    style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569), height: 1.4),
                   ),
                   const SizedBox(height: 16),
 
@@ -323,8 +325,9 @@ class _ImportProductsScreenState extends State<ImportProductsScreen> {
                     height: 48,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryNavy,
+                        backgroundColor: isDark ? const Color(0xFF1E293B) : AppTheme.primaryNavy,
                         foregroundColor: AppTheme.accentGold,
+                        side: BorderSide(color: isDark ? AppTheme.accentGold.withValues(alpha: 0.4) : Colors.transparent),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
@@ -345,30 +348,40 @@ class _ImportProductsScreenState extends State<ImportProductsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Ou coller un tableau copié',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1E293B)),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Copiez un tableau de produits depuis Word, Excel ou WhatsApp et collez-le ici :',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _pasteController,
                     maxLines: 4,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13),
                     decoration: InputDecoration(
                       hintText: "Exemple :\nSavon; 20; 500\nLait en poudre; 10; 2500\nBiscotte; 15; 800",
-                      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      hintStyle: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      ),
                       contentPadding: const EdgeInsets.all(12),
                     ),
                   ),
@@ -378,11 +391,11 @@ class _ImportProductsScreenState extends State<ImportProductsScreen> {
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.accentGold,
-                        foregroundColor: AppTheme.primaryNavy,
+                        foregroundColor: const Color(0xFF0F172A),
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      icon: const Icon(Icons.playlist_add_check, size: 18, color: AppTheme.primaryNavy),
+                      icon: const Icon(Icons.playlist_add_check, size: 18, color: Color(0xFF0F172A)),
                       label: const Text('Analyser le texte', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                       onPressed: _parsePastedText,
                     ),
@@ -399,13 +412,13 @@ class _ImportProductsScreenState extends State<ImportProductsScreen> {
                 children: [
                   Text(
                     'Articles détectés (${_parsedProducts.length})',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                   if (_selectedFileName != null)
                     Flexible(
                       child: Text(
                         _selectedFileName!,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.w600),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -423,32 +436,32 @@ class _ImportProductsScreenState extends State<ImportProductsScreen> {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? AppTheme.darkSurface : Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
                     ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 16,
-                          backgroundColor: const Color(0xFFFEF3C7),
-                          child: Text('${idx + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
+                          backgroundColor: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
+                          child: Text('${idx + 1}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : const Color(0xFFB45309))),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF0F172A))),
-                              Text('Catégorie: ${p.category}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                              Text(p.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                              Text('Catégorie: ${p.category}', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                             ],
                           ),
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text('${p.stock} ${p.unit}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-                            Text(AppTheme.formatFCFA(p.sellPrice), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFFD97706))),
+                            Text('${p.stock} ${p.unit}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                            Text(AppTheme.formatFCFA(p.sellPrice), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: isDark ? AppTheme.accentGold : const Color(0xFFD97706))),
                           ],
                         ),
                       ],

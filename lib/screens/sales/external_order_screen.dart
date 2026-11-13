@@ -21,11 +21,13 @@ class _ExternalOrderScreenState extends State<ExternalOrderScreen> {
   final List<CartItem> _orderItems = [];
 
   void _showAddProductModal() {
+    final isDark = appState.isDarkMode;
     final searchCtrl = TextEditingController();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
         return StatefulBuilder(
@@ -47,13 +49,24 @@ class _ExternalOrderScreenState extends State<ExternalOrderScreen> {
                 height: 450,
                 child: Column(
                   children: [
-                    Text('Sélectionner un article'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(
+                      'Sélectionner un article'.tr,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: searchCtrl,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                       decoration: InputDecoration(
                         hintText: 'Rechercher un produit...'.tr,
-                        prefixIcon: const Icon(Icons.search),
+                        hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
+                        prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                        filled: isDark,
+                        fillColor: isDark ? const Color(0xFF162540) : null,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       onChanged: (_) => setMState(() {}),
@@ -65,9 +78,12 @@ class _ExternalOrderScreenState extends State<ExternalOrderScreen> {
                         itemBuilder: (context, index) {
                           final p = products[index];
                           return ListTile(
-                            title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text('${AppTheme.formatFCFA(p.sellPrice)} • Stock: ${p.stock}'),
-                            trailing: const Icon(Icons.add_circle_outline, color: AppTheme.primaryNavy),
+                            title: Text(p.name, style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                            subtitle: Text(
+                              '${AppTheme.formatFCFA(p.sellPrice)} • Stock: ${p.stock}',
+                              style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                            ),
+                            trailing: Icon(Icons.add_circle_outline, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                             onTap: () {
                               setState(() {
                                 final existing = _orderItems.indexWhere((i) => i.product.id == p.id);

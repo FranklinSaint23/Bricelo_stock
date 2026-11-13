@@ -16,6 +16,9 @@ ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS access_groups JSONB DE
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS cash_desks JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS available_stores JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS is_shifts_tracking_enabled BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS recovery_email TEXT;
+ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS is_email_verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
 
 -- 2. Sécurité RLS : Permettre les lectures et mises à jour des profils (Super Admin & Utilisateurs)

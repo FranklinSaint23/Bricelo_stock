@@ -265,13 +265,14 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   }
 
   void _showFilterBottomSheet() {
+    final isDark = appState.isDarkMode;
     String tempStatus = _statusFilter;
     DateTime? tempStart = _customDateRange?.start;
     DateTime? tempEnd = _customDateRange?.end;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -287,18 +288,29 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   child: Container(
                     width: 36,
                     height: 4,
-                    decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
+                Text(
                   'Filtres',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF0F172A)),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
+                Text(
                   'Statut',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569)),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -312,7 +324,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSel ? const Color(0xFFFED7AA) : const Color(0xFFF1F5F9),
+                          color: isSel
+                              ? (isDark ? const Color(0xFF431407) : const Color(0xFFFED7AA))
+                              : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -320,7 +334,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                            color: isSel ? const Color(0xFF9A3412) : const Color(0xFF334155),
+                            color: isSel
+                                ? (isDark ? AppTheme.accentGold : const Color(0xFF9A3412))
+                                : (isDark ? Colors.white70 : const Color(0xFF334155)),
                           ),
                         ),
                       ),
@@ -328,9 +344,13 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   }).toList(),
                 ),
                 const SizedBox(height: 18),
-                const Text(
+                Text(
                   'Période personnalisée',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569)),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -351,7 +371,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFFCBD5E1)),
+                            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                            color: isDark ? const Color(0xFF162540) : null,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -360,11 +381,13 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               Text(
                                 tempStart != null ? _formatDateOnly(tempStart!) : 'Début',
                                 style: TextStyle(
-                                  color: tempStart != null ? Colors.black : const Color(0xFF94A3B8),
+                                  color: tempStart != null
+                                      ? (isDark ? Colors.white : Colors.black)
+                                      : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                                   fontSize: 13,
                                 ),
                               ),
-                              const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF64748B)),
+                              Icon(Icons.calendar_today_outlined, size: 16, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                             ],
                           ),
                         ),
@@ -387,7 +410,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFFCBD5E1)),
+                            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                            color: isDark ? const Color(0xFF162540) : null,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -396,11 +420,13 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               Text(
                                 tempEnd != null ? _formatDateOnly(tempEnd!) : 'Fin',
                                 style: TextStyle(
-                                  color: tempEnd != null ? Colors.black : const Color(0xFF94A3B8),
+                                  color: tempEnd != null
+                                      ? (isDark ? Colors.white : Colors.black)
+                                      : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                                   fontSize: 13,
                                 ),
                               ),
-                              const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF64748B)),
+                              Icon(Icons.calendar_today_outlined, size: 16, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                             ],
                           ),
                         ),
@@ -421,7 +447,13 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         });
                         Navigator.pop(ctx);
                       },
-                      child: const Text('Réinitialiser', style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Réinitialiser',
+                        style: TextStyle(
+                          color: isDark ? const Color(0xFF94A3B8) : AppTheme.primaryNavy,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(

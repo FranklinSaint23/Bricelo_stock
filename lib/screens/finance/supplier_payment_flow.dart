@@ -100,14 +100,15 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = appState.isDarkMode;
     final amount = _enteredAmount;
     final cashBalance = appState.currentCashInDrawer;
     final isCashInsufficient = _selectedPaymentMethod.startsWith('Caisse') && (cashBalance < amount);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -115,17 +116,17 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
             onTap: () => Navigator.pop(context),
             borderRadius: BorderRadius.circular(20),
             child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF1F5F9),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF162540) : const Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF0F172A), size: 16),
+              child: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : const Color(0xFF0F172A), size: 16),
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           'Payer',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF0F172A)),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: isDark ? Colors.white : const Color(0xFF0F172A)),
         ),
         centerTitle: true,
       ),
@@ -138,27 +139,27 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: isDark ? AppTheme.darkSurface : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     widget.supplierName,
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     widget.invoiceRef,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.w600),
                   ),
-                  const Divider(height: 18),
+                  Divider(height: 18, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Reste à payer', style: TextStyle(fontSize: 13, color: Color(0xFF475569))),
+                      Text('Reste à payer', style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569))),
                       Text(
                         '${widget.remainingDebt.toInt()} F CFA',
                         style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFFD97706)),
@@ -171,11 +172,11 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
             const SizedBox(height: 14),
 
             // 2. MONTANT AFFICHÉ
-            const Text('Montant', style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+            Text('Montant', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text(
               '${_amountBuffer.isEmpty ? "0" : _amountBuffer} F CFA',
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: Color(0xFF0F172A)),
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: isDark ? Colors.white : const Color(0xFF0F172A)),
             ),
             const SizedBox(height: 10),
 
@@ -192,9 +193,9 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
                       color: AppTheme.accentGold,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
-                      'Exact • ${widget.remainingDebt.toInt()}',
-                      style: const TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 12.5),
+                    child: const Text(
+                      'Exact',
+                      style: TextStyle(color: AppTheme.primaryNavy, fontWeight: FontWeight.bold, fontSize: 12.5),
                     ),
                   ),
                 ),
@@ -205,10 +206,10 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text('+500', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                    child: Text('+500', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: isDark ? Colors.white : const Color(0xFF0F172A))),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -218,10 +219,10 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text('+1000', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                    child: Text('+1000', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: isDark ? Colors.white : const Color(0xFF0F172A))),
                   ),
                 ),
               ],
@@ -233,11 +234,11 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
             const SizedBox(height: 14),
 
             // 5. MODE DE PAIEMENT
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'Mode de paiement',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF334155)),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155)),
               ),
             ),
             const SizedBox(height: 8),
@@ -282,9 +283,9 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7ED),
+                  color: isDark ? const Color(0xFF451A03) : const Color(0xFFFFF7ED),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFFEDD5)),
+                  border: Border.all(color: isDark ? const Color(0xFF78350F) : const Color(0xFFFFEDD5)),
                 ),
                 child: Row(
                   children: [
@@ -293,7 +294,7 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
                     Expanded(
                       child: Text(
                         'Solde estimé insuffisant (${cashBalance.toInt()} F CFA). Vous pouvez continuer.',
-                        style: const TextStyle(fontSize: 11.5, color: Color(0xFFB45309), fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309), fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -317,14 +318,14 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
               child: InputDecorator(
                 decoration: InputDecoration(
                   labelText: 'Date du paiement',
-                  labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
-                  suffixIcon: const Icon(Icons.calendar_month_outlined, size: 20, color: Color(0xFF334155)),
+                  labelStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.w600),
+                  suffixIcon: Icon(Icons.calendar_month_outlined, size: 20, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155)),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
                 child: Text(
                   _formatDate(_paymentDate),
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                 ),
               ),
             ),
@@ -333,9 +334,12 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
             // 8. NOTE (OPTIONNEL)
             TextField(
               controller: _noteCtrl,
+              style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
               decoration: InputDecoration(
                 hintText: 'Note (optionnel)',
-                hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                filled: isDark,
+                fillColor: isDark ? const Color(0xFF162540) : Colors.transparent,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               ),
@@ -369,6 +373,7 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
   }
 
   Widget _buildKeypad() {
+    final isDark = appState.isDarkMode;
     final keys = [
       ['1', '2', '3'],
       ['4', '5', '6'],
@@ -391,17 +396,23 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
                     child: Container(
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1))],
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark ? Colors.black26 : Colors.black12,
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
                       child: Center(
                         child: k == '⌫'
-                            ? const Icon(Icons.backspace_outlined, size: 18, color: Color(0xFF0F172A))
+                            ? Icon(Icons.backspace_outlined, size: 18, color: isDark ? Colors.white : const Color(0xFF0F172A))
                             : Text(
                                 k,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                               ),
                       ),
                     ),
@@ -422,22 +433,28 @@ class _SupplierPaymentScreenState extends State<SupplierPaymentScreen> {
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final isDark = appState.isDarkMode;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFFFFBEB) : Colors.white,
+          color: selected
+              ? (isDark ? const Color(0xFF382305) : const Color(0xFFFFFBEB))
+              : (isDark ? const Color(0xFF1E293B) : Colors.white),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: selected ? AppTheme.accentGold : const Color(0xFFE2E8F0), width: selected ? 1.5 : 1),
+          border: Border.all(
+            color: selected ? AppTheme.accentGold : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            width: selected ? 1.5 : 1,
+          ),
         ),
         child: Column(
           children: [
-            Icon(icon, color: selected ? const Color(0xFFD97706) : const Color(0xFF64748B), size: 18),
+            Icon(icon, color: selected ? AppTheme.accentGold : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)), size: 18),
             const SizedBox(height: 4),
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: selected ? AppTheme.primaryNavy : const Color(0xFF0F172A))),
-            Text(balance, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+            Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: selected ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy) : (isDark ? Colors.white : const Color(0xFF0F172A)))),
+            Text(balance, style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
           ],
         ),
       ),
@@ -462,10 +479,11 @@ class SupplierPaymentSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppState.instance.isDarkMode;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -473,17 +491,17 @@ class SupplierPaymentSuccessScreen extends StatelessWidget {
             onTap: () => Navigator.pop(context),
             borderRadius: BorderRadius.circular(20),
             child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF1F5F9),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF162540) : const Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF0F172A), size: 16),
+              child: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : const Color(0xFF0F172A), size: 16),
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           'Paiement enregistré.',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF0F172A)),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: isDark ? Colors.white : const Color(0xFF0F172A)),
         ),
         centerTitle: true,
       ),
@@ -495,8 +513,8 @@ class SupplierPaymentSuccessScreen extends StatelessWidget {
             Container(
               width: 76,
               height: 76,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFEF3C7),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF382305) : const Color(0xFFFEF3C7),
                 shape: BoxShape.circle,
               ),
               child: const Center(
@@ -506,18 +524,18 @@ class SupplierPaymentSuccessScreen extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               '${amountPaid.toInt()} F CFA',
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 26, color: Color(0xFF0F172A)),
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 26, color: isDark ? Colors.white : const Color(0xFF0F172A)),
             ),
             const SizedBox(height: 4),
             Text(
               'Payé à $supplierName',
-              style: const TextStyle(fontSize: 14, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Faites signer la décharge par le fournisseur, puis joignez la preuve.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
             ),
             const Spacer(),
 
@@ -549,8 +567,8 @@ class SupplierPaymentSuccessScreen extends StatelessWidget {
               height: 48,
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primaryNavy,
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  foregroundColor: isDark ? Colors.white : AppTheme.primaryNavy,
+                  side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
                 icon: const Icon(Icons.camera_alt_outlined, size: 18),

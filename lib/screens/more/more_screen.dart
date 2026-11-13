@@ -838,16 +838,29 @@ class _MoreScreenState extends State<MoreScreen> {
   }
 
   void _confirmLogout(BuildContext context) {
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('Se déconnecter'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Êtes-vous sûr de vouloir vous déconnecter ?'.tr),
+        title: Text(
+          'Se déconnecter'.tr,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
+        ),
+        content: Text(
+          'Êtes-vous sûr de vouloir vous déconnecter ?'.tr,
+          style: TextStyle(
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Annuler'.tr, style: const TextStyle(color: Color(0xFF6B7280))),
+            child: Text('Annuler'.tr, style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(

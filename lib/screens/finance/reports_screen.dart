@@ -523,6 +523,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
   }
 
   void _showAddExpenseDialog(BuildContext context) {
+    final isDark = appState.isDarkMode;
     final descCtrl = TextEditingController();
     final amountCtrl = TextEditingController();
     String category = 'Transport / Taxi';
@@ -531,13 +532,29 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Enregistrer une Dépense (Sortie de caisse)', style: TextStyle(fontSize: 15)),
+          backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+          title: Text(
+            'Enregistrer une Dépense (Sortie de caisse)',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
                 value: category,
-                decoration: const InputDecoration(labelText: 'Catégorie', border: OutlineInputBorder()),
+                dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Catégorie',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                ),
                 items: [
                   'Transport / Taxi',
                   'Ration / Repas',
@@ -551,19 +568,40 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
               const SizedBox(height: 10),
               TextField(
                 controller: descCtrl,
-                decoration: const InputDecoration(labelText: 'Description du motif', border: OutlineInputBorder()),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Description du motif',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: amountCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Montant décaissé (FCFA) *', border: OutlineInputBorder()),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Montant décaissé (FCFA) *',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                  filled: isDark,
+                  fillColor: isDark ? const Color(0xFF162540) : null,
+                  border: const OutlineInputBorder(),
+                ),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Annuler', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
+            ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                foregroundColor: isDark ? AppTheme.primaryNavy : Colors.white,
+              ),
               onPressed: () {
                 final amt = double.tryParse(amountCtrl.text) ?? 0;
                 if (amt <= 0) return;

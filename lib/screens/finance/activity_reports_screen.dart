@@ -132,10 +132,12 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
   }
 
   void _showStorePickerModal() {
+    final isDark = appState.isDarkMode;
     final stores = ['Tous', ...appState.outlets.map((o) => o.name)];
 
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
         return SafeArea(
@@ -146,21 +148,34 @@ class _ActivityReportsScreenState extends State<ActivityReportsScreen> {
                 width: 40,
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Text('Sélectionner une boutique', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  'Sélectionner une boutique',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
               ),
-              const Divider(),
+              Divider(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
               ...stores.map((s) {
                 final isSel = _selectedStore == s;
                 return ListTile(
                   leading: Icon(
                     s == 'Tous' ? Icons.store_mall_directory : Icons.storefront,
-                    color: isSel ? AppTheme.accentGold : AppTheme.primaryNavy,
+                    color: isSel ? AppTheme.accentGold : (isDark ? Colors.white70 : AppTheme.primaryNavy),
                   ),
-                  title: Text(s == 'Tous' ? 'Toutes les boutiques' : s, style: TextStyle(fontWeight: isSel ? FontWeight.bold : FontWeight.normal)),
+                  title: Text(
+                    s == 'Tous' ? 'Toutes les boutiques' : s,
+                    style: TextStyle(
+                      fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
                   trailing: isSel ? const Icon(Icons.check, color: AppTheme.accentGold) : null,
                   onTap: () {
                     setState(() => _selectedStore = s);

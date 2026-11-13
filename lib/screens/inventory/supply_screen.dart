@@ -854,28 +854,55 @@ class _SupplyScreenState extends State<SupplyScreen> {
                               showDialog(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
+                                  backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  title: const Text('Nouveau fournisseur', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  title: Text(
+                                    'Nouveau fournisseur',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                  ),
                                   content: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       TextField(
                                         controller: nameCtrl,
                                         autofocus: true,
-                                        decoration: const InputDecoration(labelText: 'Nom du fournisseur *', border: OutlineInputBorder()),
+                                        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                                        decoration: InputDecoration(
+                                          labelText: 'Nom du fournisseur *',
+                                          labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                                          filled: isDark,
+                                          fillColor: isDark ? const Color(0xFF162540) : null,
+                                          border: const OutlineInputBorder(),
+                                        ),
                                       ),
                                       const SizedBox(height: 10),
                                       TextField(
                                         controller: phoneCtrl,
                                         keyboardType: TextInputType.phone,
-                                        decoration: const InputDecoration(labelText: 'Téléphone', border: OutlineInputBorder()),
+                                        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                                        decoration: InputDecoration(
+                                          labelText: 'Téléphone',
+                                          labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                                          filled: isDark,
+                                          fillColor: isDark ? const Color(0xFF162540) : null,
+                                          border: const OutlineInputBorder(),
+                                        ),
                                       ),
                                     ],
                                   ),
                                   actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx),
+                                      child: Text('Annuler', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280))),
+                                    ),
                                     ElevatedButton(
-                                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryNavy, foregroundColor: Colors.white),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                                        foregroundColor: isDark ? AppTheme.primaryNavy : Colors.white,
+                                      ),
                                       onPressed: () {
                                         final n = nameCtrl.text.trim();
                                         if (n.isNotEmpty) {

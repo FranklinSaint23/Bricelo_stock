@@ -1,3 +1,4 @@
+import 'package:stock_prime/services/app_state.dart';
 import 'package:stock_prime/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:stock_prime/widgets/widgets.dart';
@@ -14,8 +15,10 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppState.instance.isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkScaffold : Colors.white,
       appBar: StockAppBar.forestGreen(
         title: 'Annonces',
         onBack: () => Navigator.pop(context),
@@ -28,7 +31,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             child: Container(
               height: 42,
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFF6B7280), width: 0.9),
+                border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280), width: 0.9),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Row(
@@ -40,7 +43,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       child: Container(
                         height: double.infinity,
                         decoration: BoxDecoration(
-                          color: _selectedTab == 'Annonces' ? const Color(0xFFFED7AA) : Colors.transparent,
+                          color: _selectedTab == 'Annonces'
+                              ? (isDark ? const Color(0xFF78350F) : const Color(0xFFFED7AA))
+                              : Colors.transparent,
                           borderRadius: const BorderRadius.horizontal(left: Radius.circular(24)),
                         ),
                         child: Row(
@@ -49,7 +54,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                             Icon(
                               Icons.campaign_outlined,
                               size: 18,
-                              color: _selectedTab == 'Annonces' ? const Color(0xFF111827) : const Color(0xFF374151),
+                              color: _selectedTab == 'Annonces'
+                                  ? (isDark ? Colors.white : const Color(0xFF111827))
+                                  : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151)),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -57,7 +64,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                               style: TextStyle(
                                 fontWeight: _selectedTab == 'Annonces' ? FontWeight.bold : FontWeight.normal,
                                 fontSize: 13,
-                                color: _selectedTab == 'Annonces' ? const Color(0xFF111827) : const Color(0xFF374151),
+                                color: _selectedTab == 'Annonces'
+                                    ? (isDark ? Colors.white : const Color(0xFF111827))
+                                    : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151)),
                               ),
                             ),
                           ],
@@ -65,7 +74,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       ),
                     ),
                   ),
-                  Container(width: 0.9, height: 42, color: const Color(0xFF6B7280)),
+                  Container(width: 0.9, height: 42, color: isDark ? const Color(0xFF334155) : const Color(0xFF6B7280)),
                   Expanded(
                     child: InkWell(
                       onTap: () => setState(() => _selectedTab = 'Mises à jour'),
@@ -73,7 +82,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       child: Container(
                         height: double.infinity,
                         decoration: BoxDecoration(
-                          color: _selectedTab == 'Mises à jour' ? const Color(0xFFFED7AA) : Colors.transparent,
+                          color: _selectedTab == 'Mises à jour'
+                              ? (isDark ? const Color(0xFF78350F) : const Color(0xFFFED7AA))
+                              : Colors.transparent,
                           borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
                         ),
                         child: Row(
@@ -82,7 +93,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                             Icon(
                               Icons.arrow_circle_up_outlined,
                               size: 18,
-                              color: _selectedTab == 'Mises à jour' ? const Color(0xFF111827) : const Color(0xFF374151),
+                              color: _selectedTab == 'Mises à jour'
+                                  ? (isDark ? Colors.white : const Color(0xFF111827))
+                                  : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151)),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -90,7 +103,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                               style: TextStyle(
                                 fontWeight: _selectedTab == 'Mises à jour' ? FontWeight.bold : FontWeight.normal,
                                 fontSize: 13,
-                                color: _selectedTab == 'Mises à jour' ? const Color(0xFF111827) : const Color(0xFF374151),
+                                color: _selectedTab == 'Mises à jour'
+                                    ? (isDark ? Colors.white : const Color(0xFF111827))
+                                    : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF374151)),
                               ),
                             ),
                           ],
@@ -113,30 +128,30 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.arrow_circle_up_outlined,
                               size: 26,
-                              color: Color(0xFF1F2937),
+                              color: isDark ? Colors.white : const Color(0xFF1F2937),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
+                                children: [
                                   Text(
                                     'Nouvelle version de Bricelo Stock: 2.5.1',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
-                                      color: Color(0xFF111827),
+                                      color: isDark ? Colors.white : const Color(0xFF111827),
                                     ),
                                   ),
-                                  SizedBox(height: 3),
+                                  const SizedBox(height: 3),
                                   Text(
                                     'v2.3.0 · 27 août 2026',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF6B7280),
+                                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
                                     ),
                                   ),
                                 ],
@@ -145,13 +160,13 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryNavy,
+                                color: AppTheme.accentGold,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Text(
                                 'Installée',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppTheme.primaryNavy,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -167,12 +182,12 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.campaign_outlined, size: 68, color: Color(0xFFCBD5E1)),
-                          SizedBox(height: 16),
+                        children: [
+                          Icon(Icons.campaign_outlined, size: 68, color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                          const SizedBox(height: 16),
                           Text(
                             'Aucune annonce pour le moment.',
-                            style: TextStyle(fontSize: 15, color: Color(0xFF9CA3AF), fontWeight: FontWeight.normal),
+                            style: TextStyle(fontSize: 15, color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF), fontWeight: FontWeight.normal),
                             textAlign: TextAlign.center,
                           ),
                         ],

@@ -53,11 +53,12 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
   }
 
   void _showCredentialsDialog(BuildContext context, TeamMember member, String pin) {
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         contentPadding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
         content: Column(
@@ -73,60 +74,60 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
               child: const Icon(Icons.check_circle_rounded, color: Color(0xFF25D366), size: 36),
             ),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'Membre invité avec succès !',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Transmettez les identifiants générés au collaborateur pour qu\'il puisse se connecter à son compte.',
-              style: TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
+              style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 children: [
-                  _buildCredentialRow('Nom :', member.name),
+                  _buildCredentialRow('Nom :', member.name, isDark: isDark),
                   const SizedBox(height: 6),
-                  _buildCredentialRow('Rôle :', member.role, isBadge: true),
+                  _buildCredentialRow('Rôle :', member.role, isBadge: true, isDark: isDark),
                   const SizedBox(height: 6),
-                  _buildCredentialRow('Téléphone (Login) :', member.phone),
+                  _buildCredentialRow('Téléphone (Login) :', member.phone, isDark: isDark),
                   const SizedBox(height: 6),
                   if (member.role.toLowerCase() == 'caissier' && member.assignedCashDesk != null) ...[
-                    _buildCredentialRow('Caisse attribuée :', member.assignedCashDesk!),
+                    _buildCredentialRow('Caisse attribuée :', member.assignedCashDesk!, isDark: isDark),
                     const SizedBox(height: 6),
                   ],
-                  _buildCredentialRow('Boutique :', member.storeName),
-                  const Divider(height: 16),
+                  _buildCredentialRow('Boutique :', member.storeName, isDark: isDark),
+                  Divider(height: 16, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Code PIN de connexion :',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
+                          color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: AppTheme.accentGold),
                         ),
                         child: Text(
                           pin,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 2.5,
-                            color: Color(0xFF92400E),
+                            color: isDark ? AppTheme.accentGold : const Color(0xFF92400E),
                           ),
                         ),
                       ),
@@ -161,8 +162,8 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 Expanded(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF334155),
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      foregroundColor: isDark ? Colors.white : const Color(0xFF334155),
+                      side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
@@ -185,7 +186,7 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 Expanded(
                   child: TextButton(
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF64748B),
+                      foregroundColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
@@ -201,28 +202,28 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
     );
   }
 
-  static Widget _buildCredentialRow(String label, String value, {bool isBadge = false}) {
+  static Widget _buildCredentialRow(String label, String value, {bool isBadge = false, bool isDark = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B))),
+        Text(label, style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
         const SizedBox(width: 8),
         isBadge
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDBEAFE),
+                  color: isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.5) : const Color(0xFFDBEAFE),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   value,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF)),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF)),
                 ),
               )
             : Flexible(
                 child: Text(
                   value,
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                   textAlign: TextAlign.end,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -231,7 +232,9 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
     );
   }
 
+
   void _showInviteDialog(BuildContext context) {
+    final isDark = appState.isDarkMode;
     final prenomCtrl = TextEditingController();
     final nomCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
@@ -248,11 +251,11 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlgState) => AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
+          title: Text(
             'Inviter un rôle / collaborateur',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF111827)),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : const Color(0xFF111827)),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -262,10 +265,12 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 // PRÉNOM *
                 TextField(
                   controller: prenomCtrl,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Prénom *',
                     hintText: 'Ex: Jean',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -275,10 +280,12 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 // NOM *
                 TextField(
                   controller: nomCtrl,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Nom *',
                     hintText: 'Ex: Dupont',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -289,10 +296,12 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 TextField(
                   controller: phoneCtrl,
                   keyboardType: TextInputType.phone,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Téléphone (Identifiant WhatsApp) *',
                     hintText: 'Ex: +237 699 00 00 00',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -303,10 +312,12 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 TextField(
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Email (optionnel)',
                     hintText: 'Ex: equipier@entreprise.com',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13),
+                    hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -317,18 +328,20 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 DropdownButtonFormField<String>(
                   initialValue: role,
                   isExpanded: true,
+                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Rôle *',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   selectedItemBuilder: (BuildContext context) {
-                    return const [
-                      Text('Caissier', overflow: TextOverflow.ellipsis, maxLines: 1),
-                      Text('Magasinier', overflow: TextOverflow.ellipsis, maxLines: 1),
-                      Text('Gérant', overflow: TextOverflow.ellipsis, maxLines: 1),
-                      Text('Propriétaire', overflow: TextOverflow.ellipsis, maxLines: 1),
+                    return [
+                      Text('Caissier', overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+                      Text('Magasinier', overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+                      Text('Gérant', overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+                      Text('Propriétaire', overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
                     ];
                   },
                   items: const [
@@ -365,15 +378,17 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                   DropdownButtonFormField<String>(
                     value: selectedCashDesk,
                     isExpanded: true,
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
                       labelText: 'Caisse attribuée au caissier *',
-                      labelStyle: const TextStyle(color: Color(0xFF0284C7), fontSize: 13, fontWeight: FontWeight.bold),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7), fontSize: 13, fontWeight: FontWeight.bold),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFF0284C7)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7)),
                       ),
-                      prefixIcon: const Icon(Icons.point_of_sale_rounded, color: Color(0xFF0284C7)),
+                      prefixIcon: Icon(Icons.point_of_sale_rounded, color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7)),
                     ),
                     items: appState.cashDesks.isNotEmpty
                         ? appState.cashDesks
@@ -390,9 +405,9 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                     onChanged: (v) => setDlgState(() => selectedCashDesk = v ?? 'Caisse Principale'),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Le caissier ne pourra ouvrir et fermer que cette caisse attribuée.',
-                    style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                    style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -402,18 +417,18 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
+                      color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFFDE68A)),
+                      border: Border.all(color: isDark ? const Color(0xFFB45309) : const Color(0xFFFDE68A)),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.security_rounded, color: Color(0xFF92400E), size: 18),
-                        SizedBox(width: 8),
+                        Icon(Icons.security_rounded, color: isDark ? AppTheme.accentGold : const Color(0xFF92400E), size: 18),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Le magasinier peut demander des réapprovisionnements et transferts. Toute action sera soumise à votre validation dans "Approbations".',
-                            style: TextStyle(fontSize: 11.5, color: Color(0xFF92400E), fontWeight: FontWeight.w600),
+                            style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E), fontWeight: FontWeight.w600),
                           ),
                         ),
                       ],
@@ -428,18 +443,18 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
+                      color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFFDE68A)),
+                      border: Border.all(color: isDark ? const Color(0xFFB45309) : const Color(0xFFFDE68A)),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.all_inclusive_rounded, color: Color(0xFF92400E), size: 18),
-                        SizedBox(width: 8),
+                        Icon(Icons.all_inclusive_rounded, color: isDark ? AppTheme.accentGold : const Color(0xFF92400E), size: 18),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Le Propriétaire gère l\'ensemble des boutiques, valide les approbations et effectue les paiements fournisseurs.',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E)),
                           ),
                         ),
                       ],
@@ -451,9 +466,11 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                   DropdownButtonFormField<String>(
                     initialValue: assignedStore,
                     isExpanded: true,
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
                       labelText: 'Boutique assignée',
-                      labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
@@ -478,11 +495,13 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 TextField(
                   controller: pinCtrl,
                   keyboardType: TextInputType.number,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Code PIN secret (Généré) *',
                     hintText: '6 chiffres',
                     helperText: 'Code de connexion qui sera envoyé au collaborateur',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    helperStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     prefixIcon: const Icon(Icons.password_rounded, color: AppTheme.accentGold),
@@ -500,11 +519,11 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                     height: 44,
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFD1D5DB)),
+                        side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Annuler', style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.bold, fontSize: 14)),
+                      child: Text('Annuler', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF1F2937), fontWeight: FontWeight.bold, fontSize: 14)),
                     ),
                   ),
                 ),
@@ -515,7 +534,7 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.accentGold,
-                        foregroundColor: AppTheme.primaryNavy,
+                        foregroundColor: const Color(0xFF0F172A),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
@@ -565,6 +584,7 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
   }
 
   void _showEditMemberDialog(BuildContext context, TeamMember member) {
+    final isDark = appState.isDarkMode;
     final isOwner = member.role.toLowerCase().contains('propriétaire') || member.id == 'owner_primary';
     final nameParts = member.name.split(' ');
     final prenomCtrl = TextEditingController(text: nameParts.first);
@@ -578,11 +598,11 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlgState) => AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
+          title: Text(
             'Modifier le membre',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF111827)),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : const Color(0xFF111827)),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -591,9 +611,10 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
               children: [
                 TextField(
                   controller: prenomCtrl,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Prénom *',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -601,9 +622,10 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 const SizedBox(height: 12),
                 TextField(
                   controller: nomCtrl,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Nom *',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -612,9 +634,10 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 TextField(
                   controller: phoneCtrl,
                   keyboardType: TextInputType.phone,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Téléphone *',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -623,9 +646,10 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                 TextField(
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -639,11 +663,11 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                      border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
@@ -651,16 +675,16 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                           children: [
                             Text(
                               'Rôle (Non modifiable)',
-                              style: TextStyle(color: Color(0xFF6B7280), fontSize: 11.5, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 11.5, fontWeight: FontWeight.bold),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
                               'Propriétaire',
-                              style: TextStyle(color: Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
-                        Icon(Icons.lock_rounded, size: 18, color: Color(0xFF64748B)),
+                        Icon(Icons.lock_rounded, size: 18, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       ],
                     ),
                   ),
@@ -668,9 +692,11 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                   DropdownButtonFormField<String>(
                     initialValue: ['Gérant', 'Caissier', 'Magasinier'].contains(role) ? role : 'Caissier',
                     isExpanded: true,
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
                       labelText: 'Rôle *',
-                      labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.bold),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
@@ -697,18 +723,18 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
+                      color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFFDE68A)),
+                      border: Border.all(color: isDark ? const Color(0xFFB45309) : const Color(0xFFFDE68A)),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.all_inclusive_rounded, color: Color(0xFF92400E), size: 18),
-                        SizedBox(width: 8),
+                        Icon(Icons.all_inclusive_rounded, color: isDark ? AppTheme.accentGold : const Color(0xFF92400E), size: 18),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Le Propriétaire gère l\'ensemble des boutiques et stocks.',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E)),
                           ),
                         ),
                       ],
@@ -719,9 +745,11 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                   DropdownButtonFormField<String>(
                     initialValue: assignedStore.isNotEmpty ? assignedStore : 'Toutes les boutiques',
                     isExpanded: true,
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
                       labelText: 'Boutique assignée',
-                      labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280), fontSize: 13),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
@@ -752,11 +780,11 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                     height: 44,
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFD1D5DB)),
+                        side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Annuler', style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.bold, fontSize: 14)),
+                      child: Text('Annuler', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF1F2937), fontWeight: FontWeight.bold, fontSize: 14)),
                     ),
                   ),
                 ),
@@ -766,8 +794,8 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
                     height: 44,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryNavy,
-                        foregroundColor: AppTheme.accentGold,
+                        backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                        foregroundColor: isDark ? const Color(0xFF0F172A) : AppTheme.accentGold,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
@@ -1262,38 +1290,40 @@ Vous avez été invité(e) à rejoindre l'équipe de *${appState.displayCompanyN
   }
 
   void _showTeamUpgradeDialog(BuildContext context) {
+    final isDark = appState.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.lock_rounded, color: Color(0xFFD97706), size: 22),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Gestion d\'équipe Pro',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: isDark ? Colors.white : const Color(0xFF0F172A)),
               ),
             ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'La formule Découverte est limitée à 1 compte solo propriétaire.\n\n'
           'Pour inviter des collaborateurs (Caissiers, Magasiniers, Gérants) avec des codes PIN secrets, des droits d\'accès et le suivi des shifts, passez à la Formule Pro sur le portail web.',
-          style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF475569)),
+          style: TextStyle(fontSize: 13, height: 1.4, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Compris', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+            child: Text('Compris', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy)),
           ),
         ],
       ),

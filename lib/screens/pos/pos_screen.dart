@@ -1504,6 +1504,7 @@ class _PosScreenState extends State<PosScreen> {
       if (!opened) return;
     }
     if (!context.mounted) return;
+    final isDark = appState.isDarkMode;
     final total = appState.cartTotal;
     String selectedPayment = 'Espèces';
     Customer? selectedCustomer;
@@ -1512,7 +1513,7 @@ class _PosScreenState extends State<PosScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1543,20 +1544,20 @@ class _PosScreenState extends State<PosScreen> {
                         children: [
                           Text(
                             'Finaliser la vente'.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 19,
-                              color: AppTheme.primaryNavy,
+                              color: isDark ? Colors.white : AppTheme.primaryNavy,
                             ),
                           ),
                           Text(
                             '${appState.cartCount} article(s) • Total : ${AppTheme.formatFCFA(total)}',
-                            style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                            style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: Icon(Icons.close, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -1569,17 +1570,17 @@ class _PosScreenState extends State<PosScreen> {
                     children: [
                       Text(
                         'Client'.tr,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.primaryNavy),
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: isDark ? Colors.white : AppTheme.primaryNavy),
                       ),
                       TextButton.icon(
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 15, color: AppTheme.primaryNavy),
+                        icon: Icon(Icons.person_add_alt_1_rounded, size: 15, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                         label: Text(
                           '+ Nouveau client'.tr,
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppTheme.primaryNavy),
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                         ),
                         onPressed: () async {
                           final created = await Navigator.push<Customer>(
@@ -1596,25 +1597,27 @@ class _PosScreenState extends State<PosScreen> {
                   const SizedBox(height: 6),
                   DropdownButtonFormField<Customer?>(
                     initialValue: selectedCustomer,
+                    dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.person_outline, color: AppTheme.primaryNavy, size: 20),
+                      prefixIcon: Icon(Icons.person_outline, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy, size: 20),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                     items: [
-                      const DropdownMenuItem<Customer?>(
+                      DropdownMenuItem<Customer?>(
                         value: null,
-                        child: Text('Client Comptoir (Vente directe)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        child: Text('Client Comptoir (Vente directe)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : Colors.black87)),
                       ),
                       ...appState.customers.map(
                         (c) => DropdownMenuItem<Customer?>(
                           value: c,
-                          child: Text('${c.name} ${c.phone.isNotEmpty ? "(${c.phone})" : ""}', style: const TextStyle(fontSize: 13)),
+                          child: Text('${c.name} ${c.phone.isNotEmpty ? "(${c.phone})" : ""}', style: TextStyle(fontSize: 13, color: isDark ? Colors.white : Colors.black87)),
                         ),
                       ),
                     ],
@@ -1625,7 +1628,7 @@ class _PosScreenState extends State<PosScreen> {
                   // 2. MODE DE PAIEMENT
                   Text(
                     'Mode de paiement'.tr,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.primaryNavy),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: isDark ? Colors.white : AppTheme.primaryNavy),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -1636,6 +1639,7 @@ class _PosScreenState extends State<PosScreen> {
                         label: 'Espèces',
                         icon: Icons.payments_outlined,
                         selected: selectedPayment == 'Espèces',
+                        isDark: isDark,
                         onTap: () {
                           setModalState(() {
                             selectedPayment = 'Espèces';
@@ -1647,6 +1651,7 @@ class _PosScreenState extends State<PosScreen> {
                         label: 'Orange Money',
                         icon: Icons.phone_android_rounded,
                         selected: selectedPayment == 'Orange Money',
+                        isDark: isDark,
                         onTap: () {
                           setModalState(() {
                             selectedPayment = 'Orange Money';
@@ -1658,6 +1663,7 @@ class _PosScreenState extends State<PosScreen> {
                         label: 'MTN MoMo',
                         icon: Icons.edgesensor_high_rounded,
                         selected: selectedPayment == 'MTN MoMo',
+                        isDark: isDark,
                         onTap: () {
                           setModalState(() {
                             selectedPayment = 'MTN MoMo';
@@ -1669,6 +1675,7 @@ class _PosScreenState extends State<PosScreen> {
                         label: 'À Crédit',
                         icon: Icons.pending_actions_rounded,
                         selected: selectedPayment == 'À Crédit',
+                        isDark: isDark,
                         onTap: () {
                           setModalState(() {
                             selectedPayment = 'À Crédit';
@@ -1683,22 +1690,23 @@ class _PosScreenState extends State<PosScreen> {
                   // 3. MONTANT REÇU & CALCUL AUTOMATIQUE DE MONNAIE / DETTE
                   Text(
                     selectedPayment == 'À Crédit' ? 'Acompte versé (FCFA)'.tr : 'Montant reçu du client (FCFA)'.tr,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.primaryNavy),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: isDark ? Colors.white : AppTheme.primaryNavy),
                   ),
                   const SizedBox(height: 6),
                   TextField(
                     controller: amountCtrl,
                     keyboardType: TextInputType.number,
                     onChanged: (_) => setModalState(() {}),
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.primaryNavy),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: isDark ? Colors.white : AppTheme.primaryNavy),
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.attach_money_rounded, color: AppTheme.primaryNavy),
+                      prefixIcon: Icon(Icons.attach_money_rounded, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy),
                       suffixText: 'FCFA',
+                      suffixStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
@@ -1710,8 +1718,8 @@ class _PosScreenState extends State<PosScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: selectedPayment == 'À Crédit'
-                          ? const Color(0xFFFEF3C7)
-                          : const Color(0xFFECFDF5),
+                          ? (isDark ? const Color(0xFF382305) : const Color(0xFFFEF3C7))
+                          : (isDark ? const Color(0xFF062E22) : const Color(0xFFECFDF5)),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -1725,8 +1733,8 @@ class _PosScreenState extends State<PosScreen> {
                             fontWeight: FontWeight.w700,
                             fontSize: 13,
                             color: selectedPayment == 'À Crédit'
-                                ? const Color(0xFF92400E)
-                                : const Color(0xFF065F46),
+                                ? (isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E))
+                                : (isDark ? const Color(0xFF34D399) : const Color(0xFF065F46)),
                           ),
                         ),
                         Text(
@@ -1750,12 +1758,12 @@ class _PosScreenState extends State<PosScreen> {
                     height: 52,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryNavy,
-                        foregroundColor: Colors.white,
+                        backgroundColor: isDark ? AppTheme.accentGold : AppTheme.primaryNavy,
+                        foregroundColor: isDark ? AppTheme.primaryNavy : Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         elevation: 0,
                       ),
-                      icon: const Icon(Icons.receipt_long_rounded, color: AppTheme.accentGold),
+                      icon: Icon(Icons.receipt_long_rounded, color: isDark ? AppTheme.primaryNavy : AppTheme.accentGold),
                       label: Text(
                         'Valider et afficher le reçu'.tr,
                         style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
@@ -1765,22 +1773,27 @@ class _PosScreenState extends State<PosScreen> {
                           showDialog(
                             context: context,
                             builder: (dCtx) => AlertDialog(
+                              backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                               title: Row(
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFFEF3C7),
+                                      color: isDark ? const Color(0xFF382305) : const Color(0xFFFEF3C7),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: const Icon(Icons.lock_rounded, color: Color(0xFFD97706), size: 22),
                                   ),
                                   const SizedBox(width: 12),
-                                  const Expanded(
+                                  Expanded(
                                     child: Text(
                                       'Plafond Découverte atteint',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16.5,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1788,12 +1801,16 @@ class _PosScreenState extends State<PosScreen> {
                               content: Text(
                                 'Vous avez atteint le plafond mensuel de 50 ventes de la formule Découverte (${appState.currentMonthSalesCount}/50 ventes ce mois-ci).\n\n'
                                 'Pour encaisser vos ventes en illimité sans interruption et profiter du reçu personnalisé sans filigrane, passez à la Formule Pro sur le portail web.',
-                                style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF475569)),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  height: 1.4,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                                ),
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(dCtx),
-                                  child: const Text('Compris', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryNavy)),
+                                  child: Text('Compris', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? AppTheme.accentGold : AppTheme.primaryNavy)),
                                 ),
                               ],
                             ),
@@ -1827,6 +1844,7 @@ class _PosScreenState extends State<PosScreen> {
     required IconData icon,
     required bool selected,
     required VoidCallback onTap,
+    bool isDark = false,
   }) {
     return InkWell(
       onTap: onTap,
@@ -1834,10 +1852,12 @@ class _PosScreenState extends State<PosScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.primaryNavy : const Color(0xFFF8FAFC),
+          color: selected
+              ? (isDark ? AppTheme.accentGold : AppTheme.primaryNavy)
+              : (isDark ? const Color(0xFF162540) : const Color(0xFFF8FAFC)),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? AppTheme.accentGold : const Color(0xFFE2E8F0),
+            color: selected ? AppTheme.accentGold : (isDark ? const Color(0xFF1E3052) : const Color(0xFFE2E8F0)),
             width: selected ? 1.5 : 1.0,
           ),
         ),
@@ -1847,7 +1867,9 @@ class _PosScreenState extends State<PosScreen> {
             Icon(
               icon,
               size: 16,
-              color: selected ? AppTheme.accentGold : AppTheme.primaryNavy,
+              color: selected
+                  ? (isDark ? AppTheme.primaryNavy : AppTheme.accentGold)
+                  : (isDark ? Colors.white70 : AppTheme.primaryNavy),
             ),
             const SizedBox(width: 6),
             Text(
@@ -1855,7 +1877,9 @@ class _PosScreenState extends State<PosScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 12.5,
-                color: selected ? Colors.white : AppTheme.primaryNavy,
+                color: selected
+                    ? (isDark ? AppTheme.primaryNavy : Colors.white)
+                    : (isDark ? Colors.white : AppTheme.primaryNavy),
               ),
             ),
           ],

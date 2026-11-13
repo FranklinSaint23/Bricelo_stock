@@ -85,6 +85,11 @@ class AppState extends ChangeNotifier {
     _globalEmailVerified = value;
   }
   bool checkEmailVerified() => _globalEmailVerified;
+  String _recoveryEmail = '';
+  String get recoveryEmail => _recoveryEmail.isNotEmpty ? _recoveryEmail : userEmail;
+  set recoveryEmail(String value) {
+    _recoveryEmail = value.trim();
+  }
   String userPhone = '';
   String userRole = 'Propriétaire';
 
@@ -434,6 +439,7 @@ class AppState extends ChangeNotifier {
         userName = (data['userName'] ?? '').toString();
         companyName = (data['companyName'] ?? '').toString();
         userEmail = (data['userEmail'] ?? '').toString();
+        _recoveryEmail = (data['recoveryEmail'] ?? '').toString();
         isEmailVerified = data['isEmailVerified'] as bool? ?? false;
         userPhone = (data['userPhone'] ?? '').toString();
         userRole = (data['userRole'] ?? 'Propriétaire').toString();
@@ -766,6 +772,7 @@ class AppState extends ChangeNotifier {
         'userName': userName,
         'companyName': companyName,
         'userEmail': userEmail,
+        'recoveryEmail': _recoveryEmail,
         'isEmailVerified': isEmailVerified,
         'userPhone': userPhone,
         'userRole': userRole,
@@ -934,6 +941,8 @@ class AppState extends ChangeNotifier {
         'full_name': userName,
         'company_name': companyName,
         'email': userEmail,
+        'recovery_email': recoveryEmail,
+        'is_email_verified': isEmailVerified,
         'phone': userPhone,
         'role': isSuperAdmin ? userRole : 'Propriétaire',
         'language': currentLanguage,
@@ -1587,12 +1596,250 @@ class AppState extends ChangeNotifier {
         availableStores.insert(0, companyName);
       }
     }
-    if (phone != null) userPhone = phone.trim();
-    if (email != null) userEmail = email.trim();
+    if (phone != null) {
+      userPhone = phone.trim();
+      final sb = _supabase;
+      if (sb != null && sb.auth.currentUser != null) {
+        try {
+          sb.auth.updateUser(UserAttributes(phone: userPhone, data: {'phone': userPhone}));
+        } catch (_) {}
+      }
+    }
+    if (email != null) {
+      userEmail = email.trim();
+      if (_recoveryEmail.isEmpty) _recoveryEmail = userEmail;
+      final sb = _supabase;
+      if (sb != null && sb.auth.currentUser != null) {
+        try {
+          sb.auth.updateUser(UserAttributes(email: userEmail, data: {'recovery_email': _recoveryEmail}));
+        } catch (_) {}
+      }
+    }
 
     await _saveToPrefs();
     notifyListeners();
     await syncOwnerWorkspaceConfigToCloud();
+  }
+
+  /// Met à jour l'email de récupération et le synchronise sur Supabase
+  Future<void> updateRecoveryEmail(String email) async {
+    final clean = email.trim();
+    _recoveryEmail = clean;
+    if (userEmail.isEmpty) {
+      userEmail = clean;
+    }
+    await _saveToPrefs();
+    notifyListeners();
+
+    final sb = _supabase;
+    if (sb != null) {
+      if (sb.auth.currentUser != null) {
+        try {
+          await sb.auth.updateUser(UserAttributes(
+            data: {'recovery_email': clean},
+          ));
+        } catch (_) {}
+      }
+    }
+
+    await syncOwnerWorkspaceConfigToCloud();
+  }
+
+  /// Modifie le mot de passe du propriétaire (vérification ancien, hachage nouveau,
+  /// mise à jour Supabase Auth pour déclencher la notification email "Password changed",
+  /// et synchronisation dans user_profiles).
+  Future<String?> changeOwnerPassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    final oldClean = oldPassword.trim();
+    final newClean = newPassword.trim();
+
+    if (newClean.length < 6) {
+      return 'Le nouveau mot de passe doit comporter au moins 6 caractères.';
+    }
+
+    // Vérification de l'ancien mot de passe
+    final inputOldHash = hashPassword(oldClean);
+    if (ownerPasswordHash.isNotEmpty &&
+        ownerPasswordHash != inputOldHash &&
+        ownerPasswordHash != oldClean) {
+      return 'L\'ancien mot de passe est incorrect.';
+    }
+
+    // Hachage et mise à jour locale
+    final newHash = hashPassword(newClean);
+    ownerPasswordHash = newHash;
+    await _saveToPrefs();
+
+    // 1. Mise à jour Supabase Auth (déclenche la notification par email de changement de mot de passe)
+    final sb = _supabase;
+    if (sb != null) {
+      try {
+        await sb.auth.updateUser(UserAttributes(password: newClean));
+      } catch (_) {}
+
+      // 2. Mise à jour immédiate de la table user_profiles
+      if (userPhone.isNotEmpty || userEmail.isNotEmpty) {
+        final profileId = normalizePhoneDigits(userPhone).isNotEmpty
+            ? normalizePhoneDigits(userPhone)
+            : userEmail.trim().toLowerCase();
+        await enqueueOrSendSupabase(
+          table: 'user_profiles',
+          action: 'update',
+          matchCol: 'id',
+          matchVal: profileId,
+          payload: {
+            'password_hash': newHash,
+            'updated_at': DateTime.now().toIso8601String(),
+          },
+        );
+      }
+    }
+
+    notifyListeners();
+    return null;
+  }
+
+  /// Envoie un code OTP de réinitialisation de mot de passe via Supabase Auth
+  Future<String?> sendPasswordResetCode(String emailOrPhone) async {
+    final clean = emailOrPhone.trim();
+    if (clean.isEmpty) {
+      return 'Veuillez renseigner votre email ou téléphone.';
+    }
+
+    String targetEmail = '';
+    if (clean.contains('@')) {
+      targetEmail = clean.toLowerCase();
+    } else {
+      // Recherche de l'email de récupération associé au téléphone
+      targetEmail = await findRecoveryEmailForIdentifier(clean) ?? '';
+    }
+
+    if (targetEmail.isEmpty) {
+      return 'Aucun email de récupération n\'a été trouvé pour ce compte. Veuillez vérifier votre saisie ou contacter le support.';
+    }
+
+    final sb = _supabase;
+    if (sb == null) {
+      return 'Service de connexion momentanément inaccessible. Vérifiez votre connexion.';
+    }
+
+    try {
+      await sb.auth.resetPasswordForEmail(targetEmail);
+      return null; // Succès
+    } on AuthException catch (e) {
+      final msg = e.message.toLowerCase();
+      if (msg.contains('rate limit') || msg.contains('over_email_send_rate_limit')) {
+        return 'Limite d\'envois atteinte. Veuillez patienter un instant avant de renvoyer un code.';
+      }
+      return e.message;
+    } catch (e) {
+      return 'Erreur lors de l\'envoi du code de réinitialisation: $e';
+    }
+  }
+
+  /// Valide le code OTP de récupération et applique le nouveau mot de passe
+  Future<String?> confirmPasswordReset({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanToken = token.trim();
+    final cleanPwd = newPassword.trim();
+
+    if (cleanToken.length != 6) {
+      return 'Veuillez saisir les 6 chiffres du code reçu.';
+    }
+    if (cleanPwd.length < 6) {
+      return 'Le nouveau mot de passe doit comporter au moins 6 caractères.';
+    }
+
+    final sb = _supabase;
+    if (sb == null) {
+      return 'Connexion indisponible.';
+    }
+
+    try {
+      // 1. Vérification du token OTP avec OtpType.recovery
+      final authResp = await sb.auth.verifyOTP(
+        email: cleanEmail,
+        token: cleanToken,
+        type: OtpType.recovery,
+      );
+
+      if (authResp.session == null && authResp.user == null) {
+        return 'Code de récupération incorrect ou expiré.';
+      }
+
+      // 2. Mise à jour du mot de passe dans Supabase Auth
+      // (déclenche automatiquement la notification email "Password changed")
+      await sb.auth.updateUser(UserAttributes(password: cleanPwd));
+
+      // 3. Mise à jour locale du mot de passe
+      final newHash = hashPassword(cleanPwd);
+      ownerPasswordHash = newHash;
+      await _saveToPrefs();
+
+      // 4. Mise à jour dans user_profiles
+      await enqueueOrSendSupabase(
+        table: 'user_profiles',
+        action: 'update',
+        matchCol: 'email',
+        matchVal: cleanEmail,
+        payload: {
+          'password_hash': newHash,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+      );
+
+      notifyListeners();
+      return null;
+    } on AuthException catch (e) {
+      final msg = e.message.toLowerCase();
+      if (msg.contains('expired') || msg.contains('invalid') || msg.contains('otp_expired')) {
+        return 'Code de récupération incorrect ou expiré. Veuillez redemander un code.';
+      }
+      return e.message;
+    } catch (e) {
+      return 'Erreur lors de la réinitialisation du mot de passe: $e';
+    }
+  }
+
+  /// Trouve l'adresse email de récupération associée à un identifiant (téléphone, etc.)
+  Future<String?> findRecoveryEmailForIdentifier(String identifier) async {
+    final clean = identifier.trim();
+    if (clean.isEmpty) return null;
+
+    // 1. Vérification locale
+    if (phonesMatch(userPhone, clean) || userPhone == clean) {
+      if (recoveryEmail.isNotEmpty && recoveryEmail.contains('@')) {
+        return recoveryEmail;
+      }
+    }
+
+    // 2. Recherche distante dans la table user_profiles
+    final sb = _supabase;
+    if (sb != null) {
+      try {
+        final norm = normalizePhoneDigits(clean);
+        final rows = await sb.from('user_profiles').select('id, phone, email, recovery_email');
+        for (final raw in (rows as List)) {
+          final r = Map<String, dynamic>.from(raw as Map);
+          final rPhone = (r['phone'] ?? '').toString();
+          final rId = (r['id'] ?? '').toString();
+          if (phonesMatch(rPhone, clean) || (norm.isNotEmpty && normalizePhoneDigits(rId) == norm) || rPhone == clean || rId == clean) {
+            final recEmail = (r['recovery_email'] ?? '').toString().trim();
+            if (recEmail.isNotEmpty && recEmail.contains('@')) return recEmail;
+            final stdEmail = (r['email'] ?? '').toString().trim();
+            if (stdEmail.isNotEmpty && stdEmail.contains('@')) return stdEmail;
+          }
+        }
+      } catch (_) {}
+    }
+
+    return null;
   }
 
   Future<void> logout() async {
